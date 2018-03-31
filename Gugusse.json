@@ -1,12 +1,12 @@
 {
     "filmdrive": {
 	"pins": [21,17,20,16],
-	"invert": true,
-	"speed": 400.0,
+	"invert": false,
+	"speed": 200.0,
 	"accel": 10.0,
 	"stopPin": 2,
 	"stopState":1,
-	"ignoreInitial": 700
+	"ignoreInitial": 100
     },
     "feeder": {
 	"pins": [25,15,24,14],

@@ -37,7 +37,7 @@ class Gugusse():
         self.cam=PiCamera()
         self.cam.resolution=self.cam.MAX_RESOLUTION
         self.cam.start_preview(resolution=(1440,1080))
-        self.framecount=798
+        self.framecount=0
         try:
             os.mkdir("/dev/shm/complete")
         except Exception:
