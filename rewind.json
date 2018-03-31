@@ -1,0 +1,33 @@
+{
+    "gearbox": {
+	"pin1": 21,
+	"pin2": 20,
+	"invert": true,
+	"speed": 400.0,
+	"accel": 50.0,
+	"stopPin": 2,
+	"stopState":1,
+	"ignoreInitial": 350
+    },
+    "feeder": {
+	"pin1": 25,
+	"pin2": 24,
+	"invert": true,
+	"speed": 50.0,
+	"accel": 10.0,
+        "stopPin": 3,
+	"stopState":1,
+	"ignoreInitial": 0
+    },
+    "pickup": {
+	"pin1": 23,
+	"pin2": 22,
+	"invert": true,
+	"speed": 50.0,
+	"accel": 10.0,
+        "stopPin": 4,
+	"stopState":1,
+	"ignoreInitial": 0
+    },
+    "motorEnablePin": 5
+}
