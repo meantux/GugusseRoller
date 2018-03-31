@@ -36,8 +36,10 @@ class Gugusse():
         self.enablePin=cfg["motorEnablePin"]
         self.cam=PiCamera()
         self.cam.resolution=self.cam.MAX_RESOLUTION
+        self.cam.shutter_speed=16660
+        #self.cam.exposure_speed=10000
         self.cam.start_preview(resolution=(1440,1080))
-        self.framecount=0
+        self.framecount=121
         try:
             os.mkdir("/dev/shm/complete")
         except Exception:
@@ -57,6 +59,7 @@ class Gugusse():
         m1.join()
         fn="/dev/shm/%05d.jpg"%self.framecount
         fncomplete="/dev/shm/complete/%05d.jpg"%self.framecount
+        print("exposure_speed={}".format(self.cam.exposure_speed))
         self.framecount+= 1
         self.cam.capture(fn)
         os.rename(fn,fncomplete)

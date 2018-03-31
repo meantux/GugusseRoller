@@ -3,7 +3,7 @@
 	"pins": [21,17,20,16],
 	"invert": false,
 	"speed": 200.0,
-	"accel": 10.0,
+	"accel": 5.0,
 	"stopPin": 2,
 	"stopState":1,
 	"ignoreInitial": 100

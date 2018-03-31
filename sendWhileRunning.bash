@@ -17,7 +17,7 @@ function sendAndDelete(){
 	echo no files, sleeping 1 sec
 	sleep 1
     else
-        ncftpput -u gugusse -p * 192.168.2.40 Capture/test3 $@ && rm -f $@
+        ncftpput -u gugusse -p macako 192.168.2.40 Capture/test4 $@ && rm -f $@
    fi
 }
 
