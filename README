@@ -1,0 +1,16 @@
+The Gugusse Roller is the second machine to transfer film to digital that
+I've created and built.
+
+For the moment the project is still under development, there is a lot
+of information available on the older Gugusse Facebook page.
+https://www.facebook.com/Gugusse16mm/
+
+The Gugusse Roller uses a Raspberry Pi and the 8MP Raspberry Pi Camera V2,
+the objectives of the software is to:
+    -Drive the 3 stepper motors
+    -read the 3 discrete inputs
+       -film hole detector
+       -left arm aligned
+       -right arm aligned
+    -capture each frame, save it
+
