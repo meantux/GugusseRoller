@@ -57,6 +57,8 @@ class Gugusse():
         m3.start()
         m3.join()
         m1.join()
+        if not m1.motor.fault or not m2.motor.fault or not m3.motor.fault:
+           raise Exception("Motor Fault!")
         fn="/dev/shm/%05d.jpg"%self.framecount
         fncomplete="/dev/shm/complete/%05d.jpg"%self.framecount
         print("exposure_speed={}".format(self.cam.exposure_speed))
@@ -69,7 +71,12 @@ class Gugusse():
 import sys
 try:
    h=open(sys.argv[1])
+   filmcfg=json.load(h)
+   h.close()
+   h=open("hardwarecfg.json")
    cfg=json.load(h)
+   for device in filmcfg:
+      cfg[device].update(filmcfg[device])
    cfg["filmFormatMaxTicks"]=int(sys.argv[2])
 except Exception as e:
    print (e.message)

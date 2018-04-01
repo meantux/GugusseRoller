@@ -17,6 +17,7 @@ class AcceleratedMotor():
     Normal= [(1,1),(3,0),(2,1),(1,0),(0,1),(2,0),(3,1),(0,0)]
     def __init__(self,cfg):
         GPIO.setmode(GPIO.BCM)
+        self.fault=False
         self.name=cfg["name"]
         self.speed=cfg["speed"]
         self.accel=cfg["accel"]
@@ -58,6 +59,7 @@ class AcceleratedMotor():
         self.currentSpeed=0
         self.ignore=self.ignoreInitial
         if self.target < self.pos:
+            self.fault=True:
             raise Exception("We do not support backward yet")
         else:
             self.direction=self.forward
@@ -78,6 +80,7 @@ class AcceleratedMotor():
                 sleep(delay)
             ticks+= 1
             waitUntil=self.tick()
+        self.fault=True
         raise Exception("Move failed, {} passed its limit without triggering sensor".format(self.name))
                 
 
