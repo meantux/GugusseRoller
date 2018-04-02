@@ -59,7 +59,7 @@ class AcceleratedMotor():
         self.currentSpeed=0
         self.ignore=self.ignoreInitial
         if self.target < self.pos:
-            self.fault=True:
+            self.fault=True
             raise Exception("We do not support backward yet")
         else:
             self.direction=self.forward

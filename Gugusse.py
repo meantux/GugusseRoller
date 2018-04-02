@@ -39,7 +39,7 @@ class Gugusse():
         self.cam.shutter_speed=16660
         #self.cam.exposure_speed=10000
         self.cam.start_preview(resolution=(1440,1080))
-        self.framecount=121
+        self.framecount=218
         try:
             os.mkdir("/dev/shm/complete")
         except Exception:
@@ -50,14 +50,15 @@ class Gugusse():
         m2=MotorThread(self.feeder,1000)
         m3=MotorThread(self.pickup,1000)
         m1.start()
-        m2.start()
+        m3.start()
         # by limiting only 2 motors running at a time
         # we're lowering the maximum electrical consumption
-        m2.join()
-        m3.start()
         m3.join()
+        m2.start()
+        m2.join()
         m1.join()
-        if not m1.motor.fault or not m2.motor.fault or not m3.motor.fault:
+        if m1.motor.fault or m2.motor.fault or m3.motor.fault:
+           GPIO.output(self.enablePin, 0)
            raise Exception("Motor Fault!")
         fn="/dev/shm/%05d.jpg"%self.framecount
         fncomplete="/dev/shm/complete/%05d.jpg"%self.framecount
