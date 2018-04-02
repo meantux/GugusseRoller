@@ -7,7 +7,7 @@
     },
     "feeder": {
 	"pins": [25,15,24,14],
-	"invert": false,
+	"invert": true,
         "stopPin": 3,
 	"stopState":1
     },

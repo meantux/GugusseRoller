@@ -39,7 +39,7 @@ class Gugusse():
         self.cam.shutter_speed=16660
         #self.cam.exposure_speed=10000
         self.cam.start_preview(resolution=(1440,1080))
-        self.framecount=218
+        self.framecount=0
         try:
             os.mkdir("/dev/shm/complete")
         except Exception:
