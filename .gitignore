@@ -1,2 +1,5 @@
 *~
 *.pyc
+*.wav
+*.raw
+img2snd
