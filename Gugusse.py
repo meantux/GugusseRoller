@@ -17,12 +17,11 @@ import os
 GPIO.setmode(GPIO.BCM) 
 
 class MotorThread (threading.Thread):
-   def __init__(self, motor, maxClicks):
+   def __init__(self, motor):
       threading.Thread.__init__(self)
       self.motor=motor
-      self.maxClicks=maxClicks
    def run(self):
-      self.motor.setMove(self.maxClicks)
+      self.motor.Move()
 
 
 class Gugusse():
@@ -64,7 +63,12 @@ class Gugusse():
         fncomplete="/dev/shm/complete/%05d.jpg"%self.framecount
         print("exposure_speed={}".format(self.cam.exposure_speed))
         self.framecount+= 1
-        self.cam.capture(fn)
+        try:
+           self.cam.capture(fn)
+        except exception as e:
+           GPIO.output(self.enablePin, 0)
+           print("Failure to capture image: {}".format(e))
+           raise Exception("Stop")
         os.rename(fn,fncomplete)
         
 
@@ -78,7 +82,6 @@ try:
    cfg=json.load(h)
    for device in filmcfg:
       cfg[device].update(filmcfg[device])
-   cfg["filmFormatMaxTicks"]=int(sys.argv[2])
 except Exception as e:
    print (e.message)
    print ("\nUSAGE: {} <motor json file> <number of ticks per frame for errors>\n".format(sys.argv[0]))

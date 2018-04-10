@@ -1,17 +1,21 @@
 {
-    "filmdrive": {
+    "filmFormatMaxTicks": 750,
+    "filmdrive": {	
 	"speed": 100.0,
 	"accel": 5.0,
-	"ignoreInitial": 70
+	"ignoreInitial": 70,
+	"faultTreshold": 750
     },
     "feeder": {
 	"speed": 200.0,
 	"accel": 10.0,
-	"ignoreInitial": 0
+	"ignoreInitial": 0,
+	"faultTreshold": 1000
     },
     "pickup": {
 	"speed": 200.0,
 	"accel": 10.0,
-	"ignoreInitial": 0
+	"ignoreInitial": 0,
+	"faultTreshold": 1000
     }
 }

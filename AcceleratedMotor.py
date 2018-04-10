@@ -26,6 +26,7 @@ class AcceleratedMotor():
         self.SensorStopPin=cfg["stopPin"]
         self.ignoreInitial=cfg["ignoreInitial"]
         self.ignore=0
+        self.faultTreshold=self.["faultTreshold"]
         self.SensorStopState=cfg["stopState"]
         self.pins=cfg["pins"]
         self.lasttick=time()
@@ -52,10 +53,10 @@ class AcceleratedMotor():
             return time() + (1.0 / self.speed)
         return None
                         
-    def setMove(self, quantity):
+    def Move(self):
         ticks=0
         log=[]
-        self.target= self.pos+quantity
+        self.target= self.pos+self.faultTreshold
         self.currentSpeed=0
         self.ignore=self.ignoreInitial
         if self.target < self.pos:
