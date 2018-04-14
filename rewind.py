@@ -30,11 +30,11 @@ class Rewind():
               cfg[item]["name"]=item
         # We rewinding so...
         cfg["feeder"]["invert"] = not cfg["feeder"]["invert"]
-
-        # Maximum speed!! is it really 1500? bah.. good enough
-        cfg["feeder"]["speed"]=1500
+        cfg["feeder"]["accel"]=10
+        cfg["feeder"]["ignoreInitial"]=0
+        cfg["feeder"]["speed"]=1200
         self.feeder=AcceleratedMotor(cfg["feeder"])
-        self.pickup=AcceleratedMotor(cfg["pickup"])
+        #self.pickup=AcceleratedMotor(cfg["pickup"])
         # Enable all H-Bridges chips
         self.enablePin=cfg["motorEnablePin"]
         GPIO.setup(self.enablePin, GPIO.OUT, initial=1)
@@ -43,7 +43,7 @@ class Rewind():
         # to the same value (that's one way to disable
         # a motor driven by H-Bridges).
         for pin in cfg["pickup"]["pins"]:
-           GPIO.output(pin,0)
+           GPIO.setup(pin, GPIO.OUT, initial=0)
        
     def frameAdvance(self):
         m2=MotorThread(self.feeder,100000000)
@@ -52,7 +52,7 @@ class Rewind():
         
 import sys
 try:
-   h=open(sys.argv[1])
+   h=open("hardwarecfg.json")
    cfg=json.load(h)
 except Exception as e:
    print (e.message)

@@ -50,7 +50,7 @@ class AcceleratedMotor():
             self.direction()            
             if self.currentSpeed < self.speed:
                 self.currentSpeed += self.accel
-            return time() + (1.0 / self.speed)
+            return time() + (1.0 / self.currentSpeed)
         return None
                         
     def Move(self):

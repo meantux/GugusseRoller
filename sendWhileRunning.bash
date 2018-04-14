@@ -2,13 +2,22 @@
 
 
 
-#ncftpput -u gugusse -p macako 192.168.2.40 Capture/test3 *
+source ftpserver.conf
 
 while [ ! -d "/dev/shm/complete" ]; do
     echo directory not there yet, `date`
     sleep 10    
 done
 
+if [ -z "$1" ]; then
+    echo "We need the directory name for the ftp server"
+    echo "(not the full path)"
+    echo "plz don't use the space character in the name, it's"
+    echo "against my religion"
+    exit -1
+fi
+
+export dirName="$1"
 
 cd /dev/shm/complete
 
@@ -17,8 +26,8 @@ function sendAndDelete(){
 	echo no files, sleeping 1 sec
 	sleep 1
     else
-        ncftpput -u gugusse -p macako 192.168.2.40 Capture/super8test $@ && rm -f $@
-   fi
+        ncftpput -u $ftpuser -p $ftppassword $ftpserver ${ftppathprefix}${dirName} $@ && rm -f $@
+    fi
 }
 
 while [ 1 ]; do

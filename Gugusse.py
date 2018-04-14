@@ -13,6 +13,7 @@ import RPi.GPIO as GPIO
 import threading
 import json
 from picamera import PiCamera
+from fractions import Fraction
 import os
 GPIO.setmode(GPIO.BCM) 
 
@@ -25,7 +26,7 @@ class MotorThread (threading.Thread):
 
 
 class Gugusse():
-    def __init__(self, cfg):
+    def __init__(self, cfg, start_frame):
         for item in cfg:
            if isinstance(cfg[item], dict):
               cfg[item]["name"]=item
@@ -35,10 +36,11 @@ class Gugusse():
         self.enablePin=cfg["motorEnablePin"]
         self.cam=PiCamera()
         self.cam.resolution=self.cam.MAX_RESOLUTION
+        self.cam.awb_mode='off'
+        self.cam.awb_gains=(Fraction(229,256),Fraction(763,256))
         self.cam.shutter_speed=16660
-        #self.cam.exposure_speed=10000
         self.cam.start_preview(resolution=(1440,1080))
-        self.framecount=0
+        self.framecount=start_frame
         try:
             os.mkdir("/dev/shm/complete")
         except Exception:
@@ -82,11 +84,15 @@ try:
    cfg=json.load(h)
    for device in filmcfg:
       cfg[device].update(filmcfg[device])
+   firstNum=int(sys.argv[2])
+   feederDirection=sys.argv[3]
 except Exception as e:
    print (e.message)
-   print ("\nUSAGE: {} <motor json file> <number of ticks per frame for errors>\n".format(sys.argv[0]))
+   print ("\nUSAGE: {} <film format json file> <initial file number> <cw|ccw>\n".format(sys.argv[0]))
    sys.exit(0)
-capture=Gugusse(cfg)
+if feederDirection == "cw":
+   cfg["feeder"]["invert"]=not cfg["feeder"]["invert"]
+capture=Gugusse(cfg, firstNum)
 while True:
     capture.frameAdvance()
     sleep(0.1)
