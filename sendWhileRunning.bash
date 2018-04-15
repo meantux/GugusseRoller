@@ -4,10 +4,6 @@
 
 source ftpserver.conf
 
-while [ ! -d "/dev/shm/complete" ]; do
-    echo directory not there yet, `date`
-    sleep 10    
-done
 
 if [ -z "$1" ]; then
     echo "We need the directory name for the ftp server"
@@ -19,6 +15,7 @@ fi
 
 export dirName="$1"
 
+mkdir -p /dev/shm/complete
 cd /dev/shm/complete
 
 function sendAndDelete(){
@@ -30,6 +27,6 @@ function sendAndDelete(){
     fi
 }
 
-while [ 1 ]; do
+while [ -f "/dev/shm/transferInProgress.flag" ]; do
     sendAndDelete *.jpg
 done

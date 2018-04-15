@@ -36,22 +36,18 @@ done
 # if not then create it
 if [ $dirExists == NO ]; then
     echo hello > deleteme.txt
-    ncftpput -m -u$ftpuser -p$ftppassword deleteme.txt ftp://$ftpserver/$ftppathprefix/$2/deleteme.txt
+    ncftpput -m -u$ftpuser -p$ftppassword $ftpserver $ftppathprefix/$2/ deleteme.txt
     if [ $? -ne 0 ]; then
 	echo "We could not create directory on ftp server"
 	exit -1
     fi
-    export $startNumber=0
+    export startNumber=0
 else
     # else figure out which is last file.
     echo "Directory $2 already existed on the ftp server!"
     echo "checking which is its last file in it"
     echo "(this could take a while)"
     ncftpls -u$ftpuser -p$ftppassword ftp://$ftpserver/$ftppathprefix/$2/*.jpg > /dev/shm/filesOnServer.txt
-    if [ $? -ne 0 ]; then
-	echo "We failed listing the directory, ouch! don't know what to do"
-	exit -1
-    fi
     lastFile=`cat /dev/shm/filesOnServer.txt | sort | tail -n 1`
     echo lastfile=$lastFile	
     if [ -z "$lastFile" ]; then
@@ -66,17 +62,22 @@ else
 	lastFileNum=${lastFile%.jpg}
 	while [ "${lastFileNum:0:1}" == "0" ]; do
 	    export lastFileNum=${lastFileNum:1}
-	    startNumber=$((lastFileNum+1))
 	done
+	startNumber=$((lastFileNum+1))
     fi
 fi	    
-echo "We'll start with number $starNumber"
+echo "We'll start with number $startNumber"
 
 killall sendWhileRunning.bash &> /dev/null
 sleep 2
 
 # start a new sendWhileRunning.bash with proper film name
+touch /dev/shm/transferInProgress.flag
 ./sendWhileRunning.bash "$2" &
+sleep 2
 
 # start the Gugusse.py
-./Gugusse.py $1 $3
+echo ./Gugusse.py $1 $startNumber $3
+./Gugusse.py $1 $startNumber $3
+sleep 5
+rm /dev/shm/transferInProgress.flag

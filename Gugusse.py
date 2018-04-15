@@ -22,7 +22,7 @@ class MotorThread (threading.Thread):
       threading.Thread.__init__(self)
       self.motor=motor
    def run(self):
-      self.motor.Move()
+      self.motor.move()
 
 
 class Gugusse():
@@ -47,9 +47,9 @@ class Gugusse():
             print("Ho well... directory already exists, who cares");
         GPIO.setup(self.enablePin, GPIO.OUT, initial=1)
     def frameAdvance(self):
-        m1=MotorThread(self.filmdrive,1000 )
-        m2=MotorThread(self.feeder,1000)
-        m3=MotorThread(self.pickup,1000)
+        m1=MotorThread(self.filmdrive )
+        m2=MotorThread(self.feeder)
+        m3=MotorThread(self.pickup)
         m1.start()
         m3.start()
         # by limiting only 2 motors running at a time
@@ -77,13 +77,17 @@ class Gugusse():
         
 import sys
 try:
+   print("Loading film config")
    h=open(sys.argv[1])
    filmcfg=json.load(h)
    h.close()
+   print("Loading hardware config")
    h=open("hardwarecfg.json")
    cfg=json.load(h)
+   print("merging the 2")
    for device in filmcfg:
       cfg[device].update(filmcfg[device])
+   print("Reading the other 2 parameters")
    firstNum=int(sys.argv[2])
    feederDirection=sys.argv[3]
 except Exception as e:

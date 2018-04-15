@@ -20,41 +20,42 @@ class MotorThread (threading.Thread):
       self.motor=motor
       self.maxClicks=maxClicks
    def run(self):
-      self.motor.move()
+      self.motor.setMove(self.maxClicks)
 
 
-class Rewind():
+class Lock():
     def __init__(self, cfg):
         for item in cfg:
            if isinstance(cfg[item], dict):
               cfg[item]["name"]=item
         # We rewinding so...
-        cfg["feeder"]["invert"] = not cfg["feeder"]["invert"]
-        self.feeder=AcceleratedMotor(cfg["feeder"])
-        #self.pickup=AcceleratedMotor(cfg["pickup"])
-        # Enable all H-Bridges chips
         self.enablePin=cfg["motorEnablePin"]
         GPIO.setup(self.enablePin, GPIO.OUT, initial=1)
-        # Now that all motors are enabled we still need
-        # to disable the pickup reel so we set all its pins
-        # to the same value (that's one way to disable
-        # a motor driven by H-Bridges).
-        for pin in cfg["pickup"]["pins"]:
+        for pin in cfg["filmdrive"]["pins"]:
            GPIO.setup(pin, GPIO.OUT, initial=0)
+        alternate=0
+        for pin in cfg["feeder"]["pins"]:
+           GPIO.setup(pin, GPIO.OUT, initial=alternate % 2)
+           sleep (0.1)
+           alternate+= 1
+        for pin in cfg["pickup"]["pins"]:
+           GPIO.setup(pin, GPIO.OUT, initial=alternate % 2)
+           sleep (0.1)
+           alternate+= 1
+         
        
     def frameAdvance(self):
         m2=MotorThread(self.feeder,100000000)
         m2.start()
         m2.join()
-
+        
 import sys
-h=open("hardwarecfg.json")
-cfg=json.load(h)
-h=open("rewind.json")
-rew=json.load(h)
-for item in rew:
-   cfg[item].update(rew[item])
-reelback=Rewind(cfg)
-print ("Remember to manually unaligned the left arm from its optical sensor")
-print ("When you're done rewinding, just re-align the left arm to exit")
-reelback.frameAdvance()
+try:
+   h=open(sys.argv[1])
+   cfg=json.load(h)
+except Exception as e:
+   print (e.message)
+   print ("\nUSAGE: {} <motor json file>\n".format(sys.argv[0]))
+   sys.exit(0)
+
+Lock(cfg)
