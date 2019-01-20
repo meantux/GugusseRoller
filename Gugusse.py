@@ -7,7 +7,7 @@
 # Gugusse Roller main file.
 #
 ################################################################################
-from AcceleratedMotor import AcceleratedMotor
+from TrinamicSilentMotor import TrinamicSilentMotor
 from time import sleep, time
 import RPi.GPIO as GPIO
 import threading
@@ -30,10 +30,9 @@ class Gugusse():
         for item in cfg:
            if isinstance(cfg[item], dict):
               cfg[item]["name"]=item
-        self.filmdrive=AcceleratedMotor(cfg["filmdrive"])
-        self.feeder=AcceleratedMotor(cfg["feeder"])
-        self.pickup=AcceleratedMotor(cfg["pickup"])
-        self.enablePin=cfg["motorEnablePin"]
+        self.filmdrive=TrinamicSilentMotor(cfg["filmdrive"])
+        self.feeder=TrinamicSilentMotor(cfg["feeder"])
+        self.pickup=TrinamicSilentMotor(cfg["pickup"])
         self.cam=PiCamera()
         self.cam.resolution=self.cam.MAX_RESOLUTION
         self.cam.awb_mode='off'
@@ -45,7 +44,9 @@ class Gugusse():
             os.mkdir("/dev/shm/complete")
         except Exception:
             print("Ho well... directory already exists, who cares");
-        GPIO.setup(self.enablePin, GPIO.OUT, initial=1)
+        self.feeder.enable()
+        self.filmdrive.enable()
+        self.pickup.disable()
     def frameAdvance(self):
         m1=MotorThread(self.filmdrive )
         m2=MotorThread(self.feeder)
@@ -59,7 +60,9 @@ class Gugusse():
         m2.join()
         m1.join()
         if m1.motor.fault or m2.motor.fault or m3.motor.fault:
-           GPIO.output(self.enablePin, 0)
+           self.feeder.disable()
+           self.filmdrive.disable()
+           self.pickup.disable()
            raise Exception("Motor Fault!")
         fn="/dev/shm/%05d.jpg"%self.framecount
         fncomplete="/dev/shm/complete/%05d.jpg"%self.framecount
