@@ -37,7 +37,7 @@ class Gugusse():
         self.cam.resolution=self.cam.MAX_RESOLUTION
         self.cam.awb_mode='off'
         self.cam.awb_gains=(Fraction(229,256),Fraction(763,256))
-        self.cam.shutter_speed=16660
+        self.cam.shutter_speed=16660/2
         self.cam.start_preview(resolution=(1440,1080))
         self.framecount=start_frame
         try:
@@ -46,7 +46,7 @@ class Gugusse():
             print("Ho well... directory already exists, who cares");
         self.feeder.enable()
         self.filmdrive.enable()
-        self.pickup.disable()
+        self.pickup.enable()
     def frameAdvance(self):
         m1=MotorThread(self.filmdrive )
         m2=MotorThread(self.feeder)
@@ -71,7 +71,9 @@ class Gugusse():
         try:
            self.cam.capture(fn)
         except exception as e:
-           GPIO.output(self.enablePin, 0)
+           self.feeder.disable()
+           self.filmdrive.disable()
+           self.pickup.disable()
            print("Failure to capture image: {}".format(e))
            raise Exception("Stop")
         os.rename(fn,fncomplete)
@@ -89,6 +91,7 @@ try:
    cfg=json.load(h)
    print("merging the 2")
    for device in filmcfg:
+      print("merging {}".format(device))
       cfg[device].update(filmcfg[device])
    print("Reading the other 2 parameters")
    firstNum=int(sys.argv[2])

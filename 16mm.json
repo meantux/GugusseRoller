@@ -1,23 +1,23 @@
 {
     "filmdrive": {
-	"speed": 200.0,
-	"accel": 5.0,
-	"ignoreInitial": 200,
-	"faultTreshold": 1500
+	"speed": 1500.0,
+	"accel": 150.0,
+	"ignoreInitial": 1500,
+	"faultTreshold": 15500
 
     },
     "feeder": {
-	"speed": 100.0,
-	"accel": 10.0,
+	"speed": 1500.0,
+	"accel": 100.0,
 	"ignoreInitial": 0,
-	"faultTreshold": 1000
+	"faultTreshold": 8000
 
     },
     "pickup": {
-	"speed": 100.0,
-	"accel": 10.0,
+	"speed": 1500.0,
+	"accel": 100.0,
 	"ignoreInitial": 0,
-	"faultTreshold": 1000
+	"faultTreshold": 8000
 
     }
 }

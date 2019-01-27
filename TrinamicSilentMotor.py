@@ -32,7 +32,7 @@ class TrinamicSilentMotor():
         self.lasttick=time()
         self.toggle=0
         GPIO.setup(self.pinStep, GPIO.OUT, initial=0)
-        GPIO.setup(self.pinEnable, GPIO.OUT, initial=1)
+        GPIO.setup(self.pinEnable, GPIO.OUT, initial=0)
         if cfg["invert"]:
             GPIO.setup(self.pinDirection, GPIO.OUT, initial=0)
         else:
@@ -47,7 +47,10 @@ class TrinamicSilentMotor():
     def forward(self):
         self.pos += 1
         GPIO.output(self.pinStep, self.toggle)
-        self.toggle= 1 - self.toggle
+        if self.toggle==1:
+            self.toggle=0
+        else:
+            self.toggle=1
     def tick(self):
         if self.target != self.pos:
             self.direction()            
@@ -58,7 +61,7 @@ class TrinamicSilentMotor():
                         
     def move(self):
         ticks=0
-        log=[]
+        #log=[]
         self.target= self.pos+self.faultTreshold
         self.currentSpeed=0
         self.ignore=self.ignoreInitial
@@ -70,14 +73,14 @@ class TrinamicSilentMotor():
         waitUntil=self.tick()
         while waitUntil != None:
             reading=GPIO.input(self.SensorStopPin)
-            log.append(reading)
+            #log.append(reading)
             if self.ignore > 0:
                 self.ignore -= 1
             else:
                 if reading == self.SensorStopState:
                     print("{} ticks for {}".format(ticks,self.name))
-                    if (self.SensorStopPin==2):
-                        print(log)
+                    #if (self.SensorStopPin==2):
+                    #    print(log)
                     return
             delay=waitUntil - time()
             if delay>0.0001:

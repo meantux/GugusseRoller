@@ -1,26 +1,26 @@
 {
     "filmdrive": {
-	"PinEnable":18,
-	"PinDirection":14,
-	"PinStep":15,
+	"pinEnable":18,
+	"pinDirection":14,
+	"pinStep":15,
 	"invert": false,
 	"stopPin": 2,
 	"stopState":1
     },
     "feeder": {
-	"PinEnable":25,
-	"PinDirection":23,
-	"PinStep":24,
-	"invert": true,
-        "stopPin": 3,
+	"pinEnable":25,
+	"pinDirection":23,
+	"pinStep":24,
+	"invert": false,
+        "stopPin": 5,
 	"stopState":1
     },
     "pickup": {
-	"PinEnable":21,
-	"PinDirection":8,
-	"PinStep":7,
+	"pinEnable":21,
+	"pinDirection":8,
+	"pinStep":7,
 	"invert": false,
-        "stopPin": 4,
+        "stopPin": 3,
 	"stopState":1
     }
 }

@@ -7,7 +7,7 @@
 # To rewind the film after the capture.
 #
 ################################################################################
-from AcceleratedMotor import AcceleratedMotor
+from TrinamicSilentMotor import TrinamicSilentMotor
 from time import sleep, time
 import RPi.GPIO as GPIO
 import threading
@@ -29,18 +29,11 @@ class Rewind():
            if isinstance(cfg[item], dict):
               cfg[item]["name"]=item
         # We rewinding so...
-        cfg["feeder"]["invert"] = not cfg["feeder"]["invert"]
-        self.feeder=AcceleratedMotor(cfg["feeder"])
-        #self.pickup=AcceleratedMotor(cfg["pickup"])
-        # Enable all H-Bridges chips
-        self.enablePin=cfg["motorEnablePin"]
-        GPIO.setup(self.enablePin, GPIO.OUT, initial=1)
-        # Now that all motors are enabled we still need
-        # to disable the pickup reel so we set all its pins
-        # to the same value (that's one way to disable
-        # a motor driven by H-Bridges).
-        for pin in cfg["pickup"]["pins"]:
-           GPIO.setup(pin, GPIO.OUT, initial=0)
+        #cfg["feeder"]["invert"] = not cfg["feeder"]["invert"]
+        self.feeder=TrinamicSilentMotor(cfg["feeder"])
+        self.pickup=TrinamicSilentMotor(cfg["pickup"])
+        self.pickup.disable()
+        self.feeder.enable()
        
     def frameAdvance(self):
         m2=MotorThread(self.feeder,100000000)
@@ -50,6 +43,7 @@ class Rewind():
 import sys
 h=open("hardwarecfg.json")
 cfg=json.load(h)
+cfg["feeder"]["invert"]= not cfg["feeder"]["invert"]
 h=open("rewind.json")
 rew=json.load(h)
 for item in rew:
