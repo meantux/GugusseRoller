@@ -30,14 +30,14 @@ class Gugusse():
         for item in cfg:
            if isinstance(cfg[item], dict):
               cfg[item]["name"]=item
-        self.filmdrive=TrinamicSilentMotor(cfg["filmdrive"])
+        self.filmdrive=TrinamicSilentMotor(cfg["filmdrive"], trace=True)
         self.feeder=TrinamicSilentMotor(cfg["feeder"])
         self.pickup=TrinamicSilentMotor(cfg["pickup"])
         self.cam=PiCamera()
         self.cam.resolution=self.cam.MAX_RESOLUTION
-        self.cam.awb_mode='off'
-        self.cam.awb_gains=(Fraction(229,256),Fraction(763,256))
-        self.cam.shutter_speed=16660/2
+        #self.cam.awb_mode='off'
+        #self.cam.awb_gains=(Fraction(229,256),Fraction(763,256))
+        self.cam.shutter_speed=16660*4
         self.cam.start_preview(resolution=(1440,1080))
         self.framecount=start_frame
         try:
@@ -48,7 +48,7 @@ class Gugusse():
         self.filmdrive.enable()
         self.pickup.enable()
     def frameAdvance(self):
-        m1=MotorThread(self.filmdrive )
+        m1=MotorThread(self.filmdrive)
         m2=MotorThread(self.feeder)
         m3=MotorThread(self.pickup)
         m1.start()
@@ -66,7 +66,7 @@ class Gugusse():
            raise Exception("Motor Fault!")
         fn="/dev/shm/%05d.jpg"%self.framecount
         fncomplete="/dev/shm/complete/%05d.jpg"%self.framecount
-        print("exposure_speed={}".format(self.cam.exposure_speed))
+        #print("exposure_speed={}".format(self.cam.exposure_speed))
         self.framecount+= 1
         try:
            self.cam.capture(fn)

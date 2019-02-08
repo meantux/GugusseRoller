@@ -13,8 +13,9 @@ GPIO.setmode(GPIO.BCM)
 
 
 class TrinamicSilentMotor():
-    def __init__(self,cfg):
+    def __init__(self,cfg,trace=False):
         GPIO.setmode(GPIO.BCM)
+        self.trace=trace
         self.fault=False
         self.name=cfg["name"]
         self.speed=cfg["speed"]
@@ -78,9 +79,8 @@ class TrinamicSilentMotor():
                 self.ignore -= 1
             else:
                 if reading == self.SensorStopState:
-                    print("{} ticks for {}".format(ticks,self.name))
-                    #if (self.SensorStopPin==2):
-                    #    print(log)
+                    if self.trace:
+                        print("{} ticks for {}".format(ticks,self.name))
                     return
             delay=waitUntil - time()
             if delay>0.0001:

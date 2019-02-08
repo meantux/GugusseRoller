@@ -6,7 +6,7 @@
 	"faultTreshold": 750
     },
     "feeder": {
-	"speed": 8000.0,
+	"speed": 6000.0,
 	"ignoreInitial":0,
 	"accel": 10.0,
 	"ignoreInitial": 0,
