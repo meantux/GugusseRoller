@@ -1,6 +1,6 @@
 
 build:
-	gcc -o img2snd img2snd.c -ljpeg
+	gcc -g -o img2snd img2snd.c -ljpeg
 
 clean:
 	rm -fr img2snd *.wav *.raw

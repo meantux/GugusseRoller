@@ -13,6 +13,7 @@
 #define false 0
 #endif
 
+int matchWidth=8;
 
 char *usage="img2snd <approx true height in pixels> [-mono] <file1.jpg> [<file2.jpg>] [...]\n";
 
@@ -133,7 +134,7 @@ Image *readjpg(char *fn)
 
 SoundFrame *imageToSoundFrame(char *fn){      
      int val, x, y, offset, min, max, mid = -1;
-     int *ligne=NULL;
+     unsigned int *ligne=NULL;
      SoundFrame *sf;
      Image *im;
      im=readjpg(fn);
@@ -142,8 +143,8 @@ SoundFrame *imageToSoundFrame(char *fn){
      sf->data=(short *)malloc(sizeof(short)*im->height);
      sf->size=im->height;
      offset=0;
-     for (y=0;y<im->height;y++){
-	  min=9999;
+     for (y=0; y<im->height;y++){
+	  min=9999999;
 	  max=0;
 	  for (x=0;x<im->width;x++){
 	       ligne[x]=im->data[offset++];
@@ -166,25 +167,32 @@ SoundFrame *imageToSoundFrame(char *fn){
 }
 
 
-int matchSeam(SoundFrame *a, SoundFrame *b, int approx){
-     int range, aval, bval, difference;
-     int start, lowest_idx=0, lowest_val = 2000000000;
-     for (start=0;start<((3*approx)-(approx/4));start++){
-	  difference=0;
-	  for (range=0;range<(approx/4);range++){
-	       aval=a->data[((a->size-(1+(3*approx))))+start+range];
-	       bval=b->data[range];
-	       difference+=abs(aval-bval);
-	  }
-	  printf("difference=%d, lowest_val=%d, lowest_idx=%d\n",difference, lowest_val, lowest_idx);
-	  if (difference < lowest_val){
-	       lowest_idx=start;
-	       lowest_val=difference;
-	  }
-	  
-     }
-     printf("We matched at offset %d\n", lowest_idx);
-     return ((3*approx)-lowest_idx);
+int matchSeam(SoundFrame *prev, SoundFrame *next, int approx){
+  int range, aval, bval, difference;
+  int start, lowest_idx=0, lowest_val = 2000000000;
+  int jeu, offset;
+  jeu=prev->size-approx;
+  for(offset=matchWidth;offset<(jeu * 2); offset++){
+    difference=0;
+    for(start=0;start<matchWidth;start++){
+      aval=prev->data[start+prev->size-matchWidth];
+      bval=next->data[offset+start];
+      difference+=abs(aval-bval);	 
+    }
+    if (difference < lowest_val){
+      lowest_idx=offset;
+      lowest_val=difference;
+    }
+  }
+
+  printf("We matched at offset %d\n", lowest_idx);
+  for(start=0;start<matchWidth;start++){
+    aval=prev->data[start+prev->size-matchWidth];
+    bval=next->data[lowest_idx+start-matchWidth];
+    next->data[lowest_idx+start-matchWidth]=(aval * start / matchWidth) + (bval * (matchWidth - start - 1)/matchWidth);
+  }
+  
+  return (lowest_idx-matchWidth);
 }
 
 
@@ -201,7 +209,7 @@ void serializeData(SoundFrame *frame, int approx, FILE *out){
 	  return;
      }
      skip=matchSeam(sfprev, frame, approx);
-     fwrite(&frame->data[skip],sizeof(short), frame->size-skip, out);
+     fwrite(&frame->data[skip],sizeof(short), frame->size-skip-matchWidth, out);
      frames++;
      totalSamples+= frame->size-skip;
      printf("Frame #%05d, skipping %d\n", frames, skip);

@@ -19,6 +19,7 @@ class TrinamicSilentMotor():
         self.fault=False
         self.name=cfg["name"]
         self.speed=cfg["speed"]
+        self.speed2=cfg["speed2"]
         self.accel=cfg["accel"]
         self.currentSpeed=0
         self.target=0
@@ -55,7 +56,7 @@ class TrinamicSilentMotor():
     def tick(self):
         if self.target != self.pos:
             self.direction()            
-            if self.currentSpeed < self.speed:
+            if self.currentSpeed < self.targetSpeed:
                 self.currentSpeed += self.accel
             return time() + (1.0 / self.currentSpeed)
         return None
@@ -64,6 +65,7 @@ class TrinamicSilentMotor():
         ticks=0
         #log=[]
         self.target= self.pos+self.faultTreshold
+        self.targetSpeed=self.speed
         self.currentSpeed=0
         self.ignore=self.ignoreInitial
         if self.target < self.pos:
@@ -80,16 +82,15 @@ class TrinamicSilentMotor():
             else:
                 if reading == self.SensorStopState:
                     if self.trace:
-                        print("{} ticks for {}".format(ticks,self.name))
+                        print("\033[1;32m{}\033[0m ticks for {}".format(ticks,self.name))
                     return
+            if self.ignore == 0 and self.ignoreInitial != 0:
+                self.currentSpeed=self.speed2
+                self.targetSpeed=self.speed2
             delay=waitUntil - time()
-            if delay>0.0001:
+            if delay>0.00001:
                 sleep(delay)
             ticks+= 1
             waitUntil=self.tick()
         self.fault=True
-        raise Exception("Move failed, {} passed its limit without triggering sensor".format(self.name))
-                
-
-
-    
+        raise Exception("Move failed, \033[1;31m{}\033[0m passed its limit without triggering sensor".format(self.name))
