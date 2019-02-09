@@ -36,20 +36,20 @@ class SimpleMotor:
         self.direction=cfg[name]["pinDirection"]
         self.step=cfg[name]["pinStep"]
         self.invert=cfg[name]["invert"]
-        GPIO.setup(self.enable, initial=GPIO.LOW)
+        GPIO.setup(self.enable, GPIO.OUT, initial=GPIO.LOW)
         if self.invert:
             self.actualDir=GPIO.LOW
         else:
             self.actualDir=GPIO.HIGH
-        GPIO.setup(self.direction, initial=self.actualDir)
-        GPIO.setup(self.step, initial=GPIO.LOW)
+        GPIO.setup(self.direction, GPIO.OUT, initial=self.actualDir)
+        GPIO.setup(self.step, GPIO.OUT, initial=GPIO.LOW)
         self.actualToggle=GPIO.LOW
 
     def changeDirection(self):
         if self.actualDir==GPIO.HIGH:
             self.actualDir=GPIO.LOW
         else:
-            self.actualDir=GPIO.HIGH)
+            self.actualDir=GPIO.HIGH
         print("Switching direction of {} to {}".format(self.name, self.actualDir))
         GPIO.output(self.direction, self.actualDir)
 

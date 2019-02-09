@@ -37,7 +37,7 @@ class Gugusse():
         self.cam.resolution=self.cam.MAX_RESOLUTION
         #self.cam.awb_mode='off'
         #self.cam.awb_gains=(Fraction(229,256),Fraction(763,256))
-        self.cam.shutter_speed=16660*4
+        #self.cam.shutter_speed=16660*4
         self.cam.start_preview(resolution=(1440,1080))
         self.framecount=start_frame
         try:
