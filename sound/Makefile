@@ -10,3 +10,4 @@ test:	build
 	echo between a frame and the next one
 	echo ""
 	./img2snd 160 images/*.jpg
+

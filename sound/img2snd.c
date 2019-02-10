@@ -13,7 +13,6 @@
 #define false 0
 #endif
 
-int matchWidth=8;
 
 char *usage="img2snd <approx true height in pixels> [-mono] <file1.jpg> [<file2.jpg>] [...]\n";
 
@@ -169,14 +168,16 @@ SoundFrame *imageToSoundFrame(char *fn){
 
 int matchSeam(SoundFrame *prev, SoundFrame *next, int approx){
   int range, aval, bval, difference;
-  int start, lowest_idx=0, lowest_val = 2000000000;
-  int jeu, offset;
+  int inMatchIdx, lowest_idx=0, lowest_val = 2000000000;
+  int jeu, offset, matchwidth;
   jeu=prev->size-approx;
-  for(offset=matchWidth;offset<(jeu * 2); offset++){
+  matchwidth=jeu/2;
+  
+  for(offset=0;offset<((jeu * 2)-matchwidth); offset++){
     difference=0;
-    for(start=0;start<matchWidth;start++){
-      aval=prev->data[start+prev->size-matchWidth];
-      bval=next->data[offset+start];
+    for(inMatchIdx=0;inMatchIdx<matchwidth;inMatchIdx++){
+      aval=prev->data[inMatchIdx+prev->size-matchwidth];
+      bval=next->data[offset+inMatchIdx];
       difference+=abs(aval-bval);	 
     }
     if (difference < lowest_val){
@@ -186,13 +187,13 @@ int matchSeam(SoundFrame *prev, SoundFrame *next, int approx){
   }
 
   printf("We matched at offset %d\n", lowest_idx);
-  for(start=0;start<matchWidth;start++){
-    aval=prev->data[start+prev->size-matchWidth];
-    bval=next->data[lowest_idx+start-matchWidth];
-    next->data[lowest_idx+start-matchWidth]=(aval * start / matchWidth) + (bval * (matchWidth - start - 1)/matchWidth);
+  for(inMatchIdx=0;inMatchIdx<matchwidth;inMatchIdx++){
+    aval=prev->data[inMatchIdx+prev->size-matchwidth];
+    bval=next->data[lowest_idx+inMatchIdx];
+    next->data[lowest_idx+inMatchIdx]=(bval * inMatchIdx / matchwidth) + (aval * (matchwidth - inMatchIdx - 1)/matchwidth);
   }
   
-  return (lowest_idx-matchWidth);
+  return (lowest_idx);
 }
 
 
@@ -200,18 +201,19 @@ void serializeData(SoundFrame *frame, int approx, FILE *out){
      static int totalSamples=0;
      static int frames=0;
      static SoundFrame* sfprev=NULL;
-     int skip;
+     int skip, matchwidth;
+     matchwidth=(frame->size-approx)/2;
      if (sfprev == NULL){
 	  sfprev=frame;
 	  frames++;
 	  totalSamples=frame->size;
-	  fwrite(frame->data, sizeof(short), frame->size, out);
+	  fwrite(frame->data, sizeof(short), frame->size-matchwidth, out);
 	  return;
      }
      skip=matchSeam(sfprev, frame, approx);
-     fwrite(&frame->data[skip],sizeof(short), frame->size-skip-matchWidth, out);
+     fwrite(&frame->data[skip],sizeof(short), frame->size-skip-matchwidth, out);
      frames++;
-     totalSamples+= frame->size-skip;
+     totalSamples+= frame->size-skip-matchwidth;
      printf("Frame #%05d, skipping %d\n", frames, skip);
      printf("sox -r %d -e signed-integer -b 16 -c 1 left.raw out.wav\n", (24 * totalSamples)/frames);
      free(sfprev->data);
