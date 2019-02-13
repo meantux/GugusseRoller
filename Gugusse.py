@@ -51,12 +51,10 @@ class Gugusse():
         m1=MotorThread(self.filmdrive)
         m2=MotorThread(self.feeder)
         m3=MotorThread(self.pickup)
+        m2.start()
         m1.start()
         m3.start()
-        # by limiting only 2 motors running at a time
-        # we're lowering the maximum electrical consumption
         m3.join()
-        m2.start()
         m2.join()
         m1.join()
         if m1.motor.fault or m2.motor.fault or m3.motor.fault:

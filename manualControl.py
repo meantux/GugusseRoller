@@ -43,8 +43,8 @@ class SimpleMotor:
             self.actualDir=GPIO.HIGH
         GPIO.setup(self.direction, GPIO.OUT, initial=self.actualDir)
         GPIO.setup(self.step, GPIO.OUT, initial=GPIO.LOW)
+        self.actualState=GPIO.LOW
         self.actualToggle=GPIO.LOW
-
     def changeDirection(self):
         if self.actualDir==GPIO.HIGH:
             self.actualDir=GPIO.LOW
@@ -63,11 +63,11 @@ class SimpleMotor:
     def move (self,count,delay=0.0005):
         print("moving {} {} clicks with a delay of {} between each".format(self.name, count, delay))
         while count>0:
-            if self.toggle==GPIO.LOW:
-                self.toggle=GPIO.HIGH
+            if self.actualState==GPIO.LOW:
+                self.actualState=GPIO.HIGH
             else:
-                self.toggle=GPIO.LOW
-            GPIO.output(self.step, self.toggle)
+                self.actualState=GPIO.LOW
+            GPIO.output(self.step, self.actualState)
             sleep(delay)
             count-= 1
 

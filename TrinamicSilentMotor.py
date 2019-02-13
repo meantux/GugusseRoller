@@ -88,7 +88,7 @@ class TrinamicSilentMotor():
                 self.currentSpeed=self.speed2
                 self.targetSpeed=self.speed2
             delay=waitUntil - time()
-            if delay>0.00001:
+            if delay>0.000001:
                 sleep(delay)
             ticks+= 1
             waitUntil=self.tick()
