@@ -8,9 +8,9 @@
 
     },
     "feeder": {
-	"speed": 6000.0,
+	"speed": 8000.0,
 	"speed2": 1500.0,
-	"accel": 10.0,
+	"accel": 20.0,
 	"ignoreInitial": 20,
 	"faultTreshold": 8000
     },
