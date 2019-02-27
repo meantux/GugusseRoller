@@ -35,13 +35,13 @@ class Gugusse():
         self.pickup=TrinamicSilentMotor(cfg["pickup"])
         self.cam=PiCamera()
         self.cam.resolution=self.cam.MAX_RESOLUTION
-        self.cam.iso=100
         self.cam.start_preview(resolution=(1440,1080))
         sleep(1)
         #self.cam.awb_mode='off'
         #self.cam.awb_gains=(Fraction(229,256),Fraction(763,256))
-        self.cam.exposure_mode="off"
-        self.cam.shutter_speed=8000
+        self.cam.exposure_mode="night"
+        self.cam.iso=60
+        #self.cam.shutter_speed=8000
         self.framecount=start_frame
         try:
             os.mkdir("/dev/shm/complete")

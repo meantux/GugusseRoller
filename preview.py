@@ -10,10 +10,11 @@ c=PiCamera()
 #c.awb_mode='off'
 #c.awb_gains=(Fraction(229,256),Fraction(763,256))
 #c.iso=100
-c.start_preview()
+c.resolution=c.MAX_RESOLUTION
+c.start_preview(resolution=(1440,1080))
 #sleep(1)
-#c.exposure_mode="off"
-#c.iso=25
+c.exposure_mode="night"
+c.iso=60
 #c.shutter_speed=8000
 #sleep(2)
 #c.capture("test.jpg")
