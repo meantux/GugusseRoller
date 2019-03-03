@@ -84,7 +84,7 @@ class TrinamicSilentMotor():
                 if reading == self.SensorStopState:
                     if self.trace:
                         print("\033[1;32m{}\033[0m ticks for {}".format(ticks,self.name))
-                    if ticks == self.ignoreInition:
+                    if ticks == self.ignoreInitial:
                         self.shortsInARow+= 1;
                     else:
                         self.shortsInARow=0
