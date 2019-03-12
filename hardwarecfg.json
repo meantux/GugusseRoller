@@ -3,7 +3,7 @@
 	"pinEnable":18,
 	"pinDirection":14,
 	"pinStep":15,
-	"invert": false,
+	"invert": true,
 	"stopPin": 2,
 	"stopState":1
     },
@@ -12,7 +12,7 @@
 	"pinDirection":23,
 	"pinStep":24,
 	"invert": false,
-        "stopPin": 5,
+        "stopPin": 3,
 	"stopState":1
     },
     "pickup": {
@@ -20,7 +20,7 @@
 	"pinDirection":8,
 	"pinStep":7,
 	"invert": false,
-        "stopPin": 3,
+        "stopPin": 5,
 	"stopState":1
     }
 }

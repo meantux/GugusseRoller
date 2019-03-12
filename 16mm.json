@@ -10,15 +10,15 @@
     "feeder": {
 	"speed": 800.0,
 	"speed2": 1500.0,
-	"accel": 5.0,
-	"ignoreInitial": 20,
+	"accel": 10.0,
+	"ignoreInitial": 10,
 	"faultTreshold": 8000
     },
     "pickup": {
 	"speed": 800.0,
 	"speed2": 1500.0,
-	"accel": 5.0,
-	"ignoreInitial": 20,
+	"accel": 10.0,
+	"ignoreInitial": 10,
 	"faultTreshold": 8000
 
     }
