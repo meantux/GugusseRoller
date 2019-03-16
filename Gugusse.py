@@ -37,11 +37,11 @@ class Gugusse():
         self.cam.resolution=self.cam.MAX_RESOLUTION
         self.cam.start_preview(resolution=(1440,1080))
         sleep(1)
-        #self.cam.awb_mode='off'
-        #self.cam.awb_gains=(Fraction(229,256),Fraction(763,256))
+        self.cam.awb_mode='off'
+        self.cam.awb_gains=(1.44,1.68)
         self.cam.exposure_mode="night"
         self.cam.iso=60
-        #self.cam.shutter_speed=8000
+        self.cam.shutter_speed=9000
         self.framecount=start_frame
         try:
             os.mkdir("/dev/shm/complete")
