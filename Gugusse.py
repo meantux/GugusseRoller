@@ -38,10 +38,10 @@ class Gugusse():
         self.cam.start_preview(resolution=(1440,1080))
         sleep(1)
         self.cam.awb_mode='off'
-        self.cam.awb_gains=(1.44,1.68)
+        self.cam.awb_gains=(1.26,2.3)
         self.cam.exposure_mode="night"
         self.cam.iso=60
-        self.cam.shutter_speed=9000
+        self.cam.shutter_speed=7000
         self.framecount=start_frame
         try:
             os.mkdir("/dev/shm/complete")
