@@ -8,13 +8,40 @@ import threading
 import json
 from picamera import PiCamera
 from fractions import Fraction
+from PIL import Image
 import os
 import tty
 import termios
 import sys
 
 GPIO.setmode(GPIO.BCM)
- 
+c=PiCamera()
+
+#c.resolution=(1024,768)
+#c.resolution=(1440,1080)
+c.awb_mode='off'
+c.awb_gains=(1.26,2.3)
+c.iso=100
+c.resolution=c.MAX_RESOLUTION
+c.start_preview(resolution=(1440,1080))
+sleep(1)
+c.exposure_mode="night"
+c.iso=60
+c.shutter_speed=6000
+
+img=Image.open('gfx/quadrillage.png')
+pad = Image.new('RGB', (
+        ((img.size[0] + 31) // 32) * 32,
+        ((img.size[1] + 15) // 16) * 16,
+        ))
+    # Paste the original image into the padded one
+    pad.paste(img, (0, 0))
+
+
+o=c.add_overlay(pad.tostring(), size=img.size)
+o.alpha=128
+o.layer=3
+
 def getch():
     fd = sys.stdin.fileno()
     old_settings = termios.tcgetattr(fd)
@@ -50,7 +77,7 @@ class SimpleMotor:
             self.actualDir=GPIO.LOW
         else:
             self.actualDir=GPIO.HIGH
-        print("Switching direction of {} to {}".format(self.name, self.actualDir))
+        #print("Switching direction of {} to {}".format(self.name, self.actualDir))
         GPIO.output(self.direction, self.actualDir)
 
     def toggle(self):
@@ -61,7 +88,7 @@ class SimpleMotor:
         GPIO.output(self.enable, self.actualToggle)
         
     def move (self,count,delay=0.0005):
-        print("moving {} {} clicks with a delay of {} between each".format(self.name, count, delay))
+        #print("moving {} {} clicks with a delay of {} between each".format(self.name, count, delay))
         while count>0:
             if self.actualState==GPIO.LOW:
                 self.actualState=GPIO.HIGH
@@ -74,6 +101,27 @@ class SimpleMotor:
 filmdrive=SimpleMotor("filmdrive")
 feeder=SimpleMotor("feeder")
 pickup=SimpleMotor("pickup")
+
+print("-------------")
+print("FEEDER")
+print("q: adv")
+print("w: toggle dir")
+print("e: toggle pwr")
+print("-------------")
+print("MAINDRIVE")
+print("a: adv")
+print("s: toggle dir")
+print("d: toggle pwr")
+print("-------------")
+print("FEEDER")
+print("z: adv")
+print("x: toggle dir")
+print("c: toggle pwr")
+print("-------------")
+print("ESC: exit")
+
+
+
 
 while True:
     char = getch()
