@@ -34,12 +34,12 @@ pad = Image.new('RGB', (
         ((img.size[0] + 31) // 32) * 32,
         ((img.size[1] + 15) // 16) * 16,
         ))
-    # Paste the original image into the padded one
-    pad.paste(img, (0, 0))
+# Paste the original image into the padded one
+pad.paste(img, (0, 0))
 
 
-o=c.add_overlay(pad.tostring(), size=img.size)
-o.alpha=128
+o=c.add_overlay(pad.tobytes(), size=img.size)
+o.alpha=0
 o.layer=3
 
 def getch():
@@ -119,8 +119,15 @@ print("x: toggle dir")
 print("c: toggle pwr")
 print("-------------")
 print("ESC: exit")
-
-
+print("SPC: toggle grid")
+overlay=False
+def toggleOverlay(o, overlay):
+    if overlay:
+        o.alpha=0
+    else:
+        o.alpha=196
+    return not overlay
+    
 
 
 while True:
@@ -143,5 +150,7 @@ while True:
         pickup.changeDirection()
     elif (char == "c"):
         pickup.toggle()
+    elif (char == " "):
+        overlay=toggleOverlay(o,overlay)
     elif (char == "\033"):
         sys.exit(0)
