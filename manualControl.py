@@ -12,6 +12,7 @@ from PIL import Image
 import os
 import tty
 import termios
+from threading import Thread
 import sys
 
 GPIO.setmode(GPIO.BCM)
@@ -27,7 +28,7 @@ c.start_preview(resolution=(1440,1080))
 sleep(1)
 c.exposure_mode="night"
 c.iso=60
-c.shutter_speed=6000
+c.shutter_speed=7000
 
 img=Image.open('gfx/quadrillage.png')
 pad = Image.new('RGB', (
@@ -41,6 +42,26 @@ pad.paste(img, (0, 0))
 o=c.add_overlay(pad.tobytes(), size=img.size)
 o.alpha=0
 o.layer=3
+
+def checkEvery10Times(tick):
+    if (tick % 10)!= 0:
+        return True
+    if os.path.isfile("/dev/shm/loopInputs.flag"):
+        return True
+    return False
+
+def displayInputs(pin):
+    tick=0
+    a=open("/dev/shm/loopInputs.flag", "w")
+    a.write("hello\n")
+    a.close()
+    GPIO.setup(pin, GPIO.IN)
+    while checkEvery10Times(tick):
+        tick+= 1
+        print("\033[0;0H{}   \n    \n".format(GPIO.input(pin)))
+        sleep(0.01)
+    
+
 
 def getch():
     fd = sys.stdin.fileno()
@@ -72,6 +93,7 @@ class SimpleMotor:
         GPIO.setup(self.step, GPIO.OUT, initial=GPIO.LOW)
         self.actualState=GPIO.LOW
         self.actualToggle=GPIO.LOW
+        self.stopPin=cfg[name]["stopPin"]
     def changeDirection(self):
         if self.actualDir==GPIO.HIGH:
             self.actualDir=GPIO.LOW
@@ -128,8 +150,9 @@ def toggleOverlay(o, overlay):
         o.alpha=196
     return not overlay
     
-
-
+t=Thread(target=displayInputs, args=(filmdrive.stopPin,))
+t.start()
+sleep(10)
 while True:
     char = getch()
     if (char == "q"):
@@ -153,4 +176,7 @@ while True:
     elif (char == " "):
         overlay=toggleOverlay(o,overlay)
     elif (char == "\033"):
-        sys.exit(0)
+        break
+os.remove("/dev/shm/loopInputs.flag")
+t.join()
+print("\033[0J")
