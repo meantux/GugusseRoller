@@ -1,7 +1,7 @@
 {
     "filmdrive": {
 	"speed": 60000.0,
-	"speed2": 300.0,
+	"speed2": 100.0,
 	"accel": 400.0,
 	"ignoreInitial": 3650,
 	"faultTreshold": 15500
