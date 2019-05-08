@@ -38,7 +38,7 @@ class Gugusse():
         self.cam.start_preview(resolution=(1440,1080))
         sleep(1)
         self.cam.awb_mode='off'
-        self.cam.awb_gains=(1.26,2.3)
+        self.cam.awb_gains=(1.39,1.77)
         self.cam.exposure_mode="night"
         self.cam.iso=60
         self.cam.shutter_speed=7000
@@ -55,10 +55,10 @@ class Gugusse():
         m2=MotorThread(self.feeder)
         m3=MotorThread(self.pickup)
         m2.start()
-        m1.start()
         m3.start()
         m3.join()
         m2.join()
+        m1.start()
         m1.join()
         if m1.motor.fault or m2.motor.fault or m3.motor.fault:
            self.feeder.disable()
