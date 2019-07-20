@@ -20,15 +20,18 @@ c=PiCamera()
 
 #c.resolution=(1024,768)
 #c.resolution=(1440,1080)
-c.awb_mode='off'
-c.awb_gains=(1.26,2.3)
-c.iso=100
+#c.awb_mode='off'
+#c.awb_gains=(1.26,2.3)
+#c.iso=100
+#c.led=True
 c.resolution=c.MAX_RESOLUTION
-c.start_preview(resolution=(1440,1080))
+c.start_preview(resolution=(1440,1080),window=(480,0,1440,1080),hflip=True)
 sleep(1)
-c.exposure_mode="night"
-c.iso=60
-c.shutter_speed=7000
+c.exposure_compensation=0
+c.led=True
+#c.exposure_mode="night"
+#c.iso=60
+#c.shutter_speed=24000
 
 img=Image.open('gfx/quadrillage.png')
 pad = Image.new('RGB', (
@@ -123,6 +126,7 @@ class SimpleMotor:
 filmdrive=SimpleMotor("filmdrive")
 feeder=SimpleMotor("feeder")
 pickup=SimpleMotor("pickup")
+compensate=0
 
 print("-------------")
 print("FEEDER")
@@ -140,6 +144,8 @@ print("z: adv")
 print("x: toggle dir")
 print("c: toggle pwr")
 print("-------------")
+print("p: inc compensation")
+print("o: dec compensation")
 print("ESC: exit")
 print("SPC: toggle grid")
 overlay=False
@@ -152,7 +158,6 @@ def toggleOverlay(o, overlay):
     
 t=Thread(target=displayInputs, args=(filmdrive.stopPin,))
 t.start()
-sleep(10)
 while True:
     char = getch()
     if (char == "q"):
@@ -173,10 +178,19 @@ while True:
         pickup.changeDirection()
     elif (char == "c"):
         pickup.toggle()
+    elif (char == "p"):
+        compensate+=1
+        c.exposure_compensation=compensate
+        print("\033[6;0H\nCOMPENSATE={}   ".format(compensate))
+    elif (char == "o"):
+        compensate-=1
+        c.exposure_compensation=compensate
+        print("\033[6;0H\nCOMPENSATE={}   ".format(compensate))
     elif (char == " "):
         overlay=toggleOverlay(o,overlay)
     elif (char == "\033"):
         break
 os.remove("/dev/shm/loopInputs.flag")
 t.join()
+c.close()
 print("\033[0J")

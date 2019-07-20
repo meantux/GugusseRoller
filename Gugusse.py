@@ -35,13 +35,14 @@ class Gugusse():
         self.pickup=TrinamicSilentMotor(cfg["pickup"])
         self.cam=PiCamera()
         self.cam.resolution=self.cam.MAX_RESOLUTION
-        self.cam.start_preview(resolution=(1440,1080))
-        sleep(1)
-        self.cam.awb_mode='off'
-        self.cam.awb_gains=(1.39,1.77)
-        self.cam.exposure_mode="night"
-        self.cam.iso=60
-        self.cam.shutter_speed=7000
+        self.cam.start_preview(resolution=(1440,1080),hflip=True, vflip=False)
+        sleep(3)
+        #self.cam.awb_mode='off'
+        #self.cam.awb_gains=(1.26,2.3)
+        #self.cam.exposure_mode="off"
+        #self.cam.iso=60
+        #self.cam.shutter_speed=400000
+        self.cam.exposure_compensation=0
         self.framecount=start_frame
         try:
             os.mkdir("/dev/shm/complete")
@@ -76,7 +77,13 @@ class Gugusse():
            self.filmdrive.disable()
            self.pickup.disable()
            print("Failure to capture image: {}".format(e))
+           self.cam.close()
            raise Exception("Stop")
+        #self.cam.awb_mode='off'
+        #self.cam.awb_gains=(1.26,2.3)
+        #self.cam.exposure_mode="night"
+        #self.cam.iso=60
+        #self.cam.shutter_speed=520000
         os.rename(fn,fncomplete)
         
 
@@ -106,4 +113,4 @@ if feederDirection == "cw":
 capture=Gugusse(cfg, firstNum)
 while True:
     capture.frameAdvance()
-    sleep(0.1)
+    sleep(0.33)
