@@ -198,7 +198,7 @@ while True:
     elif (char == " "):
         overlay=toggleOverlay(o,overlay)
     elif char in [ "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" ]:
-        c.zoom(zooms[int(char)])
+        c.zoom=zooms[int(char)]
     elif (char == "\033"):
         break    
 os.remove("/dev/shm/loopInputs.flag")
