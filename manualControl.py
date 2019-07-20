@@ -15,6 +15,12 @@ import termios
 from threading import Thread
 import sys
 
+camModes=[ "off", "auto", "night", "nightpreview", "backlight", "spotlight", "sports", "snow", "beach", "verylong", "fixedfps", "antishake", "fireworks"]
+awbModes=[ "off", "auto", "sunlight", "cloudy", "shade", "tungsten", "fluorescent", "incandescent", "flash", "horizon"]
+meterModes=[ "average", "spot", "backlit", "matrix" ]
+zooms=[(0.0,0.0,1.0,1.0), (0.0,0.0,0.333,0.333), (0.333,0.0,0.333,0.333), (0.667,0.0,0.333,0.333), (0.0,0.333,0.333,0.333), (0.333,0.333,0.333,0.333), (0.667,0.333,0.333,0.333), (0.0,0.667,0.333,0.333), (0.333,0.667,0.333,0.333), (0.667,0.667,0.333,0.333)]
+
+
 GPIO.setmode(GPIO.BCM)
 c=PiCamera()
 
@@ -148,6 +154,9 @@ print("p: inc compensation")
 print("o: dec compensation")
 print("ESC: exit")
 print("SPC: toggle grid")
+print("-------------")
+print("1 to 9: zooms")
+print("0: reset zoom")
 overlay=False
 def toggleOverlay(o, overlay):
     if overlay:
@@ -188,8 +197,10 @@ while True:
         print("\033[6;0H\nCOMPENSATE={}   ".format(compensate))
     elif (char == " "):
         overlay=toggleOverlay(o,overlay)
+    elif char in [ "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" ]:
+        c.zoom(zooms[int(char)])
     elif (char == "\033"):
-        break
+        break    
 os.remove("/dev/shm/loopInputs.flag")
 t.join()
 c.close()
