@@ -10,7 +10,7 @@ class GCamera(PiCamera):
             self.settings=json.load(h)
         self.resolution=self.MAX_RESOLUTION
         self.applySettings()
-        self.start_preview(resolution=(1440,1080),window=(480,0,1440,1080))
+        self.start_preview(fullscreen=False,resolution=(1440,1080),window=(480,0,1440,1080))
         self.camModes=[ "off", "auto", "night", "nightpreview", "backlight", "spotlight", "sports", "snow", "beach", "verylong", "fixedfps", "antishake", "fireworks"]
         self.awbModes=[ "off", "auto", "sunlight", "cloudy", "shade", "tungsten", "fluorescent", "incandescent", "flash", "horizon"]
         self.meterModes=[ "average", "spot", "backlit", "matrix" ]
