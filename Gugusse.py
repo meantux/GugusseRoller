@@ -41,6 +41,7 @@ class Gugusse():
         self.feeder.enable()
         self.filmdrive.enable()
         self.pickup.enable()
+        self.cam=GCamera()
     def frameAdvance(self):
         m1=MotorThread(self.filmdrive)
         m2=MotorThread(self.feeder)

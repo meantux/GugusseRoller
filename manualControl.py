@@ -41,9 +41,12 @@ o.layer=3
 loopInputs=True
 
 def displayInputs(pinA, pinB, pinC):
-    GPIO.setup(pin, GPIO.IN)
+    GPIO.setup(pinA, GPIO.IN)
+    GPIO.setup(pinB, GPIO.IN)
+    GPIO.setup(pinC, GPIO.IN)
+    sleep (2)
     while loopInputs:
-        print("\033[0;0H\n                                                                                \nINPUTS:{}|{}|{}                                                                      \n                                                                                \n".format(GPIO.input(pin)))
+        print("\033[0;0H\n                                           \n\rINPUTS:{}|{}|{}                                \n".format(GPIO.input(pinA),GPIO.input(pinB),GPIO.input(pinC)))
         sleep(0.05)
     
 
@@ -109,7 +112,11 @@ filmdrive=SimpleMotor("filmdrive")
 feeder=SimpleMotor("feeder")
 pickup=SimpleMotor("pickup")
 compensate=0
-
+t=Thread(target=displayInputs, args=(feeder.stopPin,filmdrive.stopPin,pickup.stopPin))
+t.start()
+sleep(0.1)
+for line in range(0,60):
+    print("                             ")
 print("-------------")
 print("FEEDER")
 print("q: adv")
@@ -145,8 +152,6 @@ def toggleOverlay(o, overlay):
         o.alpha=196
     return not overlay
     
-t=Thread(target=displayInputs, args=(feeder.stopPin,filmdrive.stopPin,pickup.stopPin))
-t.start()
 while True:
     char = getch()
     if (char == "q"):
@@ -170,10 +175,11 @@ while True:
     elif (char == "p"):
         compensate+=1
         c.exposure_compensation=compensate
-        c.settings
+        c.settings["exposure_compensation"]=compensate
     elif (char == "o"):
         compensate-=1
         c.exposure_compensation=compensate
+        c.settings["exposure_compensation"]=compensate
     elif (char == " "):
         overlay=toggleOverlay(o,overlay)
     elif char in [ "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" ]:
@@ -201,7 +207,7 @@ while True:
         c.saveSettings()        
     elif (char == "\033"):
         break
-    for line in range(5,17):
+    for line in range(5,20):
         print("\033[{};0H                                            \n".format(line))
     print("\033[5;0H{}".format(json.dumps(c.settings, indent=2)))
 

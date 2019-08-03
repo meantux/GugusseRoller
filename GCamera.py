@@ -42,6 +42,7 @@ class GCamera(PiCamera):
         self.awb_mode="off"
         self.settings["awb_mode"]="off"
         self.saveSettings()
+        return [a,b]
 
     def applySettings(self, settings=None):
         if settings != None:
