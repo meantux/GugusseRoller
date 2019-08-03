@@ -192,17 +192,25 @@ while True:
         c.freezeWhiteBalance()
     elif char == "g":
         c.awb_mode=c.selectOther(c.awb_mode, c.awbModes, 1)
+        print("\033[6;0H\n       \n      NewMode{}   \n    \n".format(c.awb_mode))
+        c.settings["awb_mode"]=c.awb_mode
+        c.saveSettings()
     elif char == "h":
         c.exposure_mode=c.selectOther(c.exposure_mode, c.camModes, 1)
+        print("\033[6;0HNewMode{}   \n    \n".format(c.exposure_mode))
+        c.settings["exposure_mode"]=c.exposure_mode
+        c.saveSettings()
     elif char == "j":
-        val=0
+        val= -1
         try:
             val=int(raw_input("Val: "))
         except Exception:
             pass        
-        if val > 0:
+        if val >= 0:
             c.shutter_speed=val
         print("exposure: {}".format(c.shutter_speed))
+        c.settings["shutter_speed"]=val
+        c.saveSettings()
         
     elif (char == "\033"):
         break    

@@ -1,10 +1,13 @@
-{    
-    "exposure_mode":"auto",
-    "iso": 60,
-    "shutter_speed": 200000,    
-    "exposure_compensation": 0,
-    "awb_mode": "auto",
-    "awb_gains": [1.26,2.3],
-    "brightness": 50,
+{
+    "awb_gains": [
+        1.2734375, 
+        2.20703125
+    ], 
+    "brightness": 50, 
+    "exposure_mode": "auto", 
+    "awb_mode": "off", 
+    "iso": 60, 
+    "shutter_speed": 0, 
+    "exposure_compensation": 0, 
     "contrast": 50
 }

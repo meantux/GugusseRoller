@@ -10,7 +10,7 @@ class GCamera(PiCamera):
             self.settings=json.load(h)
         self.resolution=self.MAX_RESOLUTION
         self.applySettings()
-        self.start_preview(fullscreen=False,resolution=(1440,1080),window=(480,0,1440,1080))
+        self.start_preview(fullscreen=False,resolution=(1024,768),window=(256,0,1024,768))
         self.camModes=[ "off", "auto", "night", "nightpreview", "backlight", "spotlight", "sports", "snow", "beach", "verylong", "fixedfps", "antishake", "fireworks"]
         self.awbModes=[ "off", "auto", "sunlight", "cloudy", "shade", "tungsten", "fluorescent", "incandescent", "flash", "horizon"]
         self.meterModes=[ "average", "spot", "backlit", "matrix" ]
@@ -18,7 +18,7 @@ class GCamera(PiCamera):
 
     def saveSettings(self, fn="cameraSettings.json"):
         with open(fn, "w") as h:
-            json.dump(self.settings, h)
+            json.dump(self.settings, h, indent=4)
 
     def selectOther(self, actual, choices, direction):
         idx=choices.index(actual)
@@ -30,7 +30,7 @@ class GCamera(PiCamera):
         return choices[idx]
         
     def freezeWhiteBalance(self):
-        if self.settings.awb_mode != "auto":
+        if self.settings["awb_mode"] != "auto":
             print("Need to be in auto to freeze")
             return
         values=self.awb_gains
@@ -40,7 +40,7 @@ class GCamera(PiCamera):
         print("b={}".format(b))
         self.settings["awb_gains"]=[a,b]
         self.awb_mode="off"
-        self.settings.awb_mode="off"
+        self.settings["awb_mode"]="off"
         self.saveSettings()
 
     def applySettings(self, settings=None):
