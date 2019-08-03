@@ -12,7 +12,7 @@ from time import sleep, time
 import RPi.GPIO as GPIO
 import threading
 import json
-from picamera import PiCamera
+from GCamera import GCamera
 from fractions import Fraction
 import os
 GPIO.setmode(GPIO.BCM) 
@@ -33,21 +33,11 @@ class Gugusse():
         self.filmdrive=TrinamicSilentMotor(cfg["filmdrive"], trace=True)
         self.feeder=TrinamicSilentMotor(cfg["feeder"])
         self.pickup=TrinamicSilentMotor(cfg["pickup"])
-        self.cam=PiCamera()
-        self.cam.resolution=self.cam.MAX_RESOLUTION
-        self.cam.start_preview(resolution=(1440,1080),hflip=True, vflip=False)
-        sleep(3)
-        #self.cam.awb_mode='off'
-        #self.cam.awb_gains=(1.26,2.3)
-        #self.cam.exposure_mode="off"
-        #self.cam.iso=60
-        #self.cam.shutter_speed=400000
-        self.cam.exposure_compensation=0
         self.framecount=start_frame
         try:
             os.mkdir("/dev/shm/complete")
         except Exception:
-            print("Ho well... directory already exists, who cares");
+            print("Ho well... directory already exists, who cares?");
         self.feeder.enable()
         self.filmdrive.enable()
         self.pickup.enable()
@@ -68,7 +58,6 @@ class Gugusse():
            raise Exception("Motor Fault!")
         fn="/dev/shm/%05d.jpg"%self.framecount
         fncomplete="/dev/shm/complete/%05d.jpg"%self.framecount
-        #print("exposure_speed={}".format(self.cam.exposure_speed))
         self.framecount+= 1
         try:
            self.cam.capture(fn)
@@ -79,11 +68,6 @@ class Gugusse():
            print("Failure to capture image: {}".format(e))
            self.cam.close()
            raise Exception("Stop")
-        #self.cam.awb_mode='off'
-        #self.cam.awb_gains=(1.26,2.3)
-        #self.cam.exposure_mode="night"
-        #self.cam.iso=60
-        #self.cam.shutter_speed=520000
         os.rename(fn,fncomplete)
         
 

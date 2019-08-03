@@ -6,7 +6,7 @@ from time import sleep, time
 import RPi.GPIO as GPIO
 import threading
 import json
-from picamera import PiCamera
+from GCamera import GCamera
 from fractions import Fraction
 from PIL import Image
 import os
@@ -15,29 +15,14 @@ import termios
 from threading import Thread
 import sys
 
-camModes=[ "off", "auto", "night", "nightpreview", "backlight", "spotlight", "sports", "snow", "beach", "verylong", "fixedfps", "antishake", "fireworks"]
-awbModes=[ "off", "auto", "sunlight", "cloudy", "shade", "tungsten", "fluorescent", "incandescent", "flash", "horizon"]
-meterModes=[ "average", "spot", "backlit", "matrix" ]
-zooms=[(0.0,0.0,1.0,1.0), (0.0,0.0,0.333,0.333), (0.333,0.0,0.333,0.333), (0.667,0.0,0.333,0.333), (0.0,0.333,0.333,0.333), (0.333,0.333,0.333,0.333), (0.667,0.333,0.333,0.333), (0.0,0.667,0.333,0.333), (0.333,0.667,0.333,0.333), (0.667,0.667,0.333,0.333)]
-
-
 GPIO.setmode(GPIO.BCM)
-c=PiCamera()
 
-#c.resolution=(1024,768)
-#c.resolution=(1440,1080)
-#c.awb_mode='off'
-#c.awb_gains=(1.26,2.3)
-#c.iso=100
-#c.led=True
-c.resolution=c.MAX_RESOLUTION
-c.start_preview(resolution=(1440,1080),window=(480,0,1440,1080),hflip=True)
-sleep(1)
-c.exposure_compensation=0
-c.led=True
-#c.exposure_mode="night"
-#c.iso=60
-#c.shutter_speed=24000
+h=open("cameraSettings.json", "r")
+camsettings=json.load(h)
+h.close()
+
+c=GCamera()
+
 
 img=Image.open('gfx/quadrillage.png')
 pad = Image.new('RGB', (
@@ -150,13 +135,17 @@ print("z: adv")
 print("x: toggle dir")
 print("c: toggle pwr")
 print("-------------")
-print("p: inc compensation")
-print("o: dec compensation")
-print("ESC: exit")
-print("SPC: toggle grid")
-print("-------------")
 print("1 to 9: zooms")
 print("0: reset zoom")
+print("p: inc compensation")
+print("o: dec compensation")
+print("f: freeze WB")
+print("g: next WB mode")
+print("h: next EXP mode")
+print("j: Enter Exposure")
+print("ESC: exit")
+print("SPC: toggle grid")
+
 overlay=False
 def toggleOverlay(o, overlay):
     if overlay:
@@ -198,7 +187,23 @@ while True:
     elif (char == " "):
         overlay=toggleOverlay(o,overlay)
     elif char in [ "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" ]:
-        c.zoom=zooms[int(char)]
+        c.zoom=c.zooms[int(char)]
+    elif char == "f":
+        c.freezeWhiteBalance()
+    elif char == "g":
+        c.awb_mode=c.selectOther(c.awb_mode, c.awbModes, 1)
+    elif char == "h":
+        c.exposure_mode=c.selectOther(c.exposure_mode, c.camModes, 1)
+    elif char == "j":
+        val=0
+        try:
+            val=int(raw_input("Val: "))
+        except Exception:
+            pass        
+        if val > 0:
+            c.shutter_speed=val
+        print("exposure: {}".format(c.shutter_speed))
+        
     elif (char == "\033"):
         break    
 os.remove("/dev/shm/loopInputs.flag")
