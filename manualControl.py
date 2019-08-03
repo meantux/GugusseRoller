@@ -37,23 +37,14 @@ o=c.add_overlay(pad.tobytes(), size=img.size)
 o.alpha=0
 o.layer=3
 
-def checkEvery10Times(tick):
-    if (tick % 10)!= 0:
-        return True
-    if os.path.isfile("/dev/shm/loopInputs.flag"):
-        return True
-    return False
 
-def displayInputs(pin):
-    tick=0
-    a=open("/dev/shm/loopInputs.flag", "w")
-    a.write("hello\n")
-    a.close()
+loopInputs=True
+
+def displayInputs(pinA, pinB, pinC):
     GPIO.setup(pin, GPIO.IN)
-    while checkEvery10Times(tick):
-        tick+= 1
-        print("\033[0;0H{}   \n    \n".format(GPIO.input(pin)))
-        sleep(0.01)
+    while loopInputs:
+        print("\033[0;0H\n                                                                                \nINPUTS:{}|{}|{}                                                                      \n                                                                                \n".format(GPIO.input(pin)))
+        sleep(0.05)
     
 
 
@@ -154,7 +145,7 @@ def toggleOverlay(o, overlay):
         o.alpha=196
     return not overlay
     
-t=Thread(target=displayInputs, args=(filmdrive.stopPin,))
+t=Thread(target=displayInputs, args=(feeder.stopPin,filmdrive.stopPin,pickup.stopPin))
 t.start()
 while True:
     char = getch()
@@ -179,11 +170,10 @@ while True:
     elif (char == "p"):
         compensate+=1
         c.exposure_compensation=compensate
-        print("\033[6;0H\nCOMPENSATE={}   ".format(compensate))
+        c.settings
     elif (char == "o"):
         compensate-=1
         c.exposure_compensation=compensate
-        print("\033[6;0H\nCOMPENSATE={}   ".format(compensate))
     elif (char == " "):
         overlay=toggleOverlay(o,overlay)
     elif char in [ "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" ]:
@@ -192,12 +182,10 @@ while True:
         c.freezeWhiteBalance()
     elif char == "g":
         c.awb_mode=c.selectOther(c.awb_mode, c.awbModes, 1)
-        print("\033[6;0H\n       \n      NewMode{}   \n    \n".format(c.awb_mode))
         c.settings["awb_mode"]=c.awb_mode
         c.saveSettings()
     elif char == "h":
         c.exposure_mode=c.selectOther(c.exposure_mode, c.camModes, 1)
-        print("\033[6;0HNewMode{}   \n    \n".format(c.exposure_mode))
         c.settings["exposure_mode"]=c.exposure_mode
         c.saveSettings()
     elif char == "j":
@@ -210,11 +198,15 @@ while True:
             c.shutter_speed=val
         print("exposure: {}".format(c.shutter_speed))
         c.settings["shutter_speed"]=val
-        c.saveSettings()
-        
+        c.saveSettings()        
     elif (char == "\033"):
-        break    
-os.remove("/dev/shm/loopInputs.flag")
+        break
+    for line in range(5,17):
+        print("\033[{};0H                                            \n".format(line))
+    print("\033[5;0H{}".format(json.dumps(c.settings, indent=2)))
+
+loopInputs=False
+sleep(0.2)
 t.join()
 c.close()
 print("\033[0J")
