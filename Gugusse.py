@@ -42,6 +42,22 @@ class Gugusse():
         self.filmdrive.enable()
         self.pickup.enable()
         self.cam=GCamera()
+    def grabAPic(self):
+        fn="/dev/shm/%05d.jpg"%self.framecount
+        fncomplete="/dev/shm/complete/%05d.jpg"%self.framecount
+        self.framecount+= 1
+        try:
+           self.cam.capture(fn)
+        except exception as e:
+           self.feeder.disable()
+           self.filmdrive.disable()
+           self.pickup.disable()
+           print("Failure to capture image: {}".format(e))
+           self.cam.close()
+           raise Exception("Stop")
+        os.rename(fn,fncomplete)
+        
+           
     def frameAdvance(self):
         m1=MotorThread(self.filmdrive)
         m2=MotorThread(self.feeder)
@@ -57,20 +73,16 @@ class Gugusse():
            self.filmdrive.disable()
            self.pickup.disable()
            raise Exception("Motor Fault!")
-        fn="/dev/shm/%05d.jpg"%self.framecount
-        fncomplete="/dev/shm/complete/%05d.jpg"%self.framecount
-        self.framecount+= 1
-        try:
-           self.cam.capture(fn)
-        except exception as e:
-           self.feeder.disable()
-           self.filmdrive.disable()
-           self.pickup.disable()
-           print("Failure to capture image: {}".format(e))
-           self.cam.close()
-           raise Exception("Stop")
-        os.rename(fn,fncomplete)
-        
+        self.grabAPic()
+        if self.cam.settings["bracketing"]==1:
+           self.cam.shutter_speed=self.cam.settings["shutter_speed"]/2
+           sleep(1)
+           self.grabAPic()
+           self.cam.shutter_speed=self.cam.settings["shutter_speed"]*2
+           sleep(1)
+           self.grabAPic()
+           self.cam.shutter_speed=self.cam.settings["shutter_speed"]
+           
 
         
 import sys
