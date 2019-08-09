@@ -228,9 +228,10 @@ while True:
         c.saveSettings()            
     elif char == "k":
         if c.settings["bracketing"]==0:
-            c.settings[""]=1
+            c.settings["bracketing"]=1
         elif c.settings["bracketing"]==1:
             c.settings["bracketing"]=0
+            c.saveSettings()
     elif (char == "\033"):
         break
     for line in range(5,20):
