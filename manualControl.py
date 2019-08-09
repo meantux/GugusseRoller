@@ -143,6 +143,7 @@ print("h: next EXP mode")
 print("j: Enter Exposure")
 print("v b: contrast")
 print("n m: brightness")
+print("k: Toggle bracketing")
 print("ESC: exit")
 print("SPC: toggle grid")
 
@@ -178,10 +179,12 @@ while True:
         compensate+=1
         c.exposure_compensation=compensate
         c.settings["exposure_compensation"]=compensate
+        c.saveSettings()
     elif (char == "o"):
         compensate-=1
         c.exposure_compensation=compensate
         c.settings["exposure_compensation"]=compensate
+        c.saveSettings()
     elif (char == " "):
         overlay=toggleOverlay(o,overlay)
     elif char in [ "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" ]:
@@ -222,8 +225,12 @@ while True:
     elif (char == "m"):
         c.settings["brightness"]+= 1
         c.brightness=c.settings["brightness"]
-        c.saveSettings()
-            
+        c.saveSettings()            
+    elif char == "k":
+        if c.settings["bracketing"]==0:
+            c.settings[""]=1
+        elif c.settings["bracketing"]==1:
+            c.settings["bracketing"]=0
     elif (char == "\033"):
         break
     for line in range(5,20):
