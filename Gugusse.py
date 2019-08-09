@@ -62,6 +62,7 @@ class Gugusse():
         self.framecount+= 1
         try:
            self.cam.capture(fn)
+           self.cam.applySettings()
         except exception as e:
            self.feeder.disable()
            self.filmdrive.disable()

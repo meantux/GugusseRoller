@@ -141,6 +141,8 @@ print("f: freeze WB")
 print("g: next WB mode")
 print("h: next EXP mode")
 print("j: Enter Exposure")
+print("v b: contrast")
+print("n m: brightness")
 print("ESC: exit")
 print("SPC: toggle grid")
 
@@ -204,7 +206,24 @@ while True:
             c.shutter_speed=val
         print("exposure: {}".format(c.shutter_speed))
         c.settings["shutter_speed"]=val
-        c.saveSettings()        
+        c.saveSettings()
+    elif (char == "v"):
+        c.settings["contrast"]-= 1
+        c.contrast=c.settings["contrast"]
+        c.saveSettings()
+    elif (char == "b"):
+        c.settings["contrast"]+= 1
+        c.contrast=c.settings["contrast"]
+        c.saveSettings()
+    elif (char == "n"):
+        c.settings["brightness"]-= 1
+        c.brightness=c.settings["brightness"]
+        c.saveSettings()
+    elif (char == "m"):
+        c.settings["brightness"]+= 1
+        c.brightness=c.settings["brightness"]
+        c.saveSettings()
+            
     elif (char == "\033"):
         break
     for line in range(5,20):
