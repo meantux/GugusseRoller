@@ -1,24 +1,28 @@
 import json
 from picamera import PiCamera
-
+from time import sleep
 
 
 class GCamera(PiCamera):
     def __init__(self, fn="cameraSettings.json"):        
         PiCamera.__init__(self)
         with open(fn, "r") as h:
-            self.settings=json.load(h)
+            self.gcSettings=json.load(h)
         self.resolution=self.MAX_RESOLUTION
-        self.applySettings()
         self.start_preview(fullscreen=False,resolution=(1024,768),window=(256,0,1024,768))
-        self.camModes=[ "off", "auto", "night", "nightpreview", "backlight", "spotlight", "sports", "snow", "beach", "verylong", "fixedfps", "antishake", "fireworks"]
-        self.awbModes=[ "off", "auto", "sunlight", "cloudy", "shade", "tungsten", "fluorescent", "incandescent", "flash", "horizon"]
-        self.meterModes=[ "average", "spot", "backlit", "matrix" ]
-        self.zooms=[(0.0,0.0,1.0,1.0), (0.0,0.0,0.333,0.333), (0.333,0.0,0.333,0.333), (0.667,0.0,0.333,0.333), (0.0,0.333,0.333,0.333), (0.333,0.333,0.333,0.333), (0.667,0.333,0.333,0.333), (0.0,0.667,0.333,0.333), (0.333,0.667,0.333,0.333), (0.667,0.667,0.333,0.333)]
+        self.gcCamModes=[ "off", "auto", "night", "nightpreview", "backlight", "spotlight", "sports", "snow", "beach", "verylong", "fixedfps", "antishake", "fireworks"]
+        self.gcAwbModes=[ "off", "auto", "sunlight", "cloudy", "shade", "tungsten", "fluorescent", "incandescent", "flash", "horizon"]
+        self.gcMeterModes=[ "average", "spot", "backlit", "matrix" ]
+        self.gcZooms=[(0.0,0.0,1.0,1.0), (0.0,0.0,0.333,0.333), (0.333,0.0,0.333,0.333), (0.667,0.0,0.333,0.333), (0.0,0.333,0.333,0.333), (0.333,0.333,0.333,0.333), (0.667,0.333,0.333,0.333), (0.0,0.667,0.333,0.333), (0.333,0.667,0.333,0.333), (0.667,0.667,0.333,0.333)]
+        # As recommended by the documentation on the raspberri pi camera
+        # we have to leave it in automatic a few seconds before setting
+        # up manual values.
+        sleep (4)
+        self.gcApplySettings()
 
-    def saveSettings(self, fn="cameraSettings.json"):
+    def gcSaveSettings(self, fn="cameraSettings.json"):
         with open(fn, "w") as h:
-            json.dump(self.settings, h, indent=4)
+            json.dump(self.gcSettings, h, indent=4)
 
     def selectOther(self, actual, choices, direction):
         idx=choices.index(actual)
@@ -30,7 +34,7 @@ class GCamera(PiCamera):
         return choices[idx]
         
     def freezeWhiteBalance(self):
-        if self.settings["awb_mode"] != "auto":
+        if self.gcSettings["awb_mode"] != "auto":
             print("Need to be in auto to freeze")
             return
         values=self.awb_gains
@@ -38,16 +42,16 @@ class GCamera(PiCamera):
         b=float(values[1])
         print("a={}".format(a))
         print("b={}".format(b))
-        self.settings["awb_gains"]=[a,b]
+        self.gcSettings["awb_gains"]=[a,b]
         self.awb_mode="off"
-        self.settings["awb_mode"]="off"
-        self.saveSettings()
+        self.gcSettings["awb_mode"]="off"
+        self.gcSaveSettings()
         return [a,b]
 
-    def applySettings(self, settings=None):
+    def gcApplySettings(self, settings=None):
         if settings != None:
-            self.settings=settings
-        s=self.settings
+            self.gcSettings=settings
+        s=self.gcSettings
         self.exposure_mode=s["exposure_mode"]
         self.iso=s["iso"]
         self.shutter_speed=s["shutter_speed"]

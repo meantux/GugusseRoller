@@ -178,27 +178,27 @@ while True:
     elif (char == "p"):
         compensate+=1
         c.exposure_compensation=compensate
-        c.settings["exposure_compensation"]=compensate
-        c.saveSettings()
+        c.gcSettings["exposure_compensation"]=compensate
+        c.gcSaveSettings()
     elif (char == "o"):
         compensate-=1
         c.exposure_compensation=compensate
-        c.settings["exposure_compensation"]=compensate
-        c.saveSettings()
+        c.gcSettings["exposure_compensation"]=compensate
+        c.gcSaveSettings()
     elif (char == " "):
         overlay=toggleOverlay(o,overlay)
     elif char in [ "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" ]:
-        c.zoom=c.zooms[int(char)]
+        c.zoom=c.gcZooms[int(char)]
     elif char == "f":
         c.freezeWhiteBalance()
     elif char == "g":
-        c.awb_mode=c.selectOther(c.awb_mode, c.awbModes, 1)
-        c.settings["awb_mode"]=c.awb_mode
-        c.saveSettings()
+        c.awb_mode=c.selectOther(c.awb_mode, c.gcAwbModes, 1)
+        c.gcSettings["awb_mode"]=c.awb_mode
+        c.gcSaveSettings()
     elif char == "h":
-        c.exposure_mode=c.selectOther(c.exposure_mode, c.camModes, 1)
-        c.settings["exposure_mode"]=c.exposure_mode
-        c.saveSettings()
+        c.exposure_mode=c.selectOther(c.exposure_mode, c.gcCamModes, 1)
+        c.gcSettings["exposure_mode"]=c.exposure_mode
+        c.gcSaveSettings()
     elif char == "j":
         val= -1
         try:
@@ -208,35 +208,35 @@ while True:
         if val >= 0:
             c.shutter_speed=val
         print("exposure: {}".format(c.shutter_speed))
-        c.settings["shutter_speed"]=val
-        c.saveSettings()
+        c.gcSettings["shutter_speed"]=val
+        c.gcSaveSettings()
     elif (char == "v"):
-        c.settings["contrast"]-= 1
-        c.contrast=c.settings["contrast"]
-        c.saveSettings()
+        c.gcSettings["contrast"]-= 1
+        c.contrast=c.gcSettings["contrast"]
+        c.gcSaveSettings()
     elif (char == "b"):
-        c.settings["contrast"]+= 1
-        c.contrast=c.settings["contrast"]
-        c.saveSettings()
+        c.gcSettings["contrast"]+= 1
+        c.contrast=c.gcSettings["contrast"]
+        c.gcSaveSettings()
     elif (char == "n"):
-        c.settings["brightness"]-= 1
-        c.brightness=c.settings["brightness"]
-        c.saveSettings()
+        c.gcSettings["brightness"]-= 1
+        c.brightness=c.gcSettings["brightness"]
+        c.gcSaveSettings()
     elif (char == "m"):
-        c.settings["brightness"]+= 1
-        c.brightness=c.settings["brightness"]
-        c.saveSettings()            
+        c.gcSettings["brightness"]+= 1
+        c.brightness=c.gcSettings["brightness"]
+        c.gcSaveSettings()            
     elif char == "k":
-        if c.settings["bracketing"]==0:
-            c.settings["bracketing"]=1
-        elif c.settings["bracketing"]==1:
-            c.settings["bracketing"]=0
-            c.saveSettings()
+        if c.gcSettings["bracketing"]==0:
+            c.gcSettings["bracketing"]=1
+        elif c.gcSettings["bracketing"]==1:
+            c.gcSettings["bracketing"]=0
+            c.gcSaveSettings()
     elif (char == "\033"):
         break
     for line in range(5,20):
         print("\033[{};0H                                            \n".format(line))
-    print("\033[5;0H{}".format(json.dumps(c.settings, indent=2)))
+    print("\033[5;0H{}".format(json.dumps(c.gcSettings, indent=2)))
 
 loopInputs=False
 sleep(0.2)
