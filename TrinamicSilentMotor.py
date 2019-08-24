@@ -13,14 +13,23 @@ GPIO.setmode(GPIO.BCM)
 
 
 class TrinamicSilentMotor():
-    def __init__(self,cfg,trace=False):
+    def __init__(self,cfg,autoSpeed=False,trace=False):
         GPIO.setmode(GPIO.BCM)
+        self.autoSpeed=autoSpeed
+        if autoSpeed:
+            self.accel=cfg["minSpeed"]
+            self.targetTime=cfg["targetTime"]
+            self.minSpeed=cfg["minSpeed"]
+            self.maxSpeed=cfg["maxSpeed"]
+        else:
+            self.accel=cfg["accel"]
+        self.histo=[]
+        self.skipHisto=3
         self.trace=trace
         self.fault=False
         self.name=cfg["name"]
         self.speed=cfg["speed"]
         self.speed2=cfg["speed2"]
-        self.accel=cfg["accel"]
         self.currentSpeed=0
         self.target=0
         self.SensorStopPin=cfg["stopPin"]
@@ -65,6 +74,8 @@ class TrinamicSilentMotor():
     def move(self):
         ticks=0
         #log=[]
+        if self.autoSpeed:
+            self.moveStart=time()
         self.target= self.pos+self.faultTreshold
         self.targetSpeed=self.speed
         self.currentSpeed=0
@@ -91,6 +102,27 @@ class TrinamicSilentMotor():
                     if self.shortsInARow >= 3:
                         raise Exception("\033[1;31mFAULT\033[0m: Low amount of steps for 3 cycles in a row")
                         self.fault=True
+                    if self.autoSpeed:
+                        if self.skipHisto > 0:
+                            self.skipHisto-= 1
+                            return
+                        delta=time()-self.moveStart
+                        self.histo.append(delta)
+                        if len(self.histo)<6:
+                            return
+                        self.histo=self.histo[-5:]
+                        avg=sum(self.histo)/len(self.histo)
+                        if abs(avg-self.targetTime)<0.01:
+                            return
+                        gamma=80.0*(avg-self.targetTime)/(self.targetTime*100.0)
+                        self.speed2=self.speed2 * (1.0 + gamma)
+                        if self.speed2 < self.minSpeed:
+                            self.speed2=self.minSpeed
+                        elif self.speed2 > self.maxSpeed:
+                            self.speed2=self.maxSpeed
+                        self.speed=self.speed2
+                            
+                        
                     return
             if self.ignore == 0 and self.ignoreInitial != 0:
                 self.currentSpeed=self.speed2

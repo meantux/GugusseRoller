@@ -31,8 +31,8 @@ class Gugusse():
            if isinstance(cfg[item], dict):
               cfg[item]["name"]=item
         self.filmdrive=TrinamicSilentMotor(cfg["filmdrive"], trace=True)
-        self.feeder=TrinamicSilentMotor(cfg["feeder"])
-        self.pickup=TrinamicSilentMotor(cfg["pickup"])
+        self.feeder=TrinamicSilentMotor(cfg["feeder"], autoSpeed=True)
+        self.pickup=TrinamicSilentMotor(cfg["pickup"], autoSpeed=True)
         self.cam=PiCamera()
         self.cam.resolution=self.cam.MAX_RESOLUTION
         self.cam.start_preview(resolution=(1440,1080),hflip=True, vflip=False)
