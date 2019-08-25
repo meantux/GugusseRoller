@@ -88,9 +88,9 @@ class TrinamicSilentMotor():
                         self.shortsInARow+= 1;
                     else:
                         self.shortsInARow=0
-                    if self.shortsInARow >= 3:
-                        raise Exception("\033[1;31mFAULT\033[0m: Low amount of steps for 3 cycles in a row")
+                    if self.shortsInARow >= 5:
                         self.fault=True
+                        raise Exception("\033[1;31mFAULT\033[0m: only the lowest amount of steps for 3 cycles in a row")
                     return
             if self.ignore == 0 and self.ignoreInitial != 0:
                 self.currentSpeed=self.speed2
