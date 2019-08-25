@@ -6,7 +6,7 @@ from time import sleep, time
 import RPi.GPIO as GPIO
 import threading
 import json
-from picamera import PiCamera
+from GCamera import GCamera
 from fractions import Fraction
 from PIL import Image
 import os
@@ -16,22 +16,13 @@ from threading import Thread
 import sys
 
 GPIO.setmode(GPIO.BCM)
-c=PiCamera()
 
-#c.resolution=(1024,768)
-#c.resolution=(1440,1080)
-#c.awb_mode='off'
-#c.awb_gains=(1.26,2.3)
-#c.iso=100
-#c.led=True
-c.resolution=c.MAX_RESOLUTION
-c.start_preview(resolution=(1440,1080),window=(480,0,1440,1080),hflip=True)
-sleep(1)
-c.exposure_compensation=0
-c.led=True
-#c.exposure_mode="night"
-#c.iso=60
-#c.shutter_speed=24000
+h=open("cameraSettings.json", "r")
+camsettings=json.load(h)
+h.close()
+
+c=GCamera()
+
 
 img=Image.open('gfx/quadrillage.png')
 pad = Image.new('RGB', (
@@ -46,23 +37,17 @@ o=c.add_overlay(pad.tobytes(), size=img.size)
 o.alpha=0
 o.layer=3
 
-def checkEvery10Times(tick):
-    if (tick % 10)!= 0:
-        return True
-    if os.path.isfile("/dev/shm/loopInputs.flag"):
-        return True
-    return False
 
-def displayInputs(pin):
-    tick=0
-    a=open("/dev/shm/loopInputs.flag", "w")
-    a.write("hello\n")
-    a.close()
-    GPIO.setup(pin, GPIO.IN)
-    while checkEvery10Times(tick):
-        tick+= 1
-        print("\033[0;0H{}   \n    \n".format(GPIO.input(pin)))
-        sleep(0.01)
+loopInputs=True
+
+def displayInputs(pinA, pinB, pinC):
+    GPIO.setup(pinA, GPIO.IN)
+    GPIO.setup(pinB, GPIO.IN)
+    GPIO.setup(pinC, GPIO.IN)
+    sleep (2)
+    while loopInputs:
+        print("\033[0;0H\n                                           \n\rINPUTS:{}|{}|{}                                \n".format(GPIO.input(pinA),GPIO.input(pinB),GPIO.input(pinC)))
+        sleep(0.05)
     
 
 
@@ -127,7 +112,11 @@ filmdrive=SimpleMotor("filmdrive")
 feeder=SimpleMotor("feeder")
 pickup=SimpleMotor("pickup")
 compensate=0
-
+t=Thread(target=displayInputs, args=(feeder.stopPin,filmdrive.stopPin,pickup.stopPin))
+t.start()
+sleep(0.1)
+for line in range(0,60):
+    print("                             ")
 print("-------------")
 print("FEEDER")
 print("q: adv")
@@ -144,10 +133,20 @@ print("z: adv")
 print("x: toggle dir")
 print("c: toggle pwr")
 print("-------------")
+print("1 to 9: zooms")
+print("0: reset zoom")
 print("p: inc compensation")
 print("o: dec compensation")
+print("f: freeze WB")
+print("g: next WB mode")
+print("h: next EXP mode")
+print("j: Enter Exposure")
+print("v b: contrast")
+print("n m: brightness")
+print("k: Toggle bracketing")
 print("ESC: exit")
 print("SPC: toggle grid")
+
 overlay=False
 def toggleOverlay(o, overlay):
     if overlay:
@@ -156,8 +155,6 @@ def toggleOverlay(o, overlay):
         o.alpha=196
     return not overlay
     
-t=Thread(target=displayInputs, args=(filmdrive.stopPin,))
-t.start()
 while True:
     char = getch()
     if (char == "q"):
@@ -181,16 +178,68 @@ while True:
     elif (char == "p"):
         compensate+=1
         c.exposure_compensation=compensate
-        print("\033[6;0H\nCOMPENSATE={}   ".format(compensate))
+        c.gcSettings["exposure_compensation"]=compensate
+        c.gcSaveSettings()
     elif (char == "o"):
         compensate-=1
         c.exposure_compensation=compensate
-        print("\033[6;0H\nCOMPENSATE={}   ".format(compensate))
+        c.gcSettings["exposure_compensation"]=compensate
+        c.gcSaveSettings()
     elif (char == " "):
         overlay=toggleOverlay(o,overlay)
+    elif char in [ "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" ]:
+        c.zoom=c.gcZooms[int(char)]
+    elif char == "f":
+        c.freezeWhiteBalance()
+    elif char == "g":
+        c.awb_mode=c.selectOther(c.awb_mode, c.gcAwbModes, 1)
+        c.gcSettings["awb_mode"]=c.awb_mode
+        c.gcSaveSettings()
+    elif char == "h":
+        c.exposure_mode=c.selectOther(c.exposure_mode, c.gcCamModes, 1)
+        c.gcSettings["exposure_mode"]=c.exposure_mode
+        c.gcSaveSettings()
+    elif char == "j":
+        val= -1
+        try:
+            val=int(raw_input("Val: "))
+        except Exception:
+            pass        
+        if val >= 0:
+            c.shutter_speed=val
+        print("exposure: {}".format(c.shutter_speed))
+        c.gcSettings["shutter_speed"]=val
+        c.gcSaveSettings()
+    elif (char == "v"):
+        c.gcSettings["contrast"]-= 1
+        c.contrast=c.gcSettings["contrast"]
+        c.gcSaveSettings()
+    elif (char == "b"):
+        c.gcSettings["contrast"]+= 1
+        c.contrast=c.gcSettings["contrast"]
+        c.gcSaveSettings()
+    elif (char == "n"):
+        c.gcSettings["brightness"]-= 1
+        c.brightness=c.gcSettings["brightness"]
+        c.gcSaveSettings()
+    elif (char == "m"):
+        c.gcSettings["brightness"]+= 1
+        c.brightness=c.gcSettings["brightness"]
+        c.gcSaveSettings()            
+    elif char == "k":
+        if c.gcSettings["bracketing"]==0:
+            c.gcSettings["bracketing"]=1
+        elif c.gcSettings["bracketing"]==1:
+            c.gcSettings["bracketing"]=0
+            c.gcSaveSettings()
     elif (char == "\033"):
         break
-os.remove("/dev/shm/loopInputs.flag")
+    for line in range(5,20):
+        print("\033[{};0H                                            \n".format(line))
+    print("\033[5;0H{}".format(json.dumps(c.gcSettings, indent=2)))
+
+loopInputs=False
+sleep(0.2)
 t.join()
 c.close()
 print("\033[0J")
