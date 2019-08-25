@@ -13,7 +13,10 @@
 	"pinStep":24,
 	"invert": false,
         "stopPin": 3,
-	"stopState":1
+	"stopState":1,
+	"targetTime": 0.5,
+	"minSpeed": 10,
+	"maxSpeed": 12000
     },
     "pickup": {
 	"pinEnable":21,
@@ -21,6 +24,9 @@
 	"pinStep":7,
 	"invert": false,
         "stopPin": 5,
-	"stopState":1
+	"stopState":1,
+	"targetTime": 0.5,
+	"minSpeed": 10,
+	"maxSpeed": 12000
     }
 }
