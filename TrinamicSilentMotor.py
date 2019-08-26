@@ -17,12 +17,10 @@ class TrinamicSilentMotor():
         GPIO.setmode(GPIO.BCM)
         self.autoSpeed=autoSpeed
         if autoSpeed:
-            self.accel=cfg["minSpeed"]
             self.targetTime=cfg["targetTime"]
             self.minSpeed=cfg["minSpeed"]
             self.maxSpeed=cfg["maxSpeed"]
-        else:
-            self.accel=cfg["accel"]
+        self.accel=cfg["accel"]
         self.histo=[]
         self.skipHisto=3
         self.trace=trace
@@ -68,6 +66,8 @@ class TrinamicSilentMotor():
             self.direction()            
             if self.currentSpeed < self.targetSpeed:
                 self.currentSpeed += self.accel
+                if self.currentSpeed > self.targetSpeed:
+                    self.currentSpeed=self.targetSpeed
             return time() + (1.0 / self.currentSpeed)
         return None
                         
@@ -114,13 +114,15 @@ class TrinamicSilentMotor():
                         avg=sum(self.histo)/len(self.histo)
                         if abs(avg-self.targetTime)<0.01:
                             return
-                        gamma=80.0*(avg-self.targetTime)/(self.targetTime*100.0)
-                        self.speed2=self.speed2 * (1.0 + gamma)
+                        gamma=20.0*(avg-self.targetTime)/(self.targetTime*100.0)
+                        newspeed=self.speed2 * (1.0 + gamma)
+                        self.speed2=int(newspeed)
                         if self.speed2 < self.minSpeed:
                             self.speed2=self.minSpeed
                         elif self.speed2 > self.maxSpeed:
                             self.speed2=self.maxSpeed
                         self.speed=self.speed2
+                        print("New speed for {}={}ticks/s".format(self.name, self.speed))
                             
                         
                     return

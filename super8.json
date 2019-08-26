@@ -10,7 +10,7 @@
     "feeder": {
 	"speed": 3000.0,
 	"speed2": 1000.0,
-	"accel": 100.0,
+	"accel": 200.0,
 	"ignoreInitial": 0,
 	"faultTreshold": 8000
 
@@ -18,7 +18,7 @@
     "pickup": {
 	"speed": 3000.0,
 	"speed2": 1000.0,
-	"accel": 100.0,
+	"accel": 200.0,
 	"ignoreInitial": 0,
 	"faultTreshold": 8000
 

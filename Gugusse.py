@@ -31,8 +31,8 @@ class Gugusse():
            if isinstance(cfg[item], dict):
               cfg[item]["name"]=item
         self.filmdrive=TrinamicSilentMotor(cfg["filmdrive"], trace=True)
-        self.feeder=TrinamicSilentMotor(cfg["feeder"])
-        self.pickup=TrinamicSilentMotor(cfg["pickup"])
+        self.feeder=TrinamicSilentMotor(cfg["feeder"],autoSpeed=True)
+        self.pickup=TrinamicSilentMotor(cfg["pickup"],autoSpeed=True)
         self.framecount=start_frame
         try:
             os.mkdir("/dev/shm/complete")
