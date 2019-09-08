@@ -73,6 +73,7 @@ class Gugusse():
            self.filmdrive.disable()
            self.pickup.disable()
            raise Exception("Motor Fault!")
+        sleep(0.2)
         self.grabAPic()
         if self.cam.gcSettings["bracketing"]==1:
            self.cam.shutter_speed=self.cam.gcSettings["shutter_speed"]/2
@@ -110,4 +111,4 @@ if feederDirection == "cw":
 capture=Gugusse(cfg, firstNum)
 while True:
     capture.frameAdvance()
-    sleep(0.33)
+    sleep(0.05)

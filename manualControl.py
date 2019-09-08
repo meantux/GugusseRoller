@@ -33,7 +33,9 @@ pad = Image.new('RGB', (
 pad.paste(img, (0, 0))
 
 
-o=c.add_overlay(pad.tobytes(), size=img.size)
+o=c.add_overlay(pad.tobytes(), size=img.size, window=(256,0,1024,768))
+o.fullscreen=False
+o.window=(256,0,1024,768)
 o.alpha=0
 o.layer=3
 
