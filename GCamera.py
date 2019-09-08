@@ -35,7 +35,7 @@ class GCamera(PiCamera):
         
     def freezeWhiteBalance(self):
         if self.gcSettings["awb_mode"] != "auto":
-            print("Need to be in auto to freeze")
+            print("AWB needs to be in auto to freeze")
             return
         values=self.awb_gains
         a=float(values[0])
@@ -54,8 +54,13 @@ class GCamera(PiCamera):
         s=self.gcSettings
         self.exposure_mode=s["exposure_mode"]
         self.iso=s["iso"]
-        self.shutter_speed=s["shutter_speed"]
-        self.exposure_compensation=s["exposure_compensation"]
+        if self.exposure_more=="off":
+            self.shutter_speed=s["shutter_speed"]
+            self.exposure_compensation=0
+        else:
+            self.shutter_speed=0
+            self.exposure_compensation=s["exposure_compensation"]
+            
         self.awb_mode=s["awb_mode"]
         if s["awb_mode"] == "off":
             self.awb_gains=s["awb_gains"]

@@ -8,12 +8,22 @@ https://www.facebook.com/Gugusse-Roller-2216783521714775/
 In progress also is a website for anyone to build his own Gugusse Roller:
 www.deniscarl.com
 
-The Gugusse Roller uses a Raspberry Pi and the 8MP Raspberry Pi Camera V2,
+The Gugusse Roller uses a Raspberry Pi and various combinations of Raspberry Pi Cameras and lenses.
 the objectives of the software is to:
     -Drive the 3 stepper motors
     -read the 3 discrete inputs:
         1. film hole detector
         2. left arm aligned in middle
         3. right arm aligned in middle
-    -capture each frame, save it as jpeg.
+    -capture each frame, save it as jpeg and transfer the file to a ftp server
 
+Files Explained:
+
+    transferMovie.bash: Recommended entry point to perform a transfer, it verifies the sequence number or create a new directory on ftp server, starts a script that upload picture files that are ready and call the main executable.
+    Gugusse.py: Main executable, don't call it directly, use above file
+    manualControl.py: use it directly to adjust camera setting, camera aiming, camera focus, film tension, hole sensor and to control motors.
+    turnoff.py: call it directly to unlock all 3 motors.
+    TrinamicSilentMotor.py: Library used by Gugusse.py
+    GCamera.py: Library used by Gugusse.py and manualControl.py
+    
+    
