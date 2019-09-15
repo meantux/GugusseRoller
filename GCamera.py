@@ -54,7 +54,7 @@ class GCamera(PiCamera):
         s=self.gcSettings
         self.exposure_mode=s["exposure_mode"]
         self.iso=s["iso"]
-        if self.exposure_more=="off":
+        if s["exposure_mode"] == "off":
             self.shutter_speed=s["shutter_speed"]
             self.exposure_compensation=0
         else:

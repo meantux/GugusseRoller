@@ -14,7 +14,7 @@
 	"invert": false,
         "stopPin": 3,
 	"stopState":1,
-	"targetTime": 0.25,
+	"DefaultTargetTime": 0.25,
 	"minSpeed": 20,
 	"maxSpeed": 20000
     },
@@ -25,7 +25,7 @@
 	"invert": false,
         "stopPin": 5,
 	"stopState":1,
-	"targetTime": 0.25,
+	"DefaultTargetTime": 0.25,
 	"minSpeed": 20,
 	"maxSpeed": 20000
     }

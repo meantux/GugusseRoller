@@ -17,7 +17,10 @@ class TrinamicSilentMotor():
         GPIO.setmode(GPIO.BCM)
         self.autoSpeed=autoSpeed
         if autoSpeed:
-            self.targetTime=cfg["targetTime"]
+            if "targetTime" not in cfg:
+                self.targetTime=cfg["defaultTargetTime"]
+            else:
+                self.targetTime=cfg["targetTime"]
             self.minSpeed=cfg["minSpeed"]
             self.maxSpeed=cfg["maxSpeed"]
         self.accel=cfg["accel"]

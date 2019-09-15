@@ -3,12 +3,12 @@
         0.96484375, 
         2.24609375
     ], 
-    "brightness": 58, 
-    "exposure_mode": "auto", 
+    "brightness": 55, 
+    "exposure_mode": "off", 
     "awb_mode": "off", 
     "iso": 60, 
     "bracketing": 0, 
-    "shutter_speed": 0, 
+    "shutter_speed": 2800, 
     "exposure_compensation": -3, 
-    "contrast": 28
+    "contrast": 19
 }
