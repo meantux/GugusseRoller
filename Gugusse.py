@@ -68,6 +68,7 @@ class Gugusse():
         m2.join()
         m1.start()
         m1.join()
+        self.cam.gcApplySettings()
         if m1.motor.fault or m2.motor.fault or m3.motor.fault:
            self.feeder.disable()
            self.filmdrive.disable()

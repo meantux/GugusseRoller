@@ -4,7 +4,7 @@
 	"speed2": 2000.0,
 	"accel": 200.0,
 	"ignoreInitial": 3500,
-	"faultTreshold": 15500
+	"faultTreshold": 20500
 
     },
     "feeder": {
@@ -13,7 +13,7 @@
 	"accel": 200.0,
 	"ignoreInitial": 10,
 	"faultTreshold": 8000,
-	"targetTime": 0.33
+	"targetTime": 0.5
     },
     "pickup": {
 	"speed": 1000.0,
@@ -21,6 +21,6 @@
 	"accel": 200.0,
 	"ignoreInitial": 10,
 	"faultTreshold": 8000,
-	"targetTime": 0.33
+	"targetTime": 0.5
     }
 }
