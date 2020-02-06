@@ -1,14 +1,14 @@
 {
     "awb_gains": [
-        1.19140625, 
-        2.859375
+        1.15234375, 
+        2.74609375
     ], 
-    "brightness": 55, 
+    "brightness": 50, 
     "exposure_mode": "off", 
     "awb_mode": "off", 
     "iso": 60, 
     "bracketing": 0, 
-    "shutter_speed": 10000, 
+    "shutter_speed": 4000, 
     "exposure_compensation": 0, 
     "contrast": 24
 }

@@ -158,6 +158,9 @@ def toggleOverlay(o, overlay):
     return not overlay
     
 while True:
+    for line in range(5,20):
+        print("\033[{};0H                                            \n".format(line))
+    print("\033[5;0H{}".format(json.dumps(c.gcSettings, indent=2)))
     char = getch()
     if (char == "q"):
         feeder.move(1000)
@@ -236,9 +239,6 @@ while True:
             c.gcSaveSettings()
     elif (char == "\033"):
         break
-    for line in range(5,20):
-        print("\033[{};0H                                            \n".format(line))
-    print("\033[5;0H{}".format(json.dumps(c.gcSettings, indent=2)))
 
 loopInputs=False
 sleep(0.2)
