@@ -191,7 +191,7 @@ while True:
         try:
             c.exposure_compensation=c.gcSettings["exposure_compensation"]
         except Exception:
-            c.gcSettings["exposure_compensation"]== 1
+            c.gcSettings["exposure_compensation"]+= 1
         c.gcSaveSettings()
     elif (char == " "):
         overlay=toggleOverlay(o,overlay)
