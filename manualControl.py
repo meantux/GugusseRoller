@@ -113,7 +113,6 @@ class SimpleMotor:
 filmdrive=SimpleMotor("filmdrive")
 feeder=SimpleMotor("feeder")
 pickup=SimpleMotor("pickup")
-compensate=0
 t=Thread(target=displayInputs, args=(feeder.stopPin,filmdrive.stopPin,pickup.stopPin))
 t.start()
 sleep(0.1)
@@ -181,14 +180,18 @@ while True:
     elif (char == "c"):
         pickup.toggle()
     elif (char == "p"):
-        compensate+=1
-        c.exposure_compensation=compensate
-        c.gcSettings["exposure_compensation"]=compensate
+        c.gcSettings["exposure_compensation"]+=1
+        try:
+            c.exposure_compensation=c.gcSettings["exposure_compensation"]
+        except Exception:
+            c.gcSettings["exposure_compensation"]-=1
         c.gcSaveSettings()
     elif (char == "o"):
-        compensate-=1
-        c.exposure_compensation=compensate
-        c.gcSettings["exposure_compensation"]=compensate
+        c.gcSettings["exposure_compensation"]-= 1
+        try:
+            c.exposure_compensation=c.gcSettings["exposure_compensation"]
+        except Exception:
+            c.gcSettings["exposure_compensation"]== 1
         c.gcSaveSettings()
     elif (char == " "):
         overlay=toggleOverlay(o,overlay)
@@ -207,7 +210,7 @@ while True:
     elif char == "j":
         val= -1
         try:
-            val=int(raw_input("Val: "))
+            val=int(raw_input("Enter value: "))
         except Exception:
             pass        
         if val >= 0:
@@ -217,19 +220,31 @@ while True:
         c.gcSaveSettings()
     elif (char == "v"):
         c.gcSettings["contrast"]-= 1
-        c.contrast=c.gcSettings["contrast"]
+        try:
+            c.contrast=c.gcSettings["contrast"]
+        except Exception:
+            c.gcSettings["contrast"]+= 1
         c.gcSaveSettings()
     elif (char == "b"):
         c.gcSettings["contrast"]+= 1
-        c.contrast=c.gcSettings["contrast"]
+        try:
+            c.contrast=c.gcSettings["contrast"]
+        except Exception:
+            c.gcSettings["contrast"]-= 1
         c.gcSaveSettings()
     elif (char == "n"):
         c.gcSettings["brightness"]-= 1
-        c.brightness=c.gcSettings["brightness"]
+        try:
+            c.brightness=c.gcSettings["brightness"]
+        except Exception:
+            c.gcSettings["brightness"]+= 1
         c.gcSaveSettings()
     elif (char == "m"):
         c.gcSettings["brightness"]+= 1
-        c.brightness=c.gcSettings["brightness"]
+        try:
+            c.brightness=c.gcSettings["brightness"]
+        except Exception:
+            c.gcSettings["brightness"]-= 1
         c.gcSaveSettings()            
     elif char == "k":
         if c.gcSettings["bracketing"]==0:
