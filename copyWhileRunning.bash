@@ -12,21 +12,21 @@ export dirName="$1"
 
 mkdir -p /dev/shm/complete
 
-cd /dev/shm/complete
-
-if [ -n "$dirName" ]; then
+if [ ! -d "$dirName" ]; then
     mkdir -p "$dirName"
 fi
 
 function sendAndDelete(){
     if [ "$1" == "*.jpg" ]; then
-	echo no files, sleeping 1 sec
+	#echo no files, sleeping 1 sec
 	sleep 1
     else
-	mv $@ "$localPath/$dirName/"
+	echo moving $@ to $dirName
+	mv $@ "$dirName"
     fi
 }
 
+cd /dev/shm/complete
 while [ -f "/dev/shm/transferInProgress.flag" ]; do
     sendAndDelete *.jpg
 done

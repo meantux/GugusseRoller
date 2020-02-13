@@ -69,12 +69,12 @@ fi
 echo "We'll start with number $startNumber"
 
 killall sendWhileRunning.bash &> /dev/null
+killall copyWhileRunning.bash &> /dev/null
 sleep 2
 
 # start a new sendWhileRunning.bash with proper film name
 touch /dev/shm/transferInProgress.flag
 ./sendWhileRunning.bash "$2" &
-sleep 2
 
 # start the Gugusse.py
 echo ./Gugusse.py $1 $startNumber $3

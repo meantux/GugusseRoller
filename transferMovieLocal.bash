@@ -65,9 +65,12 @@ else
     # ok we got a brand new directory in our hand
     export startNumber=0
 fi
-touch /dev/shm/transferInProgress.flag
 killall sendWhileRunning.bash &> /dev/null
+killall copyWhileRunning.bash &> /dev/null
 sleep 1
+touch /dev/shm/transferInProgress.flag
+./copyWhileRunning.bash "$outputPath"
+
 # start the Gugusse.py
 echo ./Gugusse.py $1 $startNumber $3
 ./Gugusse.py $1 $startNumber $3
