@@ -20,7 +20,7 @@ cd /dev/shm/complete
 
 function sendAndDelete(){
     if [ "$1" == "*.jpg" ]; then
-	echo no files, sleeping 1 sec
+	#echo no files, sleeping 1 sec
 	sleep 1
     else
         ncftpput -u $ftpuser -p $ftppassword $ftpserver ${ftppathprefix}${dirName} $@ && rm -f $@
