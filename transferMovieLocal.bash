@@ -19,6 +19,7 @@ formatFile="$1"
 outputPath="$2"
 orientation="$3"
 
+echo check if directory is a full path
 # check that directory is a full path
 if [ "${outputPath:0:1}" != "/" ]; then
         echo "the save directory must be a full path. A full path must start with the \"/\" directory."
@@ -29,9 +30,10 @@ if [ "${outputPath:0:1}" != "/" ]; then
 	echo "$USAGE"
         exit -1
 fi
+echo -n "does the directory already exists? " 
 # Does the directory already exists
-dirExists=NO
 if [ -d "$outputPath" ]; then
+    echo "Yes!"
     # Can we write in it?
     touch "$outputPath/deleteme.txt"
     if [ $? -ne 0 ]; then
@@ -54,9 +56,12 @@ if [ -d "$outputPath" ]; then
 	export startNumber=$((lastnum+1))
     else
 	export startNumber=0
-    fi	    
+    fi
 else
+    echo "No!"
     # $outputPath does not exists, check if we can create it
+    echo creating "$outputPath"
+    
     mkdir -p "$outputPath"
     if [ $? -ne 0 ]; then
 	echo "We couldn't create the directory (write access?)"
@@ -65,11 +70,13 @@ else
     # ok we got a brand new directory in our hand
     export startNumber=0
 fi
+echo startNumber=$startNumber
+echo Killing any previous instances of sendWhileRunning and copy WhileRunning
 killall sendWhileRunning.bash &> /dev/null
 killall copyWhileRunning.bash &> /dev/null
 sleep 1
 touch /dev/shm/transferInProgress.flag
-./copyWhileRunning.bash "$outputPath"
+./copyWhileRunning.bash "$outputPath" &
 
 # start the Gugusse.py
 echo ./Gugusse.py $1 $startNumber $3
