@@ -12,6 +12,7 @@
 	"speed2": 3000.0,
 	"accel": 100.0,
 	"ignoreInitial": 10,
+	"targetTime": 0.4,
 	"faultTreshold": 8000
 
     },
@@ -20,6 +21,7 @@
 	"speed2": 3000.0,
 	"accel": 100.0,
 	"ignoreInitial": 10,
+	"targetTime":0.4,
 	"faultTreshold": 8000
     }
 }

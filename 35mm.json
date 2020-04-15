@@ -3,8 +3,8 @@
     "filmdrive": {
 	"speed": 20000.0,
 	"speed2": 1000.0,
-	"accel": 200.0,
-	"ignoreInitial": 9250,
+	"accel": 100.0,
+	"ignoreInitial": 9600,
 	"faultTreshold": 20000
     },
     "feeder": {
