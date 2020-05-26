@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 ################################################################################
 # Gugusse.py
 # 
@@ -33,7 +33,6 @@ class Gugusse():
         self.filmdrive=TrinamicSilentMotor(cfg["filmdrive"], trace=True)
         self.feeder=TrinamicSilentMotor(cfg["feeder"],autoSpeed=True)
         self.pickup=TrinamicSilentMotor(cfg["pickup"],autoSpeed=True)
-        self.framecount=start_frame
         try:
             os.mkdir("/dev/shm/complete")
         except Exception:
@@ -41,21 +40,7 @@ class Gugusse():
         self.feeder.enable()
         self.filmdrive.enable()
         self.pickup.enable()
-        self.cam=GCamera()
-    def grabAPic(self):
-        fn="/dev/shm/%05d.jpg"%self.framecount
-        fncomplete="/dev/shm/complete/%05d.jpg"%self.framecount
-        self.framecount+= 1
-        try:
-           self.cam.capture(fn)
-        except exception as e:
-           self.feeder.disable()
-           self.filmdrive.disable()
-           self.pickup.disable()
-           print("Failure to capture image: {}".format(e))
-           self.cam.close()
-           raise Exception("Stop")
-        os.rename(fn,fncomplete)
+        self.cam=GCamera(start_frame)
         
            
     def frameAdvance(self):
@@ -75,15 +60,15 @@ class Gugusse():
            self.pickup.disable()
            raise Exception("Motor Fault!")
         sleep(0.2)
-        self.grabAPic()
-        if self.cam.gcSettings["bracketing"]==1:
-           self.cam.shutter_speed=self.cam.gcSettings["shutter_speed"]/2
-           sleep(1)
-           self.grabAPic()
-           self.cam.shutter_speed=self.cam.gcSettings["shutter_speed"]*2
-           sleep(1)
-           self.grabAPic()
-           self.cam.shutter_speed=self.cam.gcSettings["shutter_speed"]
+        try:
+           self.cam.captureCycle()
+        except Exception as e:
+           self.feeder.disable()
+           self.filmdrive.disable()
+           self.pickup.disable()
+           print("Failure to capture image: {}".format(e))
+           self.cam.close()
+           raise Exception("Stop")
            
 
         

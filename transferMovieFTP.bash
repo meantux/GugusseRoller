@@ -17,6 +17,10 @@ fi
 
 source ftpserver.conf
 
+captureMode=`cat cameraSettings.json | jq .captureMode | tr -d "\""`
+echo "captureMode=$captureMode (`cat captureModes.json | jq .$captureMode.description | tr -d \"\\\"\"`)"
+suffix=`cat captureModes.json | jq .$captureMode.suffix | tr -d "\""`
+echo "files suffix=$suffix"
 
 # check if FTP server is available or exit if not.
 ncftpls -u$ftpuser -p$ftppassword ftp://$ftpserver/$ftppathprefix > /dev/shm/directoriesOnServer.txt
@@ -47,36 +51,37 @@ else
     echo "Directory $2 already existed on the ftp server!"
     echo "checking which is its last file in it"
     echo "(this could take a while)"
-    ncftpls -u$ftpuser -p$ftppassword ftp://$ftpserver/$ftppathprefix/$2/*.jpg > /dev/shm/filesOnServer.txt
+    ncftpls -u$ftpuser -p$ftppassword ftp://$ftpserver/$ftppathprefix/$2/*.$suffix > /dev/shm/filesOnServer.txt
     lastFile=`cat /dev/shm/filesOnServer.txt | sort | tail -n 1`
-    echo lastfile=$lastFile	
+    echo lastFile=$lastFile
+    lastNum=`echo $lastFile | cut -c1-5`
+    echo lastNum=$lastNum
     if [ -z "$lastFile" ]; then
-	echo "The directory existed but we couldn't find a jpg in it"
+	echo "The directory existed but we couldn't find a .$suffix in it"
 	echo "therefore we'll start with 0, press Enter if you agree"
 	echo "or press Ctrl-C to cancel"
 	read
 	export startNumber=0
-    elif [ "$lastFile" == "00000.jpg" ]; then
+    elif [ "$lastNum" == "00000" ]; then
 	export startNumber=1
-    else	
-	lastFileNum=${lastFile%.jpg}
-	while [ "${lastFileNum:0:1}" == "0" ]; do
-	    export lastFileNum=${lastFileNum:1}
+    else
+	while [ "${lastNum:0:1}" == "0" ]; do
+	    export lastNum=${lastNum:1}
 	done
-	startNumber=$((lastFileNum+1))
+	startNumber=$((lastNum+1))
     fi
 fi	    
 echo "We'll start with number $startNumber"
-
 killall sendWhileRunning.bash &> /dev/null
 killall copyWhileRunning.bash &> /dev/null
 sleep 2
 
 # start a new sendWhileRunning.bash with proper film name
 touch /dev/shm/transferInProgress.flag
-./sendWhileRunning.bash "$2" &
+./sendWhileRunning.bash "$2" $suffix &
 
 # start the Gugusse.py
+echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
 echo ./Gugusse.py $1 $startNumber $3
 ./Gugusse.py $1 $startNumber $3
 sleep 5

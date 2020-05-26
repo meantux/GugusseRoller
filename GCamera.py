@@ -1,13 +1,17 @@
 import json
 from picamera import PiCamera
 from time import sleep
-
+import os
+from pydng.core import RPICAM2DNG
 
 class GCamera(PiCamera):
-    def __init__(self, fn="cameraSettings.json"):        
+    def __init__(self, framecount=0, fn="cameraSettings.json"):
+        self.framecount=framecount
         PiCamera.__init__(self)
         with open(fn, "r") as h:
             self.gcSettings=json.load(h)
+        with open("captureModes.json","r") as h:
+            self.captureModes=json.load(h)
         self.resolution=self.MAX_RESOLUTION
         self.start_preview(fullscreen=False,resolution=(1024,768),window=(256,0,1024,768),vflip=False,hflip=False)
         self.gcCamModes=[ "off", "auto", "night", "nightpreview", "backlight", "spotlight", "sports", "snow", "beach", "verylong", "fixedfps", "antishake", "fireworks"]
@@ -19,7 +23,10 @@ class GCamera(PiCamera):
         # up manual values.
         sleep (4)
         self.gcApplySettings()
-
+        self.captureMode=self.gcSettings["captureMode"]
+        self.suffix=self.captureModes[self.captureMode]["suffix"]
+        self.DNG=RPICAM2DNG()
+        
     def gcSaveSettings(self, fn="cameraSettings.json"):
         with open(fn, "w") as h:
             json.dump(self.gcSettings, h, indent=4)
@@ -55,10 +62,10 @@ class GCamera(PiCamera):
         self.exposure_mode=s["exposure_mode"]
         self.iso=s["iso"]
         if s["exposure_mode"] == "off":
-            self.shutter_speed=s["shutter_speed"]
+            self.shutter_speed=int(s["shutter_speed"])
             self.exposure_compensation=0
         else:
-            self.shutter_speed=0
+            self.shutter_speed=int(0)
             self.exposure_compensation=s["exposure_compensation"]
             
         self.awb_mode=s["awb_mode"]
@@ -66,3 +73,39 @@ class GCamera(PiCamera):
             self.awb_gains=s["awb_gains"]
         self.brightness=s["brightness"]
         self.contrast=s["contrast"]
+    def captureCycle(self):
+        if self.captureMode == "singleJpg":
+            fn="/dev/shm/{:05d}.jpg".format(self.framecount)
+            fnComplete="/dev/shm/complete/{:05d}.jpg".format(self.framecount)
+            self.capture(fn)
+            os.rename(fn, fnComplete)            
+
+        elif self.captureMode == "bracketing":
+            fn="/dev/shm/{:05d}_m.jpg".format(self.framecount)
+            fnComplete="/dev/shm/complete/{:05d}_m.jpg".format(self.framecount)
+            self.capture(fn)
+            self.shutter_speed=int(self.gcSettings["shutter_speed"]/2)
+            os.rename(fn, fnComplete)
+            sleep(1)
+            fn="/dev/shm/{:05d}_l.jpg".format(self.framecount)
+            fnComplete="/dev/shm/complete/{:05d}_l.jpg".format(self.framecount)
+            self.capture(fn)
+            self.shutter_speed=int(self.gcSettings["shutter_speed"]*2)
+            os.rename(fn, fnComplete)
+            sleep(1)
+            fn="/dev/shm/{:05d}_h.jpg".format(self.framecount)
+            fnComplete="/dev/shm/complete/{:05d}_h.jpg".format(self.framecount)
+            self.capture(fn)
+            os.rename(fn, fnComplete)                     
+            self.shutter_speed=int(self.gcSettings["shutter_speed"])
+            
+        elif self.captureMode == "PyDNG":
+            fn="/dev/shm/{:05d}.jpg".format(self.framecount)
+            fnSecond="/dev/shm/{:05d}.dng".format(self.framecount)
+            fnComplete="/dev/shm/complete/{:05d}.dng".format(self.framecount)
+            self.capture(fn, bayer=True)
+            self.DNG.convert(fn,process=False, compress=False)
+            os.rename(fnSecond, fnComplete)
+            os.remove(fn)
+
+        self.framecount+= 1

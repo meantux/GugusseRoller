@@ -4,8 +4,9 @@
 
 source ftpserver.conf
 
+suffix=$2
 
-if [ -z "$1" ]; then
+if [ -z "$1" ] || [ -z "$2" ]; then
     echo "We need the directory name for the ftp server"
     echo "(not the full path)"
     echo "plz don't use the space character in the name, it's"
@@ -19,7 +20,7 @@ mkdir -p /dev/shm/complete
 cd /dev/shm/complete
 
 function sendAndDelete(){
-    if [ "$1" == "*.jpg" ]; then
+    if [ "$1" == "*.$suffix" ]; then
 	#echo no files, sleeping 1 sec
 	sleep 1
     else
@@ -28,5 +29,5 @@ function sendAndDelete(){
 }
 
 while [ -f "/dev/shm/transferInProgress.flag" ]; do
-    sendAndDelete *.jpg
+    sendAndDelete *.$suffix
 done

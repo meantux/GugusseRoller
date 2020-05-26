@@ -1,0 +1,17 @@
+{
+    "PyDNG": {
+        "description":"12bits Raw photos saved in dng using PyDNG library",
+        "suffix":"dng",
+	"next": "singleJpg"
+    },
+    "singleJpg":{
+        "description":"simple single unprocessed jpg",
+        "suffix":"jpg",
+	"next": "bracketing"
+    },   
+    "bracketing":{
+        "description":"Bracketing (0,+1,-1) saved in jpg ",
+        "suffix":"jpg",
+	"next": "PyDNG"
+    }
+}
