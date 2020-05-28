@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3
  
 # adapted from https://github.com/recantha/EduKit3-RC-Keyboard/blob/master/rc_keyboard.py
 
@@ -144,7 +144,7 @@ print("h: next EXP mode")
 print("j: Enter Exposure")
 print("v b: contrast")
 print("n m: brightness")
-print("k: Toggle bracketing")
+print("k: change capture mode")
 print("ESC: exit")
 print("SPC: toggle grid")
 
@@ -160,6 +160,7 @@ while True:
     for line in range(5,20):
         print("\033[{};0H                                            \n".format(line))
     print("\033[5;0H{}".format(json.dumps(c.gcSettings, indent=2)))
+    print(c.captureModes[c.gcSettings["captureMode"]]["description"])
     char = getch()
     if (char == "q"):
         feeder.move(1000)
@@ -235,7 +236,7 @@ while True:
     elif (char == "n"):
         c.gcSettings["brightness"]-= 1
         try:
-            c.brightness=c.gcSettings["brightness"]
+            c.brightness=c.gcSettings["brightness"]            
         except Exception:
             c.gcSettings["brightness"]+= 1
         c.gcSaveSettings()
@@ -247,11 +248,8 @@ while True:
             c.gcSettings["brightness"]-= 1
         c.gcSaveSettings()            
     elif char == "k":
-        if c.gcSettings["bracketing"]==0:
-            c.gcSettings["bracketing"]=1
-        elif c.gcSettings["bracketing"]==1:
-            c.gcSettings["bracketing"]=0
-            c.gcSaveSettings()
+        c.gcSettings["captureMode"]=c.captureModes[c.gcSettings["captureMode"]]["next"]
+        c.gcSaveSettings()
     elif (char == "\033"):
         break
 
