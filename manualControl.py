@@ -120,18 +120,15 @@ for line in range(0,60):
     print("                             ")
 print("-------------")
 print("FEEDER")
-print("q: adv")
-print("w: toggle dir")
+print("q: adv, w: dir")
 print("e: toggle pwr")
 print("-------------")
 print("MAINDRIVE")
-print("a: adv")
-print("s: toggle dir")
+print("a: adv, s: dir")
 print("d: toggle pwr")
 print("-------------")
 print("FEEDER")
-print("z: adv")
-print("x: toggle dir")
+print("z: adv, x: dir")
 print("c: toggle pwr")
 print("-------------")
 print("1 to 9: zooms")
@@ -140,6 +137,7 @@ print("p: inc compensation")
 print("o: dec compensation")
 print("f: freeze WB")
 print("g: next WB mode")
+print("rtyu: manual WB adj")
 print("h: next EXP mode")
 print("j: Enter Exposure")
 print("v b: contrast")
@@ -200,6 +198,19 @@ while True:
         c.zoom=c.gcZooms[int(char)]
     elif char == "f":
         c.freezeWhiteBalance()
+    elif char in ["r","t","y","u"]:
+        if char=="r":
+            c.gcSettings["awb_gains"][0]=c.gcSettings["awb_gains"][0]/1.05
+        elif char=="t":
+            c.gcSettings["awb_gains"][0]=c.gcSettings["awb_gains"][0]*1.05            
+        elif char=="y":
+            c.gcSettings["awb_gains"][1]=c.gcSettings["awb_gains"][1]/1.05
+            
+        elif char=="u":
+            c.gcSettings["awb_gains"][1]=c.gcSettings["awb_gains"][1]*1.05
+        c.gcSaveSettings()
+        c.awb_gains=c.gcSettings["awb_gains"]
+            
     elif char == "g":
         c.awb_mode=c.selectOther(c.awb_mode, c.gcAwbModes, 1)
         c.gcSettings["awb_mode"]=c.awb_mode

@@ -1,16 +1,16 @@
 {
     "PyDNG": {
-        "description":"12bits Raw photos saved in dng using PyDNG library",
+        "description":"12bits DNGs",
         "suffix":"dng",
 	"next": "singleJpg"
     },
     "singleJpg":{
-        "description":"simple single unprocessed jpg",
+        "description":"simple jpg",
         "suffix":"jpg",
 	"next": "bracketing"
     },   
     "bracketing":{
-        "description":"Bracketing (0,+1,-1) saved in jpg ",
+        "description":"Bracketing (0,+1,-1) JPGs ",
         "suffix":"jpg",
 	"next": "PyDNG"
     }
