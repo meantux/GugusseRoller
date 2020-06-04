@@ -21,8 +21,11 @@ h=open("cameraSettings.json", "r")
 camsettings=json.load(h)
 h.close()
 
-c=GCamera()
+h=open("previewSettings.json", "r")
+p=json.load(h)
+h.close()
 
+c=GCamera()
 
 img=Image.open('gfx/quadrillage.png')
 pad = Image.new('RGB', (
@@ -33,9 +36,9 @@ pad = Image.new('RGB', (
 pad.paste(img, (0, 0))
 
 
-o=c.add_overlay(pad.tobytes(), size=img.size, window=(256,0,1024,768))
+o=c.add_overlay(pad.tobytes(), size=img.size, window=(p['offsetX'],p['offsetY'],p['width'],p['height']))
 o.fullscreen=False
-o.window=(256,0,1024,768)
+o.window=(p['offsetX'],p['offsetY'],p['width'],p['height'])
 o.alpha=0
 o.layer=3
 
@@ -70,6 +73,7 @@ class SimpleMotor:
         h=open("hardwarecfg.json")
         cfg=json.load(h)
         h.close()
+
         self.enable=cfg[name]["pinEnable"]
         self.direction=cfg[name]["pinDirection"]
         self.step=cfg[name]["pinStep"]
