@@ -86,13 +86,13 @@ class GCamera(PiCamera):
             self.capture(fn)
             self.shutter_speed=int(self.gcSettings["shutter_speed"]/2)
             os.rename(fn, fnComplete)
-            sleep(1)
+            sleep(0.2)
             fn="/dev/shm/{:05d}_l.jpg".format(self.framecount)
             fnComplete="/dev/shm/complete/{:05d}_l.jpg".format(self.framecount)
             self.capture(fn)
             self.shutter_speed=int(self.gcSettings["shutter_speed"]*2)
             os.rename(fn, fnComplete)
-            sleep(1)
+            sleep(0.2)
             fn="/dev/shm/{:05d}_h.jpg".format(self.framecount)
             fnComplete="/dev/shm/complete/{:05d}_h.jpg".format(self.framecount)
             self.capture(fn)
@@ -109,3 +109,4 @@ class GCamera(PiCamera):
             os.remove(fn)
 
         self.framecount+= 1
+        print ("Next:{}".format(self.framecount)) 

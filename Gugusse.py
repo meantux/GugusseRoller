@@ -59,7 +59,7 @@ class Gugusse():
            self.filmdrive.disable()
            self.pickup.disable()
            raise Exception("Motor Fault!")
-        sleep(0.2)
+        sleep(0.05)
         try:
            self.cam.captureCycle()
         except Exception as e:
@@ -97,4 +97,3 @@ if feederDirection == "cw":
 capture=Gugusse(cfg, firstNum)
 while True:
     capture.frameAdvance()
-    sleep(0.05)
