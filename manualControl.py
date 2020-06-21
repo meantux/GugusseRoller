@@ -153,14 +153,35 @@ def toggleOverlay(o, overlay):
     else:
         o.alpha=196
     return not overlay
-    
+
+mode="normal"
+invalue=""
 while True:
     for line in range(5,20):
         print("\033[{};0H                                            \n".format(line))
     print("\033[5;0H{}".format(json.dumps(c.gcSettings, indent=2)))
     print(c.captureModes[c.gcSettings["captureMode"]]["description"])
     char = getch()
-    if (char == "q"):
+    if mode == "inputShutterSpeed":
+        if char in ["0","1","2","3","4","5","6","7","8","9","0"]:
+            invalue="{}{}".format(invalue,char)
+            print(invalue)
+        elif char=="\e":
+            mode="normal"
+        elif char=="\r":
+            try:
+                val=int(invalue)
+                if val > 0 and val < 32768 :
+                    c.shutter_speed=val
+                    print("exposure: {}".format(c.shutter_speed))
+                    c.gcSettings["shutter_speed"]=val
+                    c.gcSaveSettings()
+                else:
+                    print ("Invalid value")
+            except:
+                pass
+            mode="normal"
+    elif (char == "q"):
         feeder.move(1000)
     elif (char == "w"):
         feeder.changeDirection()
@@ -220,16 +241,8 @@ while True:
         c.gcSettings["exposure_mode"]=c.exposure_mode
         c.gcSaveSettings()
     elif char == "j":
-        val= -1
-        try:
-            val=int(raw_input("Enter value: "))
-        except Exception:
-            pass        
-        if val >= 0:
-            c.shutter_speed=val
-        print("exposure: {}".format(c.shutter_speed))
-        c.gcSettings["shutter_speed"]=val
-        c.gcSaveSettings()
+        mode="inputShutterSpeed"
+        invalue=""
     elif (char == "v"):
         c.gcSettings["contrast"]-= 1
         try:
