@@ -94,6 +94,7 @@ except Exception as e:
    sys.exit(0)
 if feederDirection == "cw":
    cfg["feeder"]["invert"]=not cfg["feeder"]["invert"]
+   cfg["pickup"]["invert"]=not cfg["pickup"]["invert"]
 capture=Gugusse(cfg, firstNum)
 while True:
     capture.frameAdvance()

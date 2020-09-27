@@ -8,7 +8,7 @@
     "exposure_mode": "off",
     "exposure_compensation": 0,
     "iso": 150,
-    "awb_mode": "off",
-    "captureMode": "bracketing",
-    "shutter_speed": 16000
+    "awb_mode": "tungsten",
+    "captureMode": "PyDNG",
+    "shutter_speed": 20000
 }

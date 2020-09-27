@@ -30,7 +30,7 @@ void loop () {
             max= -1;        
         }else{
             learning=LOW;
-            threshold=min+((max-min)/8);                
+            threshold=min+((max-min)/3);                
         }       
     }
     current=analogRead(analog);
@@ -42,7 +42,7 @@ void loop () {
                 min=current;
 	}
     } else {
-        if (currentState == LOW && current < threshold){
+        if (currentState == LOW && current <= threshold){
             digitalWrite(outPin,HIGH);
             currentState=HIGH;
         }
