@@ -59,6 +59,7 @@ class TrinamicSilentMotor():
             GPIO.setup(self.pinDirection, GPIO.OUT, initial=1)
         self.pos=int(0)
         GPIO.setup(self.SensorStopPin, GPIO.IN)
+                
     def enable(self):
         GPIO.output(self.pinEnable, 0)
     def disable(self):
