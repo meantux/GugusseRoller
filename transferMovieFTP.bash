@@ -80,9 +80,18 @@ sleep 2
 touch /dev/shm/transferInProgress.flag
 ./sendWhileRunning.bash "$2" $suffix &
 
+# turn on the lights
+./lights.py on
+
 # start the Gugusse.py
 echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
 echo ./Gugusse.py $1 $startNumber $3
 ./Gugusse.py $1 $startNumber $3
+
 sleep 5
+# turn off the lights and motors.
+./lights.py off
+./motors.py off
+
+# Remove the flag that kept the ftp script running
 rm /dev/shm/transferInProgress.flag

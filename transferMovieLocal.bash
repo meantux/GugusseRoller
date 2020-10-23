@@ -82,4 +82,6 @@ touch /dev/shm/transferInProgress.flag
 echo ./Gugusse.py $1 $startNumber $3
 ./Gugusse.py $1 $startNumber $3
 sleep 2
+./motors.py off
+./lights.py off
 rm /dev/shm/transferInProgress.flag

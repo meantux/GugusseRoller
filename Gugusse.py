@@ -14,6 +14,7 @@ import threading
 import json
 from GCamera import GCamera
 from fractions import Fraction
+from Lights import Lights
 import os
 GPIO.setmode(GPIO.BCM) 
 
@@ -41,6 +42,7 @@ class Gugusse():
         self.filmdrive.enable()
         self.pickup.enable()
         self.cam=GCamera(start_frame)
+        self.lights=Lights("on")
         
            
     def frameAdvance(self):
@@ -58,6 +60,7 @@ class Gugusse():
            self.feeder.disable()
            self.filmdrive.disable()
            self.pickup.disable()
+           self.lights.set("off")
            raise Exception("Motor Fault!")
         sleep(0.05)
         try:
@@ -68,6 +71,7 @@ class Gugusse():
            self.pickup.disable()
            print("Failure to capture image: {}".format(e))
            self.cam.close()
+           self.lights.set("off")
            raise Exception("Stop")
            
 
