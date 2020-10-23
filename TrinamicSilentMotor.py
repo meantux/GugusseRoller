@@ -54,9 +54,9 @@ class TrinamicSilentMotor():
         GPIO.setup(self.pinStep, GPIO.OUT, initial=0)
         GPIO.setup(self.pinEnable, GPIO.OUT, initial=0)
         if cfg["invert"]:
-            GPIO.setup(self.pinDirection, GPIO.OUT, initial=0)
-        else:
             GPIO.setup(self.pinDirection, GPIO.OUT, initial=1)
+        else:
+            GPIO.setup(self.pinDirection, GPIO.OUT, initial=0)
         self.pos=int(0)
         GPIO.setup(self.SensorStopPin, GPIO.IN)
                 

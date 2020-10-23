@@ -4,8 +4,8 @@
 	"pinDirection":14,
 	"pinStep":15,
 	"invert": true,
-	"stopPin": 17,
-	"learnPin": 4,
+	"stopPin": 26,
+	"learnPin": 19,
 	"stopState":1
     },
     "feeder": {
@@ -13,7 +13,7 @@
 	"pinDirection":23,
 	"pinStep":24,
 	"invert": false,
-        "stopPin": 3,
+        "stopPin": 6,
 	"stopState":1,
 	"DefaultTargetTime": 0.25,
 	"minSpeed": 20,
@@ -24,10 +24,15 @@
 	"pinDirection":8,
 	"pinStep":7,
 	"invert": false,
-        "stopPin": 5,
+        "stopPin": 13,
 	"stopState":1,
 	"DefaultTargetTime": 0.25,
 	"minSpeed": 20,
 	"maxSpeed": 20000
+    },
+    "lights": {
+	"red": 17,
+	"green": 27,
+	"blue": 22
     }
 }
