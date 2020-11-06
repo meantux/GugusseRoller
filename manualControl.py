@@ -7,6 +7,7 @@ import RPi.GPIO as GPIO
 import threading
 import json
 from GCamera import GCamera
+from Lights import Lights
 from fractions import Fraction
 from PIL import Image
 import os
@@ -20,6 +21,8 @@ GPIO.setmode(GPIO.BCM)
 h=open("cameraSettings.json", "r")
 camsettings=json.load(h)
 h.close()
+
+Lights("on")
 
 c=GCamera()
 
