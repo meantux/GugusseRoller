@@ -22,11 +22,18 @@ h=open("cameraSettings.json", "r")
 camsettings=json.load(h)
 h.close()
 
-Lights("on")
-
-c=GCamera()
+lit=Lights("on")
 
 
+
+if len(sys.argv)>1:
+    firstNum=int(sys.argv[1])
+else:
+    firstNum=0
+
+c=GCamera(firstNum)
+
+    
 img=Image.open('gfx/quadrillage.png')
 pad = Image.new('RGB', (
         ((img.size[0] + 31) // 32) * 32,
@@ -244,7 +251,9 @@ while True:
         if char=="r":
             c.gcSettings["awb_gains"][0]=c.gcSettings["awb_gains"][0]/1.05
         elif char=="t":
-            c.gcSettings["awb_gains"][0]=c.gcSettings["awb_gains"][0]*1.05            
+            c.gcSettings["awb_gains"][0]=c.gcSettings["awb_gains"][0]*1.05
+            if c.gcSettings["awb_gains"][0]>=8.0:
+                c.gcSettings["awb_gains"][0]=7.999
         elif char=="y":
             c.gcSettings["awb_gains"][1]=c.gcSettings["awb_gains"][1]/1.05
             
@@ -295,9 +304,13 @@ while True:
     elif char == "k":
         c.gcSettings["captureMode"]=c.captureModes[c.gcSettings["captureMode"]]["next"]
         c.gcSaveSettings()
+    elif char == ".":
+        c.captureCycle()
+        
+        
     elif (char == "\033"):
         break
-
+lit.set("off")
 loopInputs=False
 sleep(0.2)
 t.join()

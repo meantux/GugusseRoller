@@ -43,7 +43,7 @@ class Rewind():
 import sys
 h=open("hardwarecfg.json")
 cfg=json.load(h)
-#cfg["feeder"]["invert"]= not cfg["feeder"]["invert"]
+cfg["feeder"]["invert"]= not cfg["feeder"]["invert"]
 h=open("rewind.json")
 rew=json.load(h)
 for item in rew:

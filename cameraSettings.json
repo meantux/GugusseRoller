@@ -1,14 +1,14 @@
 {
     "awb_gains": [
-        4.962541669189455,
-        1.356591796875
+        3.5267857142857135,
+        1.2919921875
     ],
-    "brightness": 50,
-    "contrast": 1,
+    "brightness": 51,
+    "contrast": 0,
     "exposure_mode": "off",
-    "exposure_compensation": 1,
+    "exposure_compensation": 0,
     "iso": 100,
     "awb_mode": "off",
     "captureMode": "PyDNG",
-    "shutter_speed": 3000
+    "shutter_speed": 14000
 }

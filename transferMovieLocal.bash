@@ -83,5 +83,5 @@ echo ./Gugusse.py $1 $startNumber $3
 ./Gugusse.py $1 $startNumber $3
 sleep 2
 ./motors.py off
-./lights.py off
+./Lights.py off
 rm /dev/shm/transferInProgress.flag
