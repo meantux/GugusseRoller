@@ -23,6 +23,13 @@ class TrinamicSilentMotor():
                 self.targetTime=cfg["targetTime"]
             self.minSpeed=cfg["minSpeed"]
             self.maxSpeed=cfg["maxSpeed"]
+        if "learnPin" in cfg:
+            self.learning=True
+            self.learnPin=cfg["learnPin"]
+            GPIO.setup(self.learnPin, GPIO.OUT, initial=1)
+        else:
+            self.learning=False
+            self.learnPin= -1
         self.accel=cfg["accel"]
         self.histo=[]
         self.skipHisto=3
@@ -47,11 +54,12 @@ class TrinamicSilentMotor():
         GPIO.setup(self.pinStep, GPIO.OUT, initial=0)
         GPIO.setup(self.pinEnable, GPIO.OUT, initial=0)
         if cfg["invert"]:
-            GPIO.setup(self.pinDirection, GPIO.OUT, initial=0)
-        else:
             GPIO.setup(self.pinDirection, GPIO.OUT, initial=1)
+        else:
+            GPIO.setup(self.pinDirection, GPIO.OUT, initial=0)
         self.pos=int(0)
         GPIO.setup(self.SensorStopPin, GPIO.IN)
+                
     def enable(self):
         GPIO.output(self.pinEnable, 0)
     def disable(self):
@@ -83,6 +91,8 @@ class TrinamicSilentMotor():
         self.targetSpeed=self.speed
         self.currentSpeed=0
         self.ignore=self.ignoreInitial
+        if self.learning:
+            GPIO.output(self.learnPin, 1)
         if self.target < self.pos:
             self.fault=True
             raise Exception("We do not support backward yet")
@@ -92,6 +102,8 @@ class TrinamicSilentMotor():
         while waitUntil != None:
             reading=GPIO.input(self.SensorStopPin)
             #log.append(reading)
+            if self.learning and self.ignore == 5:
+                GPIO.output(self.learnPin,0)
             if self.ignore > 0:
                 self.ignore -= 1
             else:

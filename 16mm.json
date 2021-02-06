@@ -1,26 +1,26 @@
 {
     "filmdrive": {
-	"speed": 3000.0,
+	"speed": 4000.0,
 	"speed2": 200.0,
-	"accel": 100.0,
+	"accel": 10.0,
 	"ignoreInitial": 1700,
-	"faultTreshold": 20500
+	"faultTreshold": 8000
 
     },
     "feeder": {
 	"speed": 1000.0,
 	"speed2": 800.0,
-	"accel": 200.0,
+	"accel": 50.0,
 	"ignoreInitial": 10,
-	"faultTreshold": 4000,
-	"targetTime": 0.5
+	"faultTreshold": 8000,
+	"targetTime": 0.33
     },
     "pickup": {
 	"speed": 1000.0,
 	"speed2": 800.0,
-	"accel": 200.0,
+	"accel": 50.0,
 	"ignoreInitial": 10,
-	"faultTreshold": 4000,
-	"targetTime": 0.5
+	"faultTreshold": 8000,
+	"targetTime": 0.33
     }
 }

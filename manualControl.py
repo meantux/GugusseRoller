@@ -7,6 +7,7 @@ import RPi.GPIO as GPIO
 import threading
 import json
 from GCamera import GCamera
+from Lights import Lights
 from fractions import Fraction
 from PIL import Image
 import os
@@ -21,9 +22,18 @@ h=open("cameraSettings.json", "r")
 camsettings=json.load(h)
 h.close()
 
-c=GCamera()
+lit=Lights("on")
 
 
+
+if len(sys.argv)>1:
+    firstNum=int(sys.argv[1])
+else:
+    firstNum=0
+
+c=GCamera(firstNum)
+
+    
 img=Image.open('gfx/quadrillage.png')
 pad = Image.new('RGB', (
         ((img.size[0] + 31) // 32) * 32,
@@ -74,6 +84,13 @@ class SimpleMotor:
         self.direction=cfg[name]["pinDirection"]
         self.step=cfg[name]["pinStep"]
         self.invert=cfg[name]["invert"]
+        if name=="filmdrive":
+            self.learning=True
+            self.learnPin=cfg[name]["learnPin"]
+            GPIO.setup(self.learnPin, GPIO.OUT, initial=0)
+            self.learnHigh=False
+        else:
+            self.learning=False            
         GPIO.setup(self.enable, GPIO.OUT, initial=GPIO.LOW)
         if self.invert:
             self.actualDir=GPIO.LOW
@@ -84,6 +101,16 @@ class SimpleMotor:
         self.actualState=GPIO.LOW
         self.actualToggle=GPIO.LOW
         self.stopPin=cfg[name]["stopPin"]
+
+    def learnToggle(self):
+        if self.learning:
+            if self.learnHigh:
+                GPIO.output(self.learnPin,GPIO.LOW)
+                self.learnHigh=False
+            else:
+                GPIO.output(self.learnPin,GPIO.HIGH)
+                self.learnHigh=True
+        print("learning: "+str(self.learnHigh))
     def changeDirection(self):
         if self.actualDir==GPIO.HIGH:
             self.actualDir=GPIO.LOW
@@ -122,12 +149,10 @@ print("-------------")
 print("FEEDER")
 print("q: adv, w: dir")
 print("e: toggle pwr")
-print("-------------")
 print("MAINDRIVE")
 print("a: adv, s: dir")
 print("d: toggle pwr")
-print("-------------")
-print("FEEDER")
+print("PICKUP")
 print("z: adv, x: dir")
 print("c: toggle pwr")
 print("-------------")
@@ -143,6 +168,7 @@ print("j: Enter Exposure")
 print("v b: contrast")
 print("n m: brightness")
 print("k: change capture mode")
+print("l: toggle learn bit")
 print("ESC: exit")
 print("SPC: toggle grid")
 
@@ -189,6 +215,8 @@ while True:
         feeder.toggle()
     elif (char == "a"):
         filmdrive.move(1000)        
+    elif (char == "l"):
+        filmdrive.learnToggle()        
     elif (char == "s"):
         filmdrive.changeDirection()
     elif (char == "d"):
@@ -223,7 +251,9 @@ while True:
         if char=="r":
             c.gcSettings["awb_gains"][0]=c.gcSettings["awb_gains"][0]/1.05
         elif char=="t":
-            c.gcSettings["awb_gains"][0]=c.gcSettings["awb_gains"][0]*1.05            
+            c.gcSettings["awb_gains"][0]=c.gcSettings["awb_gains"][0]*1.05
+            if c.gcSettings["awb_gains"][0]>=8.0:
+                c.gcSettings["awb_gains"][0]=7.999
         elif char=="y":
             c.gcSettings["awb_gains"][1]=c.gcSettings["awb_gains"][1]/1.05
             
@@ -274,9 +304,13 @@ while True:
     elif char == "k":
         c.gcSettings["captureMode"]=c.captureModes[c.gcSettings["captureMode"]]["next"]
         c.gcSaveSettings()
+    elif char == ".":
+        c.captureCycle()
+        
+        
     elif (char == "\033"):
         break
-
+lit.set("off")
 loopInputs=False
 sleep(0.2)
 t.join()
