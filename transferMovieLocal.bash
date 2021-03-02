@@ -30,6 +30,24 @@ if [ "${outputPath:0:1}" != "/" ]; then
 	echo "$USAGE"
         exit -1
 fi
+
+captureMode=`cat cameraSettings.json | jq .captureMode`
+if [ -n "$captureMode" ]; then
+    echo We could not figure out the capture mode
+    exit 0
+fi
+
+
+suffix=`cat captureModes.json | jq .${captureMode}.suffix`
+
+if [ -n "$suffx" ]; then
+   echo We could not figure out the suffix
+   exit 0
+fi
+
+echo "captureMode: $captureMode"
+echo "suffix: $suffix"
+
 echo -n "does the directory already exists? " 
 # Does the directory already exists
 if [ -d "$outputPath" ]; then
@@ -44,19 +62,17 @@ if [ -d "$outputPath" ]; then
     # which is the last file in it so we could resume from
     # there
     pushd "$outputPath"
-    lastfile=`ls *.jpg | sort | tail -n 1`
-    popd
-    if [ "$lastfile" == "00000.jpg" ]; then
-	export startNumber=1
-    elif [ -n "$lastfile" ]; then
-	lastnum=${lastfile%.jpg}
+    lastfile=`ls *.${suffix} | sort | tail -n 1`
+    if [ -n "$lastfile" ] && [ -f "$lastfile" ]; then
+        lastnum=${lastfile:0:5}
 	while [ "${lastnum:0:1}" == "0" ]; do
 	    export lastnum=${lastnum:1}
 	done
 	export startNumber=$((lastnum+1))
     else
-	export startNumber=0
+	startNumber=0
     fi
+    popd
 else
     echo "No!"
     # $outputPath does not exists, check if we can create it
@@ -76,7 +92,7 @@ killall sendWhileRunning.bash &> /dev/null
 killall copyWhileRunning.bash &> /dev/null
 sleep 1
 touch /dev/shm/transferInProgress.flag
-./copyWhileRunning.bash "$outputPath" &
+./copyWhileRunning.bash "$outputPath" "$suffix" &
 
 # start the Gugusse.py
 echo ./Gugusse.py $1 $startNumber $3
