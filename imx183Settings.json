@@ -1,0 +1,11 @@
+{
+    "camera":{
+	"width": 5440,
+	"height": 3696,
+	"deviceFile": "/dev/video0"
+    },
+    "preview":{
+	"width": 1200,
+	"height": 680
+    }    
+}

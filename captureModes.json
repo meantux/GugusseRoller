@@ -1,17 +1,12 @@
 {
-    "PyDNG": {
-        "description":"12bits DNGs",
-        "suffix":"dng",
-	"next": "singleJpg"
+    "Color": {
+	"description": "48bits TIFs",
+	"suffix":"tif",
+	"next":"Monochrome"
     },
-    "singleJpg":{
-        "description":"simple jpg",
-        "suffix":"jpg",
-	"next": "bracketing"
-    },   
-    "bracketing":{
-        "description":"Bracketing (0,+1,-1) JPGs ",
-        "suffix":"jpg",
-	"next": "PyDNG"
+    "Monochrome": {
+	"description": "16bits TIFs",
+	"suffix":"tif",
+	"next":"Color"
     }
 }

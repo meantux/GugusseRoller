@@ -12,7 +12,7 @@ from time import sleep, time
 import RPi.GPIO as GPIO
 import threading
 import json
-from GCamera import GCamera
+from ICamera import ICamera
 from fractions import Fraction
 from Lights import Lights
 import os
@@ -41,7 +41,7 @@ class Gugusse():
         self.feeder.enable()
         self.filmdrive.enable()
         self.pickup.enable()
-        self.cam=GCamera(start_frame)
+        self.cam=ICamera(start_frame)
         self.lights=Lights("on")
         
            
@@ -56,7 +56,7 @@ class Gugusse():
            self.pickup.disable()
            self.lights.set("off")
            raise Exception("Motor Fault!")
-        sleep(0.05)
+        sleep(1)
         try:
            self.cam.captureCycle()
         except Exception as e:

@@ -9,6 +9,6 @@
     "exposure_compensation": 0,
     "iso": 100,
     "awb_mode": "off",
-    "captureMode": "PyDNG",
+    "captureMode": "Color",
     "shutter_speed": 32000
 }

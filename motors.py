@@ -20,7 +20,7 @@ else:
     value=GPIO.HIGH
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(cfg["filmdrive"]["pinEnable"],GPIO.OUT, initial=value)
+GPIO.setup(cfg["filmdrive"]["pinEnable"],GPIO.OUT, initial=GPIO.HIGH)
 GPIO.setup(cfg["feeder"]["pinEnable"],GPIO.OUT, initial=value)
 GPIO.setup(cfg["pickup"]["pinEnable"],GPIO.OUT, initial=value)
 
