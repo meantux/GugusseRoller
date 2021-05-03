@@ -49,13 +49,7 @@ class Gugusse():
         m1=MotorThread(self.filmdrive)
         m2=MotorThread(self.feeder)
         m3=MotorThread(self.pickup)
-        m2.start()
-        m3.start()
-        m3.join()
-        m2.join()
-        m1.start()
-        m1.join()
-        self.cam.gcApplySettings()
+        #self.cam.gcApplySettings()
         if m1.motor.fault or m2.motor.fault or m3.motor.fault:
            self.feeder.disable()
            self.filmdrive.disable()
@@ -73,6 +67,12 @@ class Gugusse():
            self.cam.close()
            self.lights.set("off")
            raise Exception("Stop")
+        m2.start()
+        m3.start()
+        m3.join()
+        m2.join()
+        m1.start()
+        m1.join()
            
 
         

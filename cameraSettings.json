@@ -1,7 +1,7 @@
 {
     "awb_gains": [
-        3.5267857142857135,
-        1.2919921875
+        4.405693359375,
+        1.17578125
     ],
     "brightness": 51,
     "contrast": 0,
@@ -10,5 +10,5 @@
     "iso": 100,
     "awb_mode": "off",
     "captureMode": "PyDNG",
-    "shutter_speed": 14000
+    "shutter_speed": 32000
 }

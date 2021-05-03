@@ -1,13 +1,23 @@
 #/bin/bash
 
 
-USAGE="$0 <output path>"
+USAGE="$0 <output path> [<suffix>]"
+
+
 
 
 if [ -z "$1" ]; then
     echo "$USAGE"
     exit -1
 fi
+
+if [ -n "$2" ] ; then
+    suffix=$2
+else
+    suffix=jpg
+fi
+
+
 export dirName="$1"
 
 mkdir -p /dev/shm/complete
@@ -17,7 +27,7 @@ if [ ! -d "$dirName" ]; then
 fi
 
 function sendAndDelete(){
-    if [ "$1" == "*.jpg" ]; then
+    if [ "$1" == "*.$suffix" ]; then
 	#echo no files, sleeping 1 sec
 	sleep 1
     else
@@ -28,5 +38,5 @@ function sendAndDelete(){
 
 cd /dev/shm/complete
 while [ -f "/dev/shm/transferInProgress.flag" ]; do
-    sendAndDelete *.jpg
+    sendAndDelete *.$suffix
 done
