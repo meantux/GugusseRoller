@@ -19,6 +19,13 @@ formatFile="$1"
 outputPath="$2"
 orientation="$3"
 
+source ftpserver.conf
+
+captureMode=`cat cameraSettings.json | jq .captureMode | tr -d "\""`
+echo "captureMode=$captureMode (`cat captureModes.json | jq .$captureMode.description | tr -d \"\\\"\"`)"
+suffix=`cat captureModes.json | jq .$captureMode.suffix | tr -d "\""`
+echo "files suffix=$suffix"
+
 echo check if directory is a full path
 # check that directory is a full path
 if [ "${outputPath:0:1}" != "/" ]; then
@@ -44,18 +51,23 @@ if [ -d "$outputPath" ]; then
     # which is the last file in it so we could resume from
     # there
     pushd "$outputPath"
-    lastfile=`ls *.jpg | sort | tail -n 1`
+    lastfile=`ls *.$suffix | sort | tail -n 1`
     popd
-    if [ "$lastfile" == "00000.jpg" ]; then
-	export startNumber=1
-    elif [ -n "$lastfile" ]; then
-	lastnum=${lastfile%.jpg}
-	while [ "${lastnum:0:1}" == "0" ]; do
-	    export lastnum=${lastnum:1}
-	done
-	export startNumber=$((lastnum+1))
-    else
+    lastNum=`echo $lastFile | cut -c1-5`
+    echo lastNum=$lastNum
+    if [ -z "$lastFile" ]; then
+	echo "The directory existed but we couldn't find a .$suffix in it"
+	echo "therefore we'll start with 0, press Enter if you agree"
+	echo "or press Ctrl-C to cancel"
+	read
 	export startNumber=0
+    elif [ "$lastNum" == "00000" ]; then
+	export startNumber=1
+    else
+	while [ "${lastNum:0:1}" == "0" ]; do
+	    export lastNum=${lastNum:1}
+	done
+	startNumber=$((lastNum+1))
     fi
 else
     echo "No!"
@@ -76,7 +88,7 @@ killall sendWhileRunning.bash &> /dev/null
 killall copyWhileRunning.bash &> /dev/null
 sleep 1
 touch /dev/shm/transferInProgress.flag
-./copyWhileRunning.bash "$outputPath" &
+./copyWhileRunning.bash "$outputPath" "$suffix" &
 
 # start the Gugusse.py
 echo ./Gugusse.py $1 $startNumber $3

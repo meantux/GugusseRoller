@@ -114,22 +114,22 @@ class TrinamicSilentMotor():
                         self.shortsInARow+= 1;
                     else:
                         self.shortsInARow=0
-                    if self.shortsInARow >= 5:
+                    if self.shortsInARow >= 10:
                         self.fault=True
-                        raise Exception("\033[1;31mFAULT\033[0m: only the lowest amount of steps for 5 cycles in a row")
+                        raise Exception("\033[1;31mFAULT\033[0m: only the lowest amount of steps for 10 cycles in a row")
                     if self.autoSpeed:
                         if self.skipHisto > 0:
                             self.skipHisto-= 1
                             return
                         delta=time()-self.moveStart
                         self.histo.append(delta)
-                        if len(self.histo)<6:
+                        if len(self.histo)<3:
                             return
-                        self.histo=self.histo[-5:]
+                        self.histo=self.histo[-3:]
                         avg=sum(self.histo)/len(self.histo)
-                        if abs(avg-self.targetTime)<0.01:
+                        if abs(avg-self.targetTime)<0.001:
                             return
-                        gamma=20.0*(avg-self.targetTime)/(self.targetTime*100.0)
+                        gamma=10.0*(avg-self.targetTime)/(self.targetTime*100.0)
                         newspeed=self.speed2 * (1.0 + gamma)
                         self.speed2=int(newspeed)
                         if self.speed2 < self.minSpeed:
