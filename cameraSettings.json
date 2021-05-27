@@ -10,5 +10,10 @@
     "iso": 100,
     "awb_mode": "off",
     "captureMode": "Color",
-    "shutter_speed": 32000
+    "shutter_speed": 32000,
+    "trichromy_exposures":{
+        "red": 19059,
+	"green": 13923,
+	"blue": 12850	
+    }
 }
