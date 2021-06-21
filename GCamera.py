@@ -10,6 +10,8 @@ class GCamera(PiCamera):
         PiCamera.__init__(self)
         with open(fn, "r") as h:
             self.gcSettings=json.load(h)
+        if "image_effect" not in self.gcSettings:
+            self.gcSettings["image_effect"]="none"
         with open("captureModes.json","r") as h:
             self.captureModes=json.load(h)
         self.resolution=self.MAX_RESOLUTION
@@ -73,6 +75,7 @@ class GCamera(PiCamera):
             self.awb_gains=s["awb_gains"]
         self.brightness=s["brightness"]
         self.contrast=s["contrast"]
+        self.image_effect=s["image_effect"]
     def captureCycle(self):
         if self.captureMode == "singleJpg":
             fn="/dev/shm/{:05d}.jpg".format(self.framecount)

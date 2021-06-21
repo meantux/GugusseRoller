@@ -52,6 +52,22 @@ o.layer=3
 
 loopInputs=True
 
+def nextEffect():
+    actual=c.image_effect
+    possible=[]
+    count= 0
+    for item in c.IMAGE_EFFECTS:
+        possible.append(item)
+        if item == actual:
+            actualIdx=count
+        count+= 1
+    actualIdx+= 1
+    
+    if actualIdx >= len(c.IMAGE_EFFECTS):
+        actualIdx=0
+    c.image_effect=possible[actualIdx]
+    return(possible[actualIdx])
+    
 def displayInputs(pinA, pinB, pinC):
     GPIO.setup(pinA, GPIO.IN)
     GPIO.setup(pinB, GPIO.IN)
@@ -169,6 +185,7 @@ print("v b: contrast")
 print("n m: brightness")
 print("k: change capture mode")
 print("l: toggle learn bit")
+print(",: next image effect")
 print("ESC: exit")
 print("SPC: toggle grid")
 
@@ -306,6 +323,9 @@ while True:
         c.gcSaveSettings()
     elif char == ".":
         c.captureCycle()
+    elif char == ",":
+        c.gcSettings["image_effect"]=nextEffect()
+        c.gcSaveSettings()   
         
         
     elif (char == "\033"):
