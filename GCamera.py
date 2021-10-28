@@ -2,7 +2,7 @@ import json
 from picamera import PiCamera
 from time import sleep
 import os
-from pydng.core import RPICAM2DNG
+from pidng.core import RPICAM2DNG
 
 class GCamera(PiCamera):
     def __init__(self, framecount=0, fn="cameraSettings.json"):

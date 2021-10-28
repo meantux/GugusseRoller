@@ -1,15 +1,15 @@
 {
     "awb_gains": [
-        5.414038056867467,
-        1.4291694580078131
+        2.0703125,
+        2.82421875
     ],
     "brightness": 57,
     "contrast": 0,
     "exposure_mode": "off",
     "exposure_compensation": 0,
     "iso": 100,
-    "awb_mode": "auto",
+    "awb_mode": "off",
     "captureMode": "PyDNG",
-    "shutter_speed": 20000,
-    "image_effect": "oilpaint"
+    "shutter_speed": 32000,
+    "image_effect": "none"
 }
