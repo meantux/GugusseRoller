@@ -3,6 +3,7 @@ from tkinter import *
 from json import load
 from GCamera import GCamera
 
+
 root= Tk()
 scr_w = root.winfo_screenwidth()
 scr_h = root.winfo_screenheight()
