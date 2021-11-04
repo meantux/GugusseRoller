@@ -3,7 +3,6 @@ from tkinter import *
 from json import load
 from GCamera import GCamera
 
-
 root= Tk()
 scr_w = root.winfo_screenwidth()
 scr_h = root.winfo_screenheight()
@@ -103,6 +102,10 @@ def handleExposureModeChange(event):
         
 
 miniFrame=Frame(topFrame, highlightbackground="black", highlightthickness=1)
+imageEffect=StringVar(root)
+imageEffect.set(settings["image_effect"])
+
+
 miniFrame.pack(side="top",fill="x")
 exposition=Scale(miniFrame,from_=1,to=32767,length=scr_w-widget_w,width=8,orient=HORIZONTAL,command=handleExposureChange)
 exposition.set(settings["shutter_speed"])
@@ -182,9 +185,6 @@ if str(awbModeSelector) != "off":
 if exposureMode.get() != "off":
     print("mode is {}".format(exposureMode.get()))
     exposition.configure(state="disabled")
-
-
-
-
+              
 
 root.mainloop()

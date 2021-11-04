@@ -8,7 +8,7 @@
     "exposure_mode": "off",
     "exposure_compensation": 0,
     "iso": 100,
-    "awb_mode": "off",
+    "awb_mode": "auto",
     "captureMode": "PyDNG",
     "shutter_speed": 32000,
     "image_effect": "none",
