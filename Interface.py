@@ -82,13 +82,15 @@ def  handleImageEffectChange(event):
 def handleAwbModeChange(event):
     val=str(event)
     settings["awb_mode"]=val
-    cam.awb_mode=val
     if val == "off":
         wbGain1.configure(state="normal")
         wbGain2.configure(state="normal")
+            
+        
     else:
         wbGain1.configure(state="disabled")
         wbGain2.configure(state="disabled")
+    cam.awb_mode=val
     
 
 def handleExposureModeChange(event):
@@ -96,9 +98,15 @@ def handleExposureModeChange(event):
     settings["exposure_mode"]=val
     if val == "off":
         exposition.configure(state="normal",fg="black")    
+        if handleExposureModeChange.ExposureWasNotOff:
+            exposition.set(20000)
+            cam.shutter_speed=20000
+            handleExposureModeChange.ExposureWasNotOff=False
     else:
         exposition.configure(state="disabled",fg="gray")
+        handleExposureModeChange.ExposureWasNotOff=True
     cam.exposure_mode=val
+handleExposureModeChange.ExposureWasNotOff=False
         
 
 miniFrame=Frame(topFrame, highlightbackground="black", highlightthickness=1)
