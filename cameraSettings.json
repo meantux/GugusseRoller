@@ -1,9 +1,9 @@
 {
     "awb_gains": [
-        2.0703125,
-        2.82421875
+        2.05,
+        2.80
     ],
-    "brightness": 57,
+    "brightness": 50,
     "contrast": 0,
     "exposure_mode": "off",
     "exposure_compensation": 0,
@@ -11,5 +11,6 @@
     "awb_mode": "off",
     "captureMode": "PyDNG",
     "shutter_speed": 32000,
-    "image_effect": "none"
+    "image_effect": "none",
+    "filmFormat":"35mm"
 }
