@@ -7,10 +7,13 @@
     "contrast": 0,
     "exposure_mode": "off",
     "exposure_compensation": 0,
+    "analog_gain":1.0,
     "iso": 100,
     "awb_mode": "auto",
     "captureMode": "PyDNG",
     "shutter_speed": 32000,
     "image_effect": "none",
-    "filmFormat":"35mm"
+    "filmFormat":"35mm",
+    "meter_mode":"average",
+    "raw_format":"yuv"
 }
