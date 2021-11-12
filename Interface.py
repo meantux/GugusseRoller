@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 from tkinter import *
-from json import load
+from json import load,dump
 from GCamera import GCamera
 
 root= Tk()
@@ -9,7 +9,7 @@ scr_h = root.winfo_screenheight()
 widget_h=4
 widget_wchars=14
 widget_w=widget_wchars*10
-top_h=140
+top_h=180
 left_w=2*widget_w
 
 cam=GCamera()
@@ -64,7 +64,6 @@ awbMode=StringVar(root)
 awbMode.set(settings["awb_mode"])
 cam.awb_mode=settings["awb_mode"]
 
-
 imageEffect=StringVar(root)
 imageEffect.set(settings["image_effect"])
 cam.image_effect=settings["image_effect"]
@@ -73,10 +72,18 @@ rawFormat=StringVar(root)
 rawFormat.set(settings["raw_format"])
 cam.raw_format=settings["raw_format"]
 
-def handleExposureChange(event):
-    settings["shutter_speed"]=int(event)
-    cam.shutter_speed=int(event)
+def saveSettings():
+    with open("cameraSettings.json","wt") as h:
+        message.configure(text="Saving Settings")
+        dump(settings,h,sort_keys=True, indent=4)
+        h.close()
+        message.configure(text="Settings Saved")
 
+def handleExposureChange(event):
+    if exposureMode.get() == "off":
+        settings["shutter_speed"]=int(event)
+        cam.shutter_speed=int(event)
+        
 def handleMeterModeChange(event):
     val=str(event)
     settings["meter_mode"]=val
@@ -90,22 +97,30 @@ def handleWbGain2(event):
     settings["awb_gains"][1]=float(event)
     cam.awb_gains=settings["awb_gains"]
 
-def  handleImageEffectChange(event):
+def handleImageEffectChange(event):
     val=str(event)
     settings["image_effect"]=val
     cam.image_effect=val
 
+def handleBrightnessChange(event):
+    val=int(event)
+    settings["brightness"]=val
+    cam.brightness=val
+
+def handleContrastChange(event):
+    val=int(event)
+    settings["contrast"]=val
+    cam.contrast=val
+
 def handleAwbModeChange(event):
     val=str(event)
     settings["awb_mode"]=val
-    #if val == "off":
-    #    wbGain1.configure(state="normal")
-    #    wbGain2.configure(state="normal")
-    #        
-    #    
-    #else:
-    #    wbGain1.configure(state="disabled")
-    #    wbGain2.configure(state="disabled")
+    if val == "off":
+        wbGain1.configure(state="normal",fg="black")
+        wbGain2.configure(state="normal",fg="black")        
+    else:
+        wbGain1.configure(state="disabled",fg="grey")
+        wbGain2.configure(state="disabled",fg="grey")
     cam.awb_mode=val
 
 def handleRawFormatChange(event):
@@ -113,55 +128,67 @@ def handleRawFormatChange(event):
     settings["raw_format"]=val
     cam.raw_format=val
     
-
 def handleExposureModeChange(event):
     val=str(event)
     settings["exposure_mode"]=val
     if val == "off":
-        exposition.configure(state="normal",fg="black")    
-        if handleExposureModeChange.ExposureWasNotOff:
-            exposition.set(20000)
-            cam.shutter_speed=20000
-            #handleExposureModeChange.ExposureWasNotOff=False
-    #else:
-        #exposition.configure(state="disabled",fg="gray")
-        #handleExposureModeChange.ExposureWasNotOff=True
+        exposition.configure(state="normal",fg="black")
+        iso.configure(state="disabled",fg="gray")
+        if handleExposureModeChange.ExposureWasNotOff:            
+            cam.shutter_speed=exposition.get()
+            handleExposureModeChange.ExposureWasNotOff=False
+    else:
+        iso.configure(state="normal",fg="black")
+        cam.shutter_speed=0
+        exposition.configure(state="disabled",fg="gray")
+        handleExposureModeChange.ExposureWasNotOff=True
     cam.exposure_mode=val
+
+def handleSaturationChange(event):
+    val=int(event)
+    cam.saturation=val
+    settings["saturation"]=val
+
+def handleSharpnessChange(event):
+    val=int(event)
+    cam.sharpness=val
+    settings["saturation"]=val
 
 def handleIsoChange(event):
     val=int(event)
     settings["iso"]=val
     cam.iso=val
-    analog_gain.configure(text="Gain: {}".format(float(cam.analog_gain)))
+
+def handleCompensationChange(event):
+    val=int(event)
+    settings["compensation"]=val
+    cam.exposure_compensation=val
 
 handleExposureModeChange.ExposureWasNotOff=False
 
 
 
 miniFrame=Frame(topFrame, highlightbackground="black", highlightthickness=1)
-imageEffect=StringVar(root)
-imageEffect.set(settings["image_effect"])
-
-
 miniFrame.pack(side="top",fill="x")
-exposition=Scale(miniFrame,from_=1,to=32700,resolution=100,length=scr_w/2-widget_w,width=8,orient=HORIZONTAL,command=handleExposureChange)
-exposition.set(settings["shutter_speed"])
-exposition.pack(side="right")
-Label(miniFrame,text="Exposure:",width=widget_wchars,anchor="e").pack(side="right")
-
-iso=Scale(miniFrame,from_=100,to=800,resolution=100,length=scr_w/2-widget_w,width=8,orient=HORIZONTAL,command=handleIsoChange)
-iso.set(settings["iso"])
-iso.pack(side="right")
-Label(miniFrame,text="Iso:").pack(side="right")
-
+###### SATURATION SCALE
+saturation=Scale(miniFrame,from_= -100,to=100,length=int(scr_w/2-widget_w),width=8,resolution=1,orient=HORIZONTAL,command=handleSaturationChange)
+saturation.set(settings["saturation"])
+saturation.pack(side="right")
+Label(miniFrame, text="Saturation:",width=widget_wchars,anchor="e").pack(side="right")
+###### SHARPNESS SCALE
+sharpness=Scale(miniFrame,from_= -100,to=100,length=int(scr_w/2-widget_w),width=8,resolution=1,orient=HORIZONTAL,command=handleSharpnessChange)
+sharpness.set(settings["sharpness"])
+sharpness.pack(side="right")
+Label(miniFrame, text="Sharpness:").pack(side="right")
 
 miniFrame=Frame(topFrame, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top",fill="x")
+###### WBGAIN2 SCALE
 wbGain2=Scale(miniFrame,from_=0.1,to=7.95,length=int(scr_w/2-widget_w),width=8,resolution=0.005,orient=HORIZONTAL,command=handleWbGain2)
 wbGain2.set(settings["awb_gains"][1])
 wbGain2.pack(side="right")
 Label(miniFrame,text="      WB Gain 2:",width=widget_wchars,anchor="e").pack(side="right")
-              
+####### WBGAIN1 SCALE
 wbGain1=Scale(miniFrame,from_=0.1,to=7.95,length=int(scr_w/2-widget_w),width=8,resolution=0.005,orient=HORIZONTAL,command=handleWbGain1)
 wbGain1.set(settings["awb_gains"][0])
 wbGain1.pack(side="right")
@@ -169,15 +196,34 @@ Label(miniFrame,text="WB Gain 1:").pack(side="right")
 
 miniFrame=Frame(topFrame, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top",fill="x")
-contrast=Scale(miniFrame,from_= -100,to=100,length=int(scr_w/2-widget_w),width=8,resolution=0.005,orient=HORIZONTAL)
+####### CONTRAST SCALE
+contrast=Scale(miniFrame,from_= -100,to=100,length=int(scr_w/2-widget_w),width=8,resolution=1,orient=HORIZONTAL,command=handleContrastChange)
 contrast.set(settings["contrast"])
 contrast.pack(side="right")
 Label(miniFrame,text="Contrast:",width=widget_wchars,anchor="e").pack(side="right")
-              
-brightness=Scale(miniFrame,from_=0,to=100,length=int(scr_w/2-widget_w),width=8,resolution=0.005,orient=HORIZONTAL)
+###### EXPOSITION SCALE
+exposition=Scale(miniFrame,from_=1,to=32700,resolution=100,length=scr_w/2-widget_w,width=8,orient=HORIZONTAL,command=handleExposureChange)
+exposition.set(settings["shutter_speed"])
+exposition.pack(side="right")
+Label(miniFrame,text="Exposure:",width=widget_wchars,anchor="e").pack(side="right")
+
+miniFrame=Frame(topFrame, highlightbackground="black", highlightthickness=1)
+miniFrame.pack(side="top",fill="x")
+###### BRIGHTNESS SCALE
+brightness=Scale(miniFrame,from_=0,to=100,length=int(scr_w/3-widget_w),width=8,resolution=1,orient=HORIZONTAL,command=handleBrightnessChange)
 brightness.set(settings["brightness"])
 brightness.pack(side="right")
-Label(miniFrame,text="Brightness:").pack(side="right")
+Label(miniFrame,text="Brightness:",width=widget_wchars,anchor="e").pack(side="right")
+###### ISO SCALE
+iso=Scale(miniFrame,from_=100,to=800,resolution=100,length=scr_w/3-widget_w,width=8,orient=HORIZONTAL,command=handleIsoChange)
+iso.set(settings["iso"])
+iso.pack(side="right")
+Label(miniFrame,text="Iso:",width=widget_wchars,anchor="e").pack(side="right")
+###### AUTO-EXPOSURE COMPENSATION SCALE
+compensation=Scale(miniFrame,from_= -25,to=25,resolution=1,length=scr_w/3-widget_w,width=8,orient=HORIZONTAL,command=handleCompensationChange)
+compensation.set(settings["exposure_compensation"])
+compensation.pack(side="right")
+Label(miniFrame,text="Auto Compensate:").pack(side="right")
 
 miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top",fill="x")
@@ -211,9 +257,6 @@ meterModeSelector.pack(side="right")
 lbl=Label(miniFrame,text="Meter Mode:",width=widget_wchars,anchor="e")
 lbl.pack(side="right")
 
-
-
-
 miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top",fill="x")
 awbModeSelector=OptionMenu(miniFrame,awbMode,*cam.AWB_MODES.keys(),command=handleAwbModeChange)
@@ -238,22 +281,19 @@ rawFormatSelector.pack(side="right")
 lbl=Label(miniFrame,text="Raw Format:",width=widget_wchars,anchor="e")
 lbl.pack(side="right")
 
-
+miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
+miniFrame.pack(side="top",fill="x")
+SaveButton=Button(miniFrame, text="Save Settings", width=widget_wchars, command=saveSettings)
+SaveButton.pack(side="right")
 
 
 
 miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top",fill="x")
-analog_gain=Label(miniFrame,text="analog_gain=?",width=widget_wchars,anchor="e")
-analog_gain.pack(side="right")
+message=Label(miniFrame,text="",width=widget_wchars,anchor="e")
+message.pack(side="right")
 
-#if str(awbModeSelector) != "off":
-#    wbGain1.configure(state="disabled")
-#    wbGain2.configure(state="disabled")
-
-#if exposureMode.get() != "off":
-#    print("mode is {}".format(exposureMode.get()))
-#    exposition.configure(state="disabled")
-              
+handleAwbModeChange(awbMode.get())
+handleExposureModeChange(exposureMode.get())
 
 root.mainloop()

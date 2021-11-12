@@ -1,12 +1,11 @@
 {
     "awb_gains": [
-        3.01,
-        1.925
+        3.0,
+        2.0
     ],
-    "awb_mode": "off",
+    "awb_mode": "auto",
     "brightness": 50,
     "captureMode": "PyDNG",
-    "compensation": 0,
     "contrast": 0,
     "exposure_compensation": 0,
     "exposure_mode": "auto",
@@ -15,7 +14,7 @@
     "iso": 100,
     "meter_mode": "average",
     "raw_format": "yuv",
-    "saturation": 12,
+    "saturation": 0,
     "sharpness": 0,
-    "shutter_speed": 32000
+    "shutter_speed": 24000
 }
