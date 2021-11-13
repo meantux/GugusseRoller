@@ -2,6 +2,7 @@
 from tkinter import *
 from json import load,dump
 from GCamera import GCamera
+from time import sleep
 
 root= Tk()
 scr_w = root.winfo_screenwidth()
@@ -27,9 +28,32 @@ leftFrame.pack(side="left",fill="both")
 topLabel=Label(topFrame,text="Gugusse Roller")
 topLabel.pack(side="top")
 
+
+settings={
+    "awb_gains": [
+        3.0,
+        2.0
+    ],
+    "awb_mode": "auto",
+    "brightness": 50,
+    "captureMode": "PyDNG",
+    "contrast": 0,
+    "exposure_compensation": 0,
+    "exposure_mode": "auto",
+    "filmFormat": "35mm",
+    "image_effect": "none",
+    "iso": 100,
+    "meter_mode": "average",
+    "raw_format": "yuv",
+    "saturation": 0,
+    "sharpness": 0,
+    "shutter_speed": 24000
+}
 with open("cameraSettings.json","rt") as h:
-    settings=load(h)
+    settingsFromFile=load(h)
     h.close()
+    for item in settingsFromFile:
+        settings[item]=settingsFromFile[item]
 
 with open("captureModes.json","rt") as h:
     captureModesDetails=load(h)
@@ -73,44 +97,56 @@ rawFormat.set(settings["raw_format"])
 cam.raw_format=settings["raw_format"]
 
 def saveSettings():
+    if saveSettings.settingsChanged == False:
+        message.configure(text="No change to save")
+        return
     with open("cameraSettings.json","wt") as h:
         message.configure(text="Saving Settings")
         dump(settings,h,sort_keys=True, indent=4)
         h.close()
         message.configure(text="Settings Saved")
+        saveSettings.settingsChanged=False
+
 
 def handleExposureChange(event):
     if exposureMode.get() == "off":
         settings["shutter_speed"]=int(event)
         cam.shutter_speed=int(event)
+    saveSettings.settingsChanged=True
         
 def handleMeterModeChange(event):
     val=str(event)
     settings["meter_mode"]=val
     cam.meter_mode=val
+    saveSettings.settingsChanged=True
 
-def handleWbGain1(event):
+def handleWbGain1(event):    
     settings["awb_gains"][0]=float(event)
     cam.awb_gains=settings["awb_gains"]
+    saveSettings.settingsChanged=True
 
 def handleWbGain2(event):
     settings["awb_gains"][1]=float(event)
     cam.awb_gains=settings["awb_gains"]
+    saveSettings.settingsChanged=True
 
 def handleImageEffectChange(event):
     val=str(event)
     settings["image_effect"]=val
     cam.image_effect=val
+    saveSettings.settingsChanged=True
 
 def handleBrightnessChange(event):
     val=int(event)
     settings["brightness"]=val
     cam.brightness=val
+    saveSettings.settingsChanged=True
 
 def handleContrastChange(event):
     val=int(event)
     settings["contrast"]=val
     cam.contrast=val
+    saveSettings.settingsChanged=True
 
 def handleAwbModeChange(event):
     val=str(event)
@@ -122,11 +158,13 @@ def handleAwbModeChange(event):
         wbGain1.configure(state="disabled",fg="grey")
         wbGain2.configure(state="disabled",fg="grey")
     cam.awb_mode=val
+    saveSettings.settingsChanged=True
 
 def handleRawFormatChange(event):
     val=str(event)
     settings["raw_format"]=val
     cam.raw_format=val
+    saveSettings.settingsChanged=True
     
 def handleExposureModeChange(event):
     val=str(event)
@@ -143,26 +181,31 @@ def handleExposureModeChange(event):
         exposition.configure(state="disabled",fg="gray")
         handleExposureModeChange.ExposureWasNotOff=True
     cam.exposure_mode=val
+    saveSettings.settingsChanged=True
 
 def handleSaturationChange(event):
     val=int(event)
     cam.saturation=val
     settings["saturation"]=val
+    saveSettings.settingsChanged=True
 
 def handleSharpnessChange(event):
     val=int(event)
     cam.sharpness=val
     settings["saturation"]=val
+    saveSettings.settingsChanged=True
 
 def handleIsoChange(event):
     val=int(event)
     settings["iso"]=val
     cam.iso=val
+    saveSettings.settingsChanged=True
 
 def handleCompensationChange(event):
     val=int(event)
     settings["compensation"]=val
     cam.exposure_compensation=val
+    saveSettings.settingsChanged=True
 
 handleExposureModeChange.ExposureWasNotOff=False
 
@@ -215,7 +258,7 @@ brightness.set(settings["brightness"])
 brightness.pack(side="right")
 Label(miniFrame,text="Brightness:",width=widget_wchars,anchor="e").pack(side="right")
 ###### ISO SCALE
-iso=Scale(miniFrame,from_=100,to=800,resolution=100,length=scr_w/3-widget_w,width=8,orient=HORIZONTAL,command=handleIsoChange)
+iso=Scale(miniFrame,from_=100,to=800,resolution=100,length=scr_w/6-widget_w,width=8,orient=HORIZONTAL,command=handleIsoChange)
 iso.set(settings["iso"])
 iso.pack(side="right")
 Label(miniFrame,text="Iso:",width=widget_wchars,anchor="e").pack(side="right")
@@ -284,16 +327,19 @@ lbl.pack(side="right")
 miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top",fill="x")
 SaveButton=Button(miniFrame, text="Save Settings", width=widget_wchars, command=saveSettings)
+
 SaveButton.pack(side="right")
 
 
 
 miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top",fill="x")
-message=Label(miniFrame,text="",width=widget_wchars,anchor="e")
+message=Label(miniFrame,text="",anchor="e")
 message.pack(side="right")
 
 handleAwbModeChange(awbMode.get())
 handleExposureModeChange(exposureMode.get())
+
+saveSettings.settingsChanged=False
 
 root.mainloop()
