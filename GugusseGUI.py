@@ -3,6 +3,9 @@ from tkinter import *
 from json import load,dump
 from GCamera import GCamera
 from time import sleep
+from math import sqrt
+#from PreviewGUI import PreviewGUI
+
 
 root= Tk()
 scr_w = root.winfo_screenwidth()
@@ -18,13 +21,19 @@ px=2*widget_w
 py=top_h
 pw=scr_w-px
 ph=scr_h-py
-cam.start_preview(fullscreen=False,resolution=(1440,1080),window=(px,py,pw,ph),vflip=False,hflip=False)
+cam.start_preview(fullscreen=False,resolution=(2880,2160),window=(px,py,pw,ph),vflip=False,hflip=False)
 root.attributes("-fullscreen",True)
 
 topFrame=Frame(root, highlightbackground="black", highlightthickness=1)
 topFrame.pack(side="top",fill="both")
 leftFrame=Frame(root, highlightbackground="black", highlightthickness=1)
 leftFrame.pack(side="left",fill="both")
+previewSize=(scr_w-left_w,scr_h-top_h)
+picFrame=Frame(root, width=previewSize[0],height=previewSize[1])
+picFrame.pack(side="right",fill="both")
+#canvas=Canvas(picFrame,width=scr_w-left_w,height=scr_h-top_h)
+#canvas.pack()
+#preview=PreviewGUI(cam,canvas,previewSize)
 topLabel=Label(topFrame,text="Gugusse Roller")
 topLabel.pack(side="top")
 
@@ -171,12 +180,14 @@ def handleExposureModeChange(event):
     settings["exposure_mode"]=val
     if val == "off":
         exposition.configure(state="normal",fg="black")
+        compensation.configure(state="disabled",fg="gray")
         iso.configure(state="disabled",fg="gray")
         if handleExposureModeChange.ExposureWasNotOff:            
             cam.shutter_speed=exposition.get()
             handleExposureModeChange.ExposureWasNotOff=False
     else:
         iso.configure(state="normal",fg="black")
+        compensation.configure(state="normal",fg="black")
         cam.shutter_speed=0
         exposition.configure(state="disabled",fg="gray")
         handleExposureModeChange.ExposureWasNotOff=True
@@ -341,5 +352,72 @@ handleAwbModeChange(awbMode.get())
 handleExposureModeChange(exposureMode.get())
 
 saveSettings.settingsChanged=False
+def click_handler(event):
+    global previewSize
+    step=sqrt(2.0)
+    zoomLimit=16.0
+    z=click_handler.zoom
+    oldfactor=1.0/(z[2]-z[0])
+    #message.configure(text="{} at {},{}".format(event.num, event.x, event.y))
+    if event.num == 3:
+        # reset zoom
+        click_handler.zoom=(0.0,0.0,1.0,1.0)
+        cam.zoom=click_handler.zoom
+        message.configure(text="zoom factor: 1.00")
+    if event.num == 4:
+        # ZOOM IN
+        if oldfactor >= zoomLimit:
+            return
+        factor=step*oldfactor
+        if factor > zoomLimit:
+            factor=zoomLimit
+        maxXY=1.0-(1/factor)
+        posX=float(event.x)/float(previewSize[0])
+        newX=z[0]+posX/oldfactor-(0.5/factor)
+        if newX < 0.0:
+            newX = 0.0
+        if newX > maxXY:
+            newX=maxXY
+        posY=float(event.y)/float(previewSize[1])
+        newY=z[1]+posY/oldfactor-(0.5/factor)
+        if newY < 0.0:
+            newY = 0.0
+        if newY > maxXY:
+            newY=maxXY
+        z=(newX,newY,newX+(1.0/factor),newY+(1.0/factor))
+        cam.zoom=z
+        click_handler.zoom=z
+        message.configure(text="zoom factor: {:.2f}".format(factor))
+    elif event.num == 5:
+        # ZOOM OUT
+        if oldfactor < 0.0000001:
+            return
+        factor=oldfactor/step
+        if factor < 1.0:
+            factor=1.0
+        maxXY=1.0-(1/factor)
+        posX=float(event.x)/float(previewSize[0])
+        newX=z[0]+posX/oldfactor-(0.5/factor)
+        if newX < 0.0:
+            newX = 0.0
+        if newX > maxXY:
+            newX=maxXY
+        posY=float(event.y)/float(previewSize[1])
+        newY=z[1]+posY/oldfactor-(0.5/factor)
+        if newY < 0.0:
+            newY = 0.0
+        if newY > maxXY:
+            newY=maxXY
+        z=(newX,newY,newX+(1.0/factor),newY+(1.0/factor))
+        cam.zoom=z
+        click_handler.zoom=z
+        message.configure(text="zoom factor: {:.2f}".format(factor))
+        
+            
+click_handler.zoom=(0.0,0.0,1.0,1.0)    
+    
+picFrame.bind("<Button>",click_handler)
+
 
 root.mainloop()
+

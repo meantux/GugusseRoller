@@ -1,7 +1,7 @@
 {
     "awb_gains": [
-        2.5,
-        2.5
+        2.4,
+        2.53
     ],
     "awb_mode": "off",
     "brightness": 51,
