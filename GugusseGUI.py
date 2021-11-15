@@ -8,6 +8,7 @@ from math import sqrt
 
 
 root= Tk()
+
 scr_w = root.winfo_screenwidth()
 scr_h = root.winfo_screenheight()
 widget_h=4
@@ -15,6 +16,9 @@ widget_wchars=14
 widget_w=widget_wchars*10
 top_h=180
 left_w=2*widget_w
+
+
+
 
 cam=GCamera()
 px=2*widget_w
@@ -54,11 +58,12 @@ settings={
     "iso": 100,
     "meter_mode": "average",
     "raw_format": "yuv",
+    "direction": "cw",
     "saturation": 0,
     "sharpness": 0,
     "shutter_speed": 24000
 }
-with open("cameraSettings.json","rt") as h:
+with open("GugusseSettings.json","rt") as h:
     settingsFromFile=load(h)
     h.close()
     for item in settingsFromFile:
@@ -105,11 +110,14 @@ rawFormat=StringVar(root)
 rawFormat.set(settings["raw_format"])
 cam.raw_format=settings["raw_format"]
 
+direction=StringVar(root)
+direction.set(settings["direction"])
+
 def saveSettings():
     if saveSettings.settingsChanged == False:
         message.configure(text="No change to save")
         return
-    with open("cameraSettings.json","wt") as h:
+    with open("GugusseSettings.json","wt") as h:
         message.configure(text="Saving Settings")
         dump(settings,h,sort_keys=True, indent=4)
         h.close()
@@ -217,6 +225,11 @@ def handleCompensationChange(event):
     settings["compensation"]=val
     cam.exposure_compensation=val
     saveSettings.settingsChanged=True
+
+def handleDirectionChange(event):
+    val=str(event)
+    settings["direction"]=val
+    saveSettings.settingChanged=True
 
 handleExposureModeChange.ExposureWasNotOff=False
 
@@ -334,6 +347,17 @@ rawFormatSelector.config(width=widget_wchars)
 rawFormatSelector.pack(side="right")
 lbl=Label(miniFrame,text="Raw Format:",width=widget_wchars,anchor="e")
 lbl.pack(side="right")
+
+miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
+miniFrame.pack(side="top",fill="x")
+possibleDirections=("cw","ccw")
+directionSelector=OptionMenu(miniFrame,direction,*possibleDirections,command=handleDirectionChange)
+directionSelector.config(width=widget_wchars)
+directionSelector.pack(side="right")
+lbl=Label(miniFrame,text="Reels Direction:",width=widget_wchars,anchor="e")
+lbl.pack(side="right")
+
+
 
 miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top",fill="x")

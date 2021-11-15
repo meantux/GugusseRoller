@@ -8,6 +8,7 @@
     "captureMode": "PyDNG",
     "compensation": 0,
     "contrast": -1,
+    "direction": "ccw",
     "exposure_compensation": 0,
     "exposure_mode": "off",
     "filmFormat": "35mm",

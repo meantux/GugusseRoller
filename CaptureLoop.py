@@ -1,29 +1,13 @@
-#!/usr/bin/python3
-################################################################################
-# Gugusse.py
-# 
-#
-# By: Denis-Carl Robidoux
-# Gugusse Roller main file.
-#
-################################################################################
+from threading import Thread
+from FtpThread import FtpThread
+
+
 from TrinamicSilentMotor import TrinamicSilentMotor
 from time import sleep, time
-import RPi.GPIO as GPIO
-import threading
-import json
-from GCamera import GCamera
 from Lights import Lights
 import os
-GPIO.setmode(GPIO.BCM) 
-
-class MotorThread (threading.Thread):
-   def __init__(self, motor):
-      threading.Thread.__init__(self)
-      self.motor=motor
-   def run(self):
-      self.motor.move()
-
+import RPi.GPIO as GPIO
+GPIO.setmode(GPIO.BCM)
 
 class Gugusse():
     def __init__(self, cfg, start_frame):
@@ -72,32 +56,36 @@ class Gugusse():
         m2.join()
         m1.start()
         m1.join()
-           
 
+
+class MotorThread (threading.Thread):
+   def __init__(self, motor):
+      threading.Thread.__init__(self)
+      self.motor=motor
+   def run(self):
+      self.motor.move()
+
+
+
+class CaptureLoop(Thread):
+    def __init__ (self, settings, subDir):
+        Thread.__init__(self)
+        self.settings=settings
+        self.subDir=subDir
+        self.Loop=True
+        with open("filmFormats.json","rt") as h:
+            filmformats=load(h)
+        with open("hardwarecfg.json","rt") as h:
+            self.hardware=load(h)
+        for device in filmformats:
+            self.hardware[device].update(filmformats[device])
         
-import sys
-try:
-   print("Loading film config")
-   h=open(sys.argv[1])
-   filmcfg=json.load(h)
-   h.close()
-   print("Loading hardware config")
-   h=open("hardwarecfg.json")
-   cfg=json.load(h)
-   print("merging the 2")
-   for device in filmcfg:
-      print("merging {}".format(device))
-      cfg[device].update(filmcfg[device])
-   print("Reading the other 2 parameters")
-   firstNum=int(sys.argv[2])
-   feederDirection=sys.argv[3]
-except Exception as e:
-   print (e.message)
-   print ("\nUSAGE: {} <film format json file> <initial file number> <cw|ccw>\n".format(sys.argv[0]))
-   sys.exit(0)
-if feederDirection == "cw":
-   cfg["feeder"]["invert"]=not cfg["feeder"]["invert"]
-   cfg["pickup"]["invert"]=not cfg["pickup"]["invert"]
-capture=Gugusse(cfg, firstNum)
-while True:
-    capture.frameAdvance()
+        
+
+    def run(self):
+        
+        
+    def stopLoop(self):
+        self.Loop=False
+    
+        

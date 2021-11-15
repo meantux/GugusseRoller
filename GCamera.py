@@ -5,7 +5,7 @@ import os
 from pidng.core import RPICAM2DNG
 
 class GCamera(PiCamera):
-    def __init__(self, framecount=0, fn="cameraSettings.json"):
+    def __init__(self, framecount=0, fn="GugusseSettings.json"):
         self.framecount=framecount
         PiCamera.__init__(self)
         with open(fn, "r") as h:
@@ -26,7 +26,7 @@ class GCamera(PiCamera):
         self.suffix=self.captureModes[self.captureMode]["suffix"]
         self.DNG=RPICAM2DNG()
         
-    def gcSaveSettings(self, fn="cameraSettings.json"):
+    def gcSaveSettings(self, fn="GugusseSettings.json"):
         with open(fn, "w") as h:
             json.dump(self.gcSettings, h, indent=4)
 
