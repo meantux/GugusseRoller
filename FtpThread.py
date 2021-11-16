@@ -21,7 +21,7 @@ class FtpThread(Thread):
         if not self.connected:
             self.openConnection()
         if self.fileIndex>0:
-            return
+            return 0
         listdir=[]
         print("listing remote directory {} (this could take time if there are thousands of files)".format(self.subdir))
         try:
@@ -33,13 +33,14 @@ class FtpThread(Thread):
                 raise Exception(msg)
             print("subdirectory {} has no {} in it, we start with file index 0".format( self.subdir, self.fileExt))
             self.fileIndex=0
-            return
+            return 0
         print("sorting list")
         listdir.sort()
         lastFile=listdir[len(listdir)-1]        
         print("last file in {}={}".format(self.subdir,lastFile))
         self.fileIndex=1+int(lastFile.split(".")[0],10)
         print("File index is set at: {}".format(self.fileIndex))
+        return self.fileIndex
         
         
         

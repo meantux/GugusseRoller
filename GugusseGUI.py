@@ -2,7 +2,9 @@
 from tkinter import *
 from json import load,dump
 from GCamera import GCamera
+from CaptureLoop import CaptureLoop
 from time import sleep
+from datetime import datetime
 from math import sqrt
 #from PreviewGUI import PreviewGUI
 
@@ -12,20 +14,16 @@ root= Tk()
 scr_w = root.winfo_screenwidth()
 scr_h = root.winfo_screenheight()
 widget_h=4
-widget_wchars=14
-widget_w=widget_wchars*10
+widget_wchars=12
+widget_w=widget_wchars*12
 top_h=180
 left_w=2*widget_w
 
-
+ftpBG=None
+CaptureBG=None
 
 
 cam=GCamera()
-px=2*widget_w
-py=top_h
-pw=scr_w-px
-ph=scr_h-py
-cam.start_preview(fullscreen=False,resolution=(2880,2160),window=(px,py,pw,ph),vflip=False,hflip=False)
 root.attributes("-fullscreen",True)
 
 topFrame=Frame(root, highlightbackground="black", highlightthickness=1)
@@ -41,6 +39,8 @@ picFrame.pack(side="right",fill="both")
 topLabel=Label(topFrame,text="Gugusse Roller")
 topLabel.pack(side="top")
 
+capture=None
+
 
 settings={
     "awb_gains": [
@@ -54,14 +54,15 @@ settings={
     "exposure_compensation": 0,
     "exposure_mode": "auto",
     "filmFormat": "35mm",
+    "hflip": False,
     "image_effect": "none",
     "iso": 100,
     "meter_mode": "average",
-    "raw_format": "yuv",
     "direction": "cw",
     "saturation": 0,
     "sharpness": 0,
-    "shutter_speed": 24000
+    "shutter_speed": 24000,
+    "vflip": False    
 }
 with open("GugusseSettings.json","rt") as h:
     settingsFromFile=load(h)
@@ -83,8 +84,22 @@ with open("filmFormats.json","rt") as h:
 
 filmFormatsList=[]
 for item in filmFormatsDetails:
+    settings[item]=filmFormatsDetails[item]
     filmFormatsList.append(str(item))
-    
+
+def start_preview(hflip, vflip):
+    global widget_w
+    global top_h
+    global scr_w
+    global scr_h
+    px=2*widget_w
+    py=top_h
+    pw=scr_w-px
+    ph=scr_h-py
+    cam.start_preview(fullscreen=False,resolution=(2880,2160),window=(px,py,pw,ph),hflip=hflip,vflip=vflip)
+
+start_preview(settings["hflip"],settings["vflip"])
+
 captureMode=StringVar(root)
 captureMode.set(settings["captureMode"])
 
@@ -106,13 +121,24 @@ imageEffect=StringVar(root)
 imageEffect.set(settings["image_effect"])
 cam.image_effect=settings["image_effect"]
 
-rawFormat=StringVar(root)
-rawFormat.set(settings["raw_format"])
-cam.raw_format=settings["raw_format"]
-
 direction=StringVar(root)
 direction.set(settings["direction"])
 
+projectName=StringVar(root)
+projectName.set(datetime.now().strftime("%Y-%m-%d_%H:%M"))
+
+def filterProjectName():
+    prj=projectName.get()
+    newprj=""
+    for aChar in prj:
+        if aChar in "-+_:abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789":
+            newprj="{}{}".format(newprj, aChar)
+        else:
+            newprj="{}_".format(newprj)
+    if prj != newprj:
+        projectName.set(newprj)
+        message.configure(text="project name filtered")
+        
 def saveSettings():
     if saveSettings.settingsChanged == False:
         message.configure(text="No change to save")
@@ -177,12 +203,6 @@ def handleAwbModeChange(event):
     cam.awb_mode=val
     saveSettings.settingsChanged=True
 
-def handleRawFormatChange(event):
-    val=str(event)
-    settings["raw_format"]=val
-    cam.raw_format=val
-    saveSettings.settingsChanged=True
-    
 def handleExposureModeChange(event):
     val=str(event)
     settings["exposure_mode"]=val
@@ -229,7 +249,66 @@ def handleCompensationChange(event):
 def handleDirectionChange(event):
     val=str(event)
     settings["direction"]=val
-    saveSettings.settingChanged=True
+    saveSettings.settingsChanged=True
+
+def handleHFlip():
+    val= not settings["hflip"]
+    settings["hflip"]=val
+    cam.stop_preview()
+    sleep (0.1)
+    start_preview(val, settings["vflip"])
+    saveSettings.settingsChanged=True
+    
+def handleVFlip():
+    val= not settings["vflip"]
+    settings["vflip"]=val
+    cam.stop_preview()
+    sleep (0.1)
+    start_preview(settings["hflip"], val)
+    saveSettings.settingsChanged=True
+
+
+
+
+def runHandle():
+    global CaptureBG
+    if runHandle.running:
+        runButton.configure(text="Run",state="disabled",bg="grey")
+        runHandle.running=False
+        if CaptureBG!=None:
+            CaptureBG.stopLoop()
+    else:        
+        filterProjectName()
+        if projectName.get()=="":            
+            message.configure(text="You need to set a project name")
+            return
+        runButton.configure(text="Stop")
+        runHandle.running=True
+        vflipButton.configure(state="disabled",fg="grey")
+        hflipButton.configure(state="disabled",fg="grey")
+        prjBox.configure(state="disabled")
+        prjLbl.configure(fg="grey")
+        uiTools={
+            "runButton": runButton,
+            "message": message,
+            "runHandle": runHandle
+        }
+        CaptureBG=CaptureLoop(cam, settings, projectName.get(),uiTools)
+        CaptureBG.start()
+runHandle.running=False
+
+def handlePrjNameChange(event):
+    print(event)
+
+def pauseHandle():
+    if pauseHandle.paused:
+        pauseButton.configure(text="Pause")
+        pauseHandle.paused=False 
+    else:
+        pauseButton.configure(text="Unpause")
+        pauseHandle.paused=True
+pauseHandle.paused=False    
+    
 
 handleExposureModeChange.ExposureWasNotOff=False
 
@@ -282,7 +361,7 @@ brightness.set(settings["brightness"])
 brightness.pack(side="right")
 Label(miniFrame,text="Brightness:",width=widget_wchars,anchor="e").pack(side="right")
 ###### ISO SCALE
-iso=Scale(miniFrame,from_=100,to=800,resolution=100,length=scr_w/6-widget_w,width=8,orient=HORIZONTAL,command=handleIsoChange)
+iso=Scale(miniFrame,from_=100,to=800,resolution=100,length=scr_w/4-widget_w,width=8,orient=HORIZONTAL,command=handleIsoChange)
 iso.set(settings["iso"])
 iso.pack(side="right")
 Label(miniFrame,text="Iso:",width=widget_wchars,anchor="e").pack(side="right")
@@ -342,14 +421,6 @@ lbl.pack(side="right")
 
 miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top",fill="x")
-rawFormatSelector=OptionMenu(miniFrame,rawFormat,*cam.RAW_FORMATS,command=handleRawFormatChange)
-rawFormatSelector.config(width=widget_wchars)
-rawFormatSelector.pack(side="right")
-lbl=Label(miniFrame,text="Raw Format:",width=widget_wchars,anchor="e")
-lbl.pack(side="right")
-
-miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
-miniFrame.pack(side="top",fill="x")
 possibleDirections=("cw","ccw")
 directionSelector=OptionMenu(miniFrame,direction,*possibleDirections,command=handleDirectionChange)
 directionSelector.config(width=widget_wchars)
@@ -362,8 +433,27 @@ lbl.pack(side="right")
 miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top",fill="x")
 SaveButton=Button(miniFrame, text="Save Settings", width=widget_wchars, command=saveSettings)
-
 SaveButton.pack(side="right")
+vflipButton=Button(miniFrame, text="vflip",command=handleVFlip)
+vflipButton.pack(side="right")
+hflipButton=Button(miniFrame, text="hflip",command=handleHFlip)
+hflipButton.pack(side="right")
+
+miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
+miniFrame.pack(side="top",fill="x")
+runButton=Button(miniFrame, text="Run", width=widget_wchars, command=runHandle)
+runButton.pack(side="right")
+
+pauseButton=Button(miniFrame, text="Pause", width=widget_wchars, command=pauseHandle)
+pauseButton.pack(side="right")
+
+miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
+miniFrame.pack(side="top",fill="x")
+prjLbl=Label(miniFrame,text="Project name",width=widget_wchars)
+prjLbl.pack(side="top")
+prjBox=Entry(miniFrame,textvariable=projectName)
+prjBox.pack()
+
 
 
 
@@ -383,6 +473,14 @@ def click_handler(event):
     z=click_handler.zoom
     oldfactor=1.0/(z[2]-z[0])
     #message.configure(text="{} at {},{}".format(event.num, event.x, event.y))
+    if settings["hflip"]:
+        flippedX=previewSize[0]-event.x
+    else:
+        flippedX=event.x
+    if settings["vflip"]:
+        flippedY=previewSize[1]-event.y
+    else:
+        flippedY=event.y    
     if event.num == 3:
         # reset zoom
         click_handler.zoom=(0.0,0.0,1.0,1.0)
@@ -396,13 +494,13 @@ def click_handler(event):
         if factor > zoomLimit:
             factor=zoomLimit
         maxXY=1.0-(1/factor)
-        posX=float(event.x)/float(previewSize[0])
+        posX=float(flippedX)/float(previewSize[0])
         newX=z[0]+posX/oldfactor-(0.5/factor)
         if newX < 0.0:
             newX = 0.0
         if newX > maxXY:
             newX=maxXY
-        posY=float(event.y)/float(previewSize[1])
+        posY=float(flippedY)/float(previewSize[1])
         newY=z[1]+posY/oldfactor-(0.5/factor)
         if newY < 0.0:
             newY = 0.0
@@ -420,13 +518,13 @@ def click_handler(event):
         if factor < 1.0:
             factor=1.0
         maxXY=1.0-(1/factor)
-        posX=float(event.x)/float(previewSize[0])
+        posX=float(flippedX)/float(previewSize[0])
         newX=z[0]+posX/oldfactor-(0.5/factor)
         if newX < 0.0:
             newX = 0.0
         if newX > maxXY:
             newX=maxXY
-        posY=float(event.y)/float(previewSize[1])
+        posY=float(flippedY)/float(previewSize[1])
         newY=z[1]+posY/oldfactor-(0.5/factor)
         if newY < 0.0:
             newY = 0.0

@@ -25,6 +25,9 @@ class GCamera(PiCamera):
         self.captureMode=self.gcSettings["captureMode"]
         self.suffix=self.captureModes[self.captureMode]["suffix"]
         self.DNG=RPICAM2DNG()
+
+    def setFileIndex(self, newIndex):
+        self.framecount=newIndex
         
     def gcSaveSettings(self, fn="GugusseSettings.json"):
         with open(fn, "w") as h:

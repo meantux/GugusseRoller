@@ -10,10 +10,13 @@
 from time import sleep, time
 import RPi.GPIO as GPIO
 GPIO.setmode(GPIO.BCM) 
+from json import dumps
+
 
 
 class TrinamicSilentMotor():
     def __init__(self,cfg,autoSpeed=False,trace=False):
+        print(dumps(cfg, indent=4))
         GPIO.setmode(GPIO.BCM)
         self.autoSpeed=autoSpeed
         if autoSpeed:
