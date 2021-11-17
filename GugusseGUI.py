@@ -6,7 +6,8 @@ from CaptureLoop import CaptureLoop
 from time import sleep
 from datetime import datetime
 from math import sqrt
-#from PreviewGUI import PreviewGUI
+import RPi.GPIO as GPIO
+import threading
 
 
 root= Tk()
@@ -14,7 +15,7 @@ root= Tk()
 scr_w = root.winfo_screenwidth()
 scr_h = root.winfo_screenheight()
 widget_h=4
-widget_wchars=12
+widget_wchars=13
 widget_w=widget_wchars*12
 top_h=180
 left_w=2*widget_w
@@ -33,9 +34,6 @@ leftFrame.pack(side="left",fill="both")
 previewSize=(scr_w-left_w,scr_h-top_h)
 picFrame=Frame(root, width=previewSize[0],height=previewSize[1])
 picFrame.pack(side="right",fill="both")
-#canvas=Canvas(picFrame,width=scr_w-left_w,height=scr_h-top_h)
-#canvas.pack()
-#preview=PreviewGUI(cam,canvas,previewSize)
 topLabel=Label(topFrame,text="Gugusse Roller")
 topLabel.pack(side="top")
 
@@ -57,7 +55,7 @@ settings={
     "hflip": False,
     "image_effect": "none",
     "iso": 100,
-    "meter_mode": "average",
+    # "meter_mode": "average",
     "direction": "cw",
     "saturation": 0,
     "sharpness": 0,
@@ -87,16 +85,29 @@ for item in filmFormatsDetails:
     settings[item]=filmFormatsDetails[item]
     filmFormatsList.append(str(item))
 
+def previewHandle():
+    if previewHandle.running:
+        previewButton.configure(text="Preview On")
+        cam.stop_preview();
+        previewHandle.running=False
+    else:
+        previewHandle.running=True
+        previewButton.configure(text="Preview Off")
+        start_preview(settings["hflip"],settings["vflip"])
+previewHandle.running=True
+        
 def start_preview(hflip, vflip):
     global widget_w
     global top_h
     global scr_w
     global scr_h
+    global previewHandle
     px=2*widget_w
     py=top_h
     pw=scr_w-px
     ph=scr_h-py
-    cam.start_preview(fullscreen=False,resolution=(2880,2160),window=(px,py,pw,ph),hflip=hflip,vflip=vflip)
+    if previewHandle.running:
+        cam.start_preview(fullscreen=False,resolution=(2880,2160),window=(px,py,pw,ph),hflip=hflip,vflip=vflip)
 
 start_preview(settings["hflip"],settings["vflip"])
 
@@ -109,9 +120,9 @@ filmFormat.set(settings["filmFormat"])
 exposureMode=StringVar(root)
 exposureMode.set(settings["exposure_mode"])
 
-meterMode=StringVar(root)
-meterMode.set(settings["meter_mode"])
-cam.meter_mode=settings["meter_mode"]
+#meterMode=StringVar(root)
+#meterMode.set(settings["meter_mode"])
+#cam.meter_mode=settings["meter_mode"]
 
 awbMode=StringVar(root)
 awbMode.set(settings["awb_mode"])
@@ -157,11 +168,11 @@ def handleExposureChange(event):
         cam.shutter_speed=int(event)
     saveSettings.settingsChanged=True
         
-def handleMeterModeChange(event):
-    val=str(event)
-    settings["meter_mode"]=val
-    cam.meter_mode=val
-    saveSettings.settingsChanged=True
+#def handleMeterModeChange(event):
+#    val=str(event)
+#    settings["meter_mode"]=val
+#    cam.meter_mode=val
+#    saveSettings.settingsChanged=True
 
 def handleWbGain1(event):    
     settings["awb_gains"][0]=float(event)
@@ -253,8 +264,9 @@ def handleDirectionChange(event):
 
 def handleHFlip():
     val= not settings["hflip"]
-    settings["hflip"]=val
-    cam.stop_preview()
+    settings["hflip"]=val    
+    if previewHandle.running:
+        cam.stop_preview()
     sleep (0.1)
     start_preview(val, settings["vflip"])
     saveSettings.settingsChanged=True
@@ -262,12 +274,49 @@ def handleHFlip():
 def handleVFlip():
     val= not settings["vflip"]
     settings["vflip"]=val
-    cam.stop_preview()
+    if previewHandle.running:
+        cam.stop_preview()
     sleep (0.1)
     start_preview(settings["hflip"], val)
     saveSettings.settingsChanged=True
 
+def pwrMotor(name):
+    pass
 
+def advMotor(name,inverse):
+    pass
+
+def handlePickupCw():
+    advMotor("pickup",False)
+
+def handlePickupCcw():
+    advMotor("pickup",True)
+
+def handlePickupPwr():
+    pwrMotor("pickup")
+
+def handleMainDriveCw():
+    advMotor("filmdrive",False)
+
+def handleMainDriveCcw():
+    advMotor("filmdrive",True)
+    pass
+
+def handleMainDrivePwr():
+    pwrMotor("filmdrive")
+    pass
+
+def handleFeederCw():
+    advMotor("feeder",False)
+    pass
+
+def handleFeederCcw():
+    advMotor("feeder",True)
+    pass
+
+def handleFeederPwr():
+    pwrMotor("feeder")
+    pass
 
 
 def runHandle():
@@ -300,15 +349,6 @@ runHandle.running=False
 def handlePrjNameChange(event):
     print(event)
 
-def pauseHandle():
-    if pauseHandle.paused:
-        pauseButton.configure(text="Pause")
-        pauseHandle.paused=False 
-    else:
-        pauseButton.configure(text="Unpause")
-        pauseHandle.paused=True
-pauseHandle.paused=False    
-    
 
 handleExposureModeChange.ExposureWasNotOff=False
 
@@ -370,7 +410,7 @@ compensation=Scale(miniFrame,from_= -25,to=25,resolution=1,length=scr_w/3-widget
 compensation.set(settings["exposure_compensation"])
 compensation.pack(side="right")
 Label(miniFrame,text="Auto Compensate:").pack(side="right")
-
+###### Film Format
 miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top",fill="x")
 filmFormatSelector=OptionMenu(miniFrame,filmFormat,*filmFormatsList)
@@ -378,7 +418,7 @@ filmFormatSelector.config(width=widget_wchars)
 filmFormatSelector.pack(side="right")
 lbl=Label(miniFrame,text="Film format:",width=widget_wchars,anchor="e")
 lbl.pack(side="right")
-
+###### Capture Mode
 miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top",fill="x")
 captureModeSelector=OptionMenu(miniFrame,captureMode,*captureModesList)
@@ -386,7 +426,7 @@ captureModeSelector.config(width=widget_wchars)
 captureModeSelector.pack(side="right")
 lbl=Label(miniFrame,text="Capture Mode:",width=widget_wchars,anchor="e")
 lbl.pack(side="right")
-
+##### Exposure Mode
 miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top",fill="x")
 exposureModeSelector=OptionMenu(miniFrame,exposureMode,*cam.EXPOSURE_MODES.keys(),command=handleExposureModeChange)
@@ -394,14 +434,14 @@ exposureModeSelector.config(width=widget_wchars)
 exposureModeSelector.pack(side="right")
 lbl=Label(miniFrame,text="Exposure Mode:",width=widget_wchars,anchor="e")
 lbl.pack(side="right")
-
-miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
-miniFrame.pack(side="top",fill="x")
-meterModeSelector=OptionMenu(miniFrame,meterMode,*cam.METER_MODES.keys(),command=handleMeterModeChange)
-meterModeSelector.config(width=widget_wchars)
-meterModeSelector.pack(side="right")
-lbl=Label(miniFrame,text="Meter Mode:",width=widget_wchars,anchor="e")
-lbl.pack(side="right")
+###### Meter Mode
+#miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
+#miniFrame.pack(side="top",fill="x")
+#meterModeSelector=OptionMenu(miniFrame,meterMode,*cam.METER_MODES.keys(),command=handleMeterModeChange)
+#meterModeSelector.config(width=widget_wchars)
+#meterModeSelector.pack(side="right")
+#lbl=Label(miniFrame,text="Meter Mode:",width=widget_wchars,anchor="e")
+#lbl.pack(side="right")
 
 miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top",fill="x")
@@ -439,13 +479,14 @@ vflipButton.pack(side="right")
 hflipButton=Button(miniFrame, text="hflip",command=handleHFlip)
 hflipButton.pack(side="right")
 
+
 miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top",fill="x")
 runButton=Button(miniFrame, text="Run", width=widget_wchars, command=runHandle)
 runButton.pack(side="right")
 
-pauseButton=Button(miniFrame, text="Pause", width=widget_wchars, command=pauseHandle)
-pauseButton.pack(side="right")
+previewButton=Button(miniFrame, text="Preview Off", width=widget_wchars, command=previewHandle)
+previewButton.pack(side="right")
 
 miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top",fill="x")
@@ -455,7 +496,32 @@ prjBox=Entry(miniFrame,textvariable=projectName)
 prjBox.pack()
 
 
+Label(leftFrame, text="Feeder    |  MainDrive  |    Pickup ").pack(side="top")
+cwPic=PhotoImage(file="cw.png")
+ccwPic=PhotoImage(file="ccw.png")
+powerPic=PhotoImage(file="power.png")
+miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
+miniFrame.pack(side="top",fill="x")
+pickupCwButton=Button(miniFrame,image=cwPic,command=handlePickupCw)
+pickupCwButton.pack(side="right")
+pickupPwrButton=Button(miniFrame,image=powerPic,command=handlePickupPwr)
+pickupPwrButton.pack(side="right")
+pickupCcwButton=Button(miniFrame,image=ccwPic,command=handlePickupCcw)
+pickupCcwButton.pack(side="right")
 
+mainDriveCwButton=Button(miniFrame,image=cwPic,command=handleMainDriveCw)
+mainDriveCwButton.pack(side="right")
+mainDrivePwrButton=Button(miniFrame,image=powerPic,command=handleMainDrivePwr)
+mainDrivePwrButton.pack(side="right")
+mainDriveCcwButton=Button(miniFrame,image=ccwPic,command=handleMainDriveCcw)
+mainDriveCcwButton.pack(side="right")
+
+feederCwButton=Button(miniFrame,image=cwPic,command=handleFeederCw)
+feederCwButton.pack(side="right")
+feederPwrButton=Button(miniFrame,image=powerPic,command=handleFeederPwr)
+feederPwrButton.pack(side="right")
+feederCcwButton=Button(miniFrame,image=ccwPic,command=handleFeederCcw)
+feederCcwButton.pack(side="right")
 
 miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top",fill="x")
@@ -469,10 +535,9 @@ saveSettings.settingsChanged=False
 def click_handler(event):
     global previewSize
     step=sqrt(2.0)
-    zoomLimit=16.0
+    zoomLimit=128
     z=click_handler.zoom
     oldfactor=1.0/(z[2]-z[0])
-    #message.configure(text="{} at {},{}".format(event.num, event.x, event.y))
     if settings["hflip"]:
         flippedX=previewSize[0]-event.x
     else:
@@ -486,7 +551,29 @@ def click_handler(event):
         click_handler.zoom=(0.0,0.0,1.0,1.0)
         cam.zoom=click_handler.zoom
         message.configure(text="zoom factor: 1.00")
-    if event.num == 4:
+    elif event.num == 1:
+        # ZOOM IN FULL
+        if oldfactor >= zoomLimit:
+            return
+        factor=zoomLimit
+        maxXY=1.0-(1/factor)
+        posX=float(flippedX)/float(previewSize[0])
+        newX=z[0]+posX/oldfactor-(0.5/factor)
+        if newX < 0.0:
+            newX = 0.0
+        if newX > maxXY:
+            newX=maxXY
+        posY=float(flippedY)/float(previewSize[1])
+        newY=z[1]+posY/oldfactor-(0.5/factor)
+        if newY < 0.0:
+            newY = 0.0
+        if newY > maxXY:
+            newY=maxXY
+        z=(newX,newY,newX+(1.0/factor),newY+(1.0/factor))
+        cam.zoom=z
+        click_handler.zoom=z
+        message.configure(text="zoom factor: {:.2f}".format(factor))
+    elif event.num == 4:
         # ZOOM IN
         if oldfactor >= zoomLimit:
             return
