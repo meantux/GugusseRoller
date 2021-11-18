@@ -15,7 +15,7 @@ from json import dumps
 
 
 class TrinamicSilentMotor():
-    def __init__(self,cfg,autoSpeed=False,trace=False):
+    def __init__(self,cfg,autoSpeed=False,trace=False,button=None):
         print(dumps(cfg, indent=4))
         GPIO.setmode(GPIO.BCM)
         self.autoSpeed=autoSpeed
@@ -34,6 +34,7 @@ class TrinamicSilentMotor():
         self.trace=trace
         self.fault=False
         self.name=cfg["name"]
+        self.button=button
         self.currentSpeed=0
         self.target=0
         self.SensorStopPin=cfg["stopPin"]
@@ -62,8 +63,12 @@ class TrinamicSilentMotor():
                 
     def enable(self):
         GPIO.output(self.pinEnable, 0)
+        if self.button:
+            self.button.configure(bg="green")
     def disable(self):
         GPIO.output(self.pinEnable, 1)
+        if self.button:
+            self.button.configure(bg="grey")
         
     def forward(self):
         self.pos += 1
@@ -82,6 +87,9 @@ class TrinamicSilentMotor():
             return time() + (1.0 / self.currentSpeed)
         return None
 
+    def getPowerState(self):
+        return GPIO.input(self.pinEnable)
+    
     def setDirection(self, direction):
         #  I need XOR but all I got is != which
         #  does the same for booleans
@@ -160,8 +168,6 @@ class TrinamicSilentMotor():
                             self.speed2=self.maxSpeed
                         self.speed=self.speed2
                         print("New speed for {}={}ticks/s".format(self.name, self.speed))
-                            
-                        
                     return
             if self.ignore == 0 and self.ignoreInitial != 0:
                 self.currentSpeed=self.speed2

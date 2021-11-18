@@ -18,12 +18,11 @@ class FrameSequence():
             mkdir("/dev/shm/complete")
         except Exception:
             print("Ho well... directory already exists, who cares?");
-        self.feeder.enable()
-        self.filmdrive.enable()
-        self.pickup.enable()
         self.cam=cam
         self.cam.setFileIndex(start_frame)
         self.lights=Lights("on")
+        self.feeder.enable()
+        self.pickup.enable()
                    
     def frameAdvance(self):
         m1=MotorThread(self.filmdrive)
@@ -76,6 +75,9 @@ class CaptureLoop(Thread):
             h.close()
 
     def run(self):
+        self.feeder.enable()
+        self.filmdrive.enable()
+        self.pickup.enable()
         self.uiTools["runButton"].configure(state="disabled",fg="grey")
         self.ftp=FtpThread(self.subDir,self.captureModes[self.settings["captureMode"]]["suffix"])
         start=self.ftp.getStartPoint()

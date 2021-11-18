@@ -82,11 +82,6 @@ with open("hardwarecfg.json","rt") as h:
         settings[item]=hardware[item]
     h.close()
 
-motors={
-    "feeder": TrinamicSilentMotor(settings["feeder"],autoSpeed=True),
-    "pickup": TrinamicSilentMotor(settings["pickup"],autoSpeed=True),
-    "filmdrive": TrinamicSilentMotor(settings["filmdrive"], trace=True)
-}
 
 
 
@@ -286,28 +281,34 @@ def handleVFlip():
     start_preview(settings["hflip"], val)
     saveSettings.settingsChanged=True
 
-
     
 def pwrMotor(name):
-    pass
+    global motors
+    global powers
+    val=motors[name].getPowerState()
+    if val:
+        motors[name].enable()
+    else:
+        motors[name].disable()
 
-def advMotor(name,inverse):
-    pass
+def advMotor(name,direction):
+    motors[name].setDirection(direction)
+    motors[name].blindMove(1000)
 
 def handlePickupCw():
-    advMotor("pickup",False)
+    advMotor("pickup","cw")
 
 def handlePickupCcw():
-    advMotor("pickup",True)
+    advMotor("pickup","ccw")
 
 def handlePickupPwr():
     pwrMotor("pickup")
 
 def handleMainDriveCw():
-    advMotor("filmdrive",False)
+    advMotor("filmdrive","cw")
 
 def handleMainDriveCcw():
-    advMotor("filmdrive",True)
+    advMotor("filmdrive","ccw")
     pass
 
 def handleMainDrivePwr():
@@ -315,11 +316,11 @@ def handleMainDrivePwr():
     pass
 
 def handleFeederCw():
-    advMotor("feeder",False)
+    advMotor("feeder","cw")
     pass
 
 def handleFeederCcw():
-    advMotor("feeder",True)
+    advMotor("feeder","ccw")
     pass
 
 def handleFeederPwr():
@@ -538,6 +539,23 @@ miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top",fill="x")
 message=Label(miniFrame,text="",anchor="e")
 message.pack(side="right")
+
+powers={
+    "feeder": feederPwrButton,
+    "filmdrive": mainDrivePwrButton,
+    "pickup":pickupPwrButton
+}
+motors={
+    "feeder": TrinamicSilentMotor(settings["feeder"],autoSpeed=True,button=powers["feeder"]),
+    "pickup": TrinamicSilentMotor(settings["pickup"],autoSpeed=True,button=powers["pickup"]),
+    "filmdrive": TrinamicSilentMotor(settings["filmdrive"], trace=True,button=powers["filmdrive"])
+}
+for item in motors:
+    if motors[item].getPowerState==0:
+        powers[item].configure(bg="grey")
+    else:
+        powers[item].configure(bg="green")
+
 
 handleAwbModeChange(awbMode.get())
 handleExposureModeChange(exposureMode.get())
