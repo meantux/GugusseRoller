@@ -1,24 +1,21 @@
 from threading import Thread
 from FtpThread import FtpThread
 
-from TrinamicSilentMotor import TrinamicSilentMotor
 from time import sleep, time
 from Lights import Lights
 from json import load,dumps
-import os
-import RPi.GPIO as GPIO
-GPIO.setmode(GPIO.BCM)
+from os import mkdir
 
 class FrameSequence():
-    def __init__(self, cam, cfg, start_frame):
+    def __init__(self, cam, motors, cfg, start_frame):
         for item in cfg:
            if isinstance(cfg[item], dict):
               cfg[item]["name"]=item
-        self.filmdrive=TrinamicSilentMotor(cfg["filmdrive"], trace=True)
-        self.feeder=TrinamicSilentMotor(cfg["feeder"],autoSpeed=True)
-        self.pickup=TrinamicSilentMotor(cfg["pickup"],autoSpeed=True)
+        self.filmdrive=motors["filmdrive"]
+        self.feeder=motors["feeder"]
+        self.pickup=motors["pickup"]
         try:
-            os.mkdir("/dev/shm/complete")
+            mkdir("/dev/shm/complete")
         except Exception:
             print("Ho well... directory already exists, who cares?");
         self.feeder.enable()
@@ -65,41 +62,25 @@ class MotorThread (Thread):
       self.motor.move()
 
 class CaptureLoop(Thread):
-    def __init__ (self, cam, settings, subDir, uiTools):
+    def __init__ (self, cam, motors, settings, subDir, uiTools):
         Thread.__init__(self)
         self.cam=cam
+        self.motors=motors
         self.settings=dict(settings)
         self.subDir=subDir
         self.Loop=True
         self.Pause=False
         self.uiTools=uiTools
-        with open("filmFormats.json","rt") as h:
-            filmformats=load(h)
-            h.close()
-        with open("hardwarecfg.json","rt") as h:
-            self.hardware=load(h)
-            h.close()
         with open("captureModes.json","rt") as h:
             self.captureModes=load(h)
             h.close()
-        print("filmformats={}".format(dumps(filmformats[settings["filmFormat"]],indent=4)))
-        print("hardware={}".format(dumps(self.hardware,indent=4)))
-        chosenOne=filmformats[settings["filmFormat"]]
-        for device in chosenOne:
-            self.hardware[device].update(chosenOne[device])
-        print("merge={}".format(dumps(self.hardware,indent=4)))
-        if settings["direction"] == "cw":
-            self.hardware["feeder"]["invert"]=not self.hardware["feeder"]["invert"]
-            self.hardware["pickup"]["invert"]=not self.hardware["pickup"]["invert"]
-        for anything in self.hardware:
-            self.settings[anything]=self.hardware[anything]
 
     def run(self):
         self.uiTools["runButton"].configure(state="disabled",fg="grey")
         self.ftp=FtpThread(self.subDir,self.captureModes[self.settings["captureMode"]]["suffix"])
         start=self.ftp.getStartPoint()
         self.ftp.start()
-        self.sequence=FrameSequence(self.cam, self.settings, start)        
+        self.sequence=FrameSequence(self.cam, self.motors, self.settings,start)        
         self.uiTools["runButton"].configure(state="normal",fg="black")
         while self.Loop:
             try:

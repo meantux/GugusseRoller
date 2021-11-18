@@ -20,10 +20,6 @@ class TrinamicSilentMotor():
         GPIO.setmode(GPIO.BCM)
         self.autoSpeed=autoSpeed
         if autoSpeed:
-            if "targetTime" not in cfg:
-                self.targetTime=cfg["defaultTargetTime"]
-            else:
-                self.targetTime=cfg["targetTime"]
             self.minSpeed=cfg["minSpeed"]
             self.maxSpeed=cfg["maxSpeed"]
         if "learnPin" in cfg:
@@ -33,35 +29,36 @@ class TrinamicSilentMotor():
         else:
             self.learning=False
             self.learnPin= -1
-        self.accel=cfg["accel"]
         self.histo=[]
         self.skipHisto=3
         self.trace=trace
         self.fault=False
         self.name=cfg["name"]
-        self.speed=cfg["speed"]
-        self.speed2=cfg["speed2"]
         self.currentSpeed=0
         self.target=0
         self.SensorStopPin=cfg["stopPin"]
-        self.ignoreInitial=cfg["ignoreInitial"]
         self.ignore=0
-        self.faultTreshold=cfg["faultTreshold"]
         self.pinEnable=cfg["pinEnable"]
         self.pinDirection=cfg["pinDirection"]
         self.pinStep=cfg["pinStep"]
         self.SensorStopState=cfg["stopState"]
+        self.inverted=cfg["invert"]
         self.lasttick=time()
         self.toggle=0
         self.shortsInARow=0
         GPIO.setup(self.pinStep, GPIO.OUT, initial=0)
         GPIO.setup(self.pinEnable, GPIO.OUT, initial=0)
-        if cfg["invert"]:
-            GPIO.setup(self.pinDirection, GPIO.OUT, initial=1)
-        else:
-            GPIO.setup(self.pinDirection, GPIO.OUT, initial=0)
         self.pos=int(0)
         GPIO.setup(self.SensorStopPin, GPIO.IN)
+
+    def setFormat(self, cfg):
+        self.speed=cfg["speed"]
+        self.speed2=cfg["speed2"]
+        self.accel=cfg["accel"]
+        self.ignoreInitial=cfg["ignoreInitial"]
+        self.faultTreshold=cfg["faultTreshold"]
+        if "targetTime" in cfg:
+            self.targetTime=cfg["targetTime"]
                 
     def enable(self):
         GPIO.output(self.pinEnable, 0)
@@ -84,7 +81,29 @@ class TrinamicSilentMotor():
                     self.currentSpeed=self.targetSpeed
             return time() + (1.0 / self.currentSpeed)
         return None
-                        
+
+    def setDirection(self, direction):
+        #  I need XOR but all I got is != which
+        #  does the same for booleans
+        rev=False
+        if direction == "ccw":
+            rev=True
+        elif direction != "cw":
+            raise Exception("Bad direction parameter")        
+        if self.inverted != rev:
+            GPIO.setup(self.pinDirection, GPIO.OUT, initial=1)
+        else:
+            GPIO.setup(self.pinDirection, GPIO.OUT, initial=0)
+        
+    def blindMove(self, ticks):
+        delay=0.020
+        while ticks > 0:
+            sleep(delay)
+            if delay > 0.001:
+                delay-= 0.0005
+            self.forward()
+            ticks-= 1
+            
     def move(self):
         ticks=0
         #log=[]

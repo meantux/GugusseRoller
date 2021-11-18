@@ -7,7 +7,8 @@ from time import sleep
 from datetime import datetime
 from math import sqrt
 import RPi.GPIO as GPIO
-import threading
+from TrinamicSilentMotor import TrinamicSilentMotor
+GPIO.setmode(GPIO.BCM)
 
 
 root= Tk()
@@ -55,7 +56,6 @@ settings={
     "hflip": False,
     "image_effect": "none",
     "iso": 100,
-    # "meter_mode": "average",
     "direction": "cw",
     "saturation": 0,
     "sharpness": 0,
@@ -75,16 +75,22 @@ with open("captureModes.json","rt") as h:
 captureModesList=[]
 for item in captureModesDetails:
     captureModesList.append(str(item))
-
-with open("filmFormats.json","rt") as h:
-    filmFormatsDetails=load(h)
+    
+with open("hardwarecfg.json","rt") as h:
+    hardware=load(h)
+    for item in hardware:
+        settings[item]=hardware[item]
     h.close()
 
-filmFormatsList=[]
-for item in filmFormatsDetails:
-    settings[item]=filmFormatsDetails[item]
-    filmFormatsList.append(str(item))
+motors={
+    "feeder": TrinamicSilentMotor(settings["feeder"],autoSpeed=True),
+    "pickup": TrinamicSilentMotor(settings["pickup"],autoSpeed=True),
+    "filmdrive": TrinamicSilentMotor(settings["filmdrive"], trace=True)
+}
 
+
+
+    
 def previewHandle():
     if previewHandle.running:
         previewButton.configure(text="Preview On")
@@ -280,6 +286,8 @@ def handleVFlip():
     start_preview(settings["hflip"], val)
     saveSettings.settingsChanged=True
 
+
+    
 def pwrMotor(name):
     pass
 
@@ -321,6 +329,7 @@ def handleFeederPwr():
 
 def runHandle():
     global CaptureBG
+    global motors
     if runHandle.running:
         runButton.configure(text="Run",state="disabled",bg="grey")
         runHandle.running=False
@@ -341,8 +350,10 @@ def runHandle():
             "runButton": runButton,
             "message": message,
             "runHandle": runHandle
-        }
-        CaptureBG=CaptureLoop(cam, settings, projectName.get(),uiTools)
+        }        
+        for name in motors.keys():
+            motors[name].setFormat(settings["filmFormats"][filmFormat.get()][name])        
+        CaptureBG=CaptureLoop(cam, motors, settings, projectName.get(),uiTools)
         CaptureBG.start()
 runHandle.running=False
 
@@ -413,7 +424,7 @@ Label(miniFrame,text="Auto Compensate:").pack(side="right")
 ###### Film Format
 miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top",fill="x")
-filmFormatSelector=OptionMenu(miniFrame,filmFormat,*filmFormatsList)
+filmFormatSelector=OptionMenu(miniFrame,filmFormat,*settings["filmFormats"])
 filmFormatSelector.config(width=widget_wchars)
 filmFormatSelector.pack(side="right")
 lbl=Label(miniFrame,text="Film format:",width=widget_wchars,anchor="e")
