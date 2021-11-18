@@ -42,7 +42,7 @@ topLabel.pack(side="top")
 capture=None
 
 
-settings={
+settingsDefaults={
     "awb_gains": [
         3.0,
         2.0
@@ -63,6 +63,9 @@ settings={
     "shutter_speed": 24000,
     "vflip": False    
 }
+settings=dict(settingsDefaults)
+
+
 with open("GugusseSettings.json","rt") as h:
     settingsFromFile=load(h)
     h.close()
@@ -156,14 +159,18 @@ def saveSettings():
     if saveSettings.settingsChanged == False:
         message.configure(text="No change to save")
         return
+    tosave={}
+    for item in settingsDefaults:
+        tosave[item]=settings[item]
     with open("GugusseSettings.json","wt") as h:
         message.configure(text="Saving Settings")
-        dump(settings,h,sort_keys=True, indent=4)
+        dump(tosave,h,sort_keys=True, indent=4)
         h.close()
         message.configure(text="Settings Saved")
         saveSettings.settingsChanged=False
 
 
+        
 def handleExposureChange(event):
     if exposureMode.get() == "off":
         settings["shutter_speed"]=int(event)
@@ -204,6 +211,16 @@ def handleContrastChange(event):
     cam.contrast=val
     saveSettings.settingsChanged=True
 
+def handleFilmFormatChange(event):
+    val=str(event)
+    settings["filmFormat"]=val
+    saveSettings.settingsChanged=True
+
+def handleCaptureModeChange(event):
+    val=str(event)
+    settings["captureMode"]=val
+    saveSettings.settingsChanged=True
+    
 def handleAwbModeChange(event):
     val=str(event)
     settings["awb_mode"]=val
@@ -426,7 +443,7 @@ Label(miniFrame,text="Auto Compensate:").pack(side="right")
 ###### Film Format
 miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top",fill="x")
-filmFormatSelector=OptionMenu(miniFrame,filmFormat,*settings["filmFormats"])
+filmFormatSelector=OptionMenu(miniFrame,filmFormat,*settings["filmFormats"],command=handleFilmFormatChange)
 filmFormatSelector.config(width=widget_wchars)
 filmFormatSelector.pack(side="right")
 lbl=Label(miniFrame,text="Film format:",width=widget_wchars,anchor="e")
@@ -434,7 +451,7 @@ lbl.pack(side="right")
 ###### Capture Mode
 miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top",fill="x")
-captureModeSelector=OptionMenu(miniFrame,captureMode,*captureModesList)
+captureModeSelector=OptionMenu(miniFrame,captureMode,*captureModesList,command=handleCaptureModeChange)
 captureModeSelector.config(width=widget_wchars)
 captureModeSelector.pack(side="right")
 lbl=Label(miniFrame,text="Capture Mode:",width=widget_wchars,anchor="e")
@@ -447,14 +464,6 @@ exposureModeSelector.config(width=widget_wchars)
 exposureModeSelector.pack(side="right")
 lbl=Label(miniFrame,text="Exposure Mode:",width=widget_wchars,anchor="e")
 lbl.pack(side="right")
-###### Meter Mode
-#miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
-#miniFrame.pack(side="top",fill="x")
-#meterModeSelector=OptionMenu(miniFrame,meterMode,*cam.METER_MODES.keys(),command=handleMeterModeChange)
-#meterModeSelector.config(width=widget_wchars)
-#meterModeSelector.pack(side="right")
-#lbl=Label(miniFrame,text="Meter Mode:",width=widget_wchars,anchor="e")
-#lbl.pack(side="right")
 
 miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top",fill="x")
