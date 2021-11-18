@@ -75,9 +75,14 @@ class CaptureLoop(Thread):
             h.close()
 
     def run(self):
-        self.feeder.enable()
-        self.filmdrive.enable()
-        self.pickup.enable()
+        self.motors["feeder"].enable()
+        self.motors["filmdrive"].enable()
+        self.motors["pickup"].enable()
+        
+        self.motors["feeder"].setDirection(self.settings["direction"])
+        self.motors["filmdrive"].setDirection("cw")
+        self.motors["pickup"].setDirection(self.settings["direction"])
+        
         self.uiTools["runButton"].configure(state="disabled",fg="grey")
         self.ftp=FtpThread(self.subDir,self.captureModes[self.settings["captureMode"]]["suffix"])
         start=self.ftp.getStartPoint()

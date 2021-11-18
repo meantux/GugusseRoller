@@ -4,7 +4,7 @@
 	"pinEnable":18,
 	"pinDirection":14,
 	"pinStep":15,
-	"invert": true,
+	"invert": false,
 	"stopPin": 26,
 	"learnPin": 19,
 	"stopState":1

@@ -99,9 +99,9 @@ class TrinamicSilentMotor():
         elif direction != "cw":
             raise Exception("Bad direction parameter")        
         if self.inverted != rev:
-            GPIO.setup(self.pinDirection, GPIO.OUT, initial=1)
-        else:
             GPIO.setup(self.pinDirection, GPIO.OUT, initial=0)
+        else:
+            GPIO.setup(self.pinDirection, GPIO.OUT, initial=1)
         
     def blindMove(self, ticks):
         delay=0.020

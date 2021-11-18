@@ -16,6 +16,7 @@ from GCamera import GCamera
 from Lights import Lights
 import os
 GPIO.setmode(GPIO.BCM) 
+Lights(on)
 
 class MotorThread (threading.Thread):
    def __init__(self, motor):

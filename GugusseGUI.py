@@ -8,8 +8,9 @@ from datetime import datetime
 from math import sqrt
 import RPi.GPIO as GPIO
 from TrinamicSilentMotor import TrinamicSilentMotor
+from Lights import Lights
 GPIO.setmode(GPIO.BCM)
-
+Lights("on")
 
 root= Tk()
 
