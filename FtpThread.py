@@ -8,9 +8,9 @@ class FtpThread(Thread):
     def __init__(self, subdir, fileExt):
         Thread.__init__(self)
         self.subdir=subdir
-        self.Loop=True
         self.fileExt=fileExt
         self.connected=False
+        self.Loop=True
         self.fileIndex=0
 
 
@@ -61,6 +61,7 @@ class FtpThread(Thread):
         self.connected=True
     
     def run(self):
+        self.Loop=True
         self.getStartPoint()
         try:
             mkdir("/dev/shm/complete")
@@ -71,7 +72,7 @@ class FtpThread(Thread):
         while self.Loop:
             sleep(1)
             for item in listdir("/dev/shm/complete/"):
-                if path.isfile(item):
+                if path.isfile("/dev/shm/complete/{}".format(item)):
                     print("transferring {}".format(item))
                     a=open("/dev/shm/complete/{}".format(item), "rb")                    
                     self.ftp.storbinary("STOR {}".format(item),a)
