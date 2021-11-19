@@ -34,6 +34,8 @@ class FtpThread(Thread):
             self.message("no {} in {}".format( self.fileExt, self.subdir))
             self.fileIndex=0
             return 0
+        if len(listdir) == 0:
+            return 0
         self.message("sorting list")
         listdir.sort()
         lastFile=listdir[len(listdir)-1]        
