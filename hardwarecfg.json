@@ -44,8 +44,8 @@
 		"accel": 50.0,
 		"faultTreshold": 8000,
 		"ignoreInitial": 10,
-		"speed": 1000.0,
-		"speed2": 800.0,
+		"speed": 400.0,
+		"speed2": 400.0,
 		"targetTime": 0.33
             },
             "filmdrive": {
@@ -59,8 +59,8 @@
 		"accel": 50.0,
 		"faultTreshold": 8000,
 		"ignoreInitial": 10,
-		"speed": 1000.0,
-		"speed2": 800.0,
+		"speed": 400.0,
+		"speed2": 400.0,
 		"targetTime": 0.33
             }
 	},
@@ -69,7 +69,7 @@
 		"accel": 200.0,
 		"faultTreshold": 8000,
 		"ignoreInitial": 20,
-		"speed": 1000.0,
+		"speed": 800.0,
 		"speed2": 800.0,
 		"targetTime": 0.5
             },
@@ -84,7 +84,7 @@
 		"accel": 200.0,
 		"faultTreshold": 8000,
 		"ignoreInitial": 20,
-		"speed": 1000.0,
+		"speed": 800.0,
 		"speed2": 800.0,
 		"targetTime": 0.5
             }
@@ -94,8 +94,8 @@
 		"accel": 400.0,
 		"faultTreshold": 8000,
 		"ignoreInitial": 20,
-		"speed": 1000.0,
-		"speed2": 800.0,
+		"speed": 400.0,
+		"speed2": 400.0,
 		"targetTime": 0.15
             },
             "filmdrive": {
@@ -109,8 +109,8 @@
 		"accel": 400.0,
 		"faultTreshold": 8000,
 		"ignoreInitial": 20,
-		"speed": 1000.0,
-		"speed2": 800.0,
+		"speed": 400.0,
+		"speed2": 400.0,
 		"targetTime": 0.15
             }
 	},
@@ -119,8 +119,8 @@
 		"accel": 100.0,
 		"faultTreshold": 8000,
 		"ignoreInitial": 10,
-		"speed": 3000.0,
-		"speed2": 3000.0,
+		"speed": 300.0,
+		"speed2": 300.0,
 		"targetTime": 0.4
             },
             "filmdrive": {
@@ -134,8 +134,8 @@
 		"accel": 100.0,
 		"faultTreshold": 8000,
 		"ignoreInitial": 10,
-		"speed": 3000.0,
-		"speed2": 3000.0,
+		"speed": 300.0,
+		"speed2": 300.0,
 		"targetTime": 0.4
             }
 	},
@@ -144,8 +144,9 @@
 		"accel": 10.0,
 		"faultTreshold": 8000,
 		"ignoreInitial": 10,
-		"speed": 800.0,
-		"speed2": 1500.0
+		"speed": 400.0,
+		"speed2": 400.0,
+		"targetTime": 0.4
             },
             "filmdrive": {
 		"accel": 100.0,
@@ -158,8 +159,9 @@
 		"accel": 10.0,
 		"faultTreshold": 8000,
 		"ignoreInitial": 10,
-		"speed": 800.0,
-		"speed2": 1500.0
+		"speed": 400.0,
+		"speed2": 400.0,
+		"targetTime": 0.4
             }
 	},
 	"super8": {
@@ -167,9 +169,9 @@
 		"accel": 200.0,
 		"faultTreshold": 8000,
 		"ignoreInitial": 0,
-		"speed": 3000.0,
-		"speed2": 1000.0,
-		"targetTime": 0.25
+		"speed": 300.0,
+		"speed2": 400.0,
+		"targetTime": 0.4
             },
             "filmdrive": {
 		"accel": 100.0,
@@ -182,9 +184,9 @@
 		"accel": 200.0,
 		"faultTreshold": 8000,
 		"ignoreInitial": 0,
-		"speed": 3000.0,
-		"speed2": 1000.0,
-		"targetTime": 0.25
+		"speed": 300.0,
+		"speed2": 300.0,
+		"targetTime": 0.4
             }
 	}
     }
