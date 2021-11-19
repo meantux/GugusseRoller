@@ -79,30 +79,37 @@ class CaptureLoop(Thread):
         self.motors["filmdrive"].enable()
         self.motors["pickup"].enable()
         
+        self.motors["feeder"].clearFault()
+        self.motors["filmdrive"].clearFault()
+        self.motors["pickup"].clearFault()
+        
         self.motors["feeder"].setDirection(self.settings["direction"])
         self.motors["filmdrive"].setDirection("cw")
         self.motors["pickup"].setDirection(self.settings["direction"])
         
-        self.uiTools["runButton"].configure(state="disabled",fg="grey")
-        self.ftp=FtpThread(self.subDir,self.captureModes[self.settings["captureMode"]]["suffix"])
+        self.ftp=FtpThread(self.subDir,self.captureModes[self.settings["captureMode"]]["suffix"], self.uiTools)
         start=self.ftp.getStartPoint()
         self.ftp.start()
         self.sequence=FrameSequence(self.cam, self.motors, self.settings,start)        
         self.uiTools["runButton"].configure(state="normal",fg="black")
+        self.uiTools["prjBox"].configure(state="disable",fg="grey")
+        
         while self.Loop:
             try:
                 self.sequence.frameAdvance()
             except Exception as e:
                 print(e)
                 self.stopLoop()
-        print("Giving a change to background FTP to finish")
+        self.uiTools["message"]("wait 10secs")
         sleep(10)
-        print("stopping FTP background")
-        self.ftp.stopLoop()
+        self.uiTools["message"]("stopping FTP")
+        self.ftp.stopLoop()        
         self.ftp.join()
         self.uiTools["runHandle"].running=False
-        self.uiTools["message"].configure(text="stopped running")
-        self.uiTools["runButton"].configure(state="normal",fg="black")
+        self.uiTools["runHandle"].clean=False
+        self.uiTools["runButton"].configure(text="Run",state="normal",fg="black")
+        self.uiTools["prjBox"].configure(text="Run",state="normal",fg="black")
+        self.uiTools["message"]("Capture stopped!")
 
     def stopLoop(self):
         self.uiTools["runButton"].configure(state="disabled", fg="grey")

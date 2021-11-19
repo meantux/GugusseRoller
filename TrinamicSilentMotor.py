@@ -15,7 +15,7 @@ from json import dumps
 
 
 class TrinamicSilentMotor():
-    def __init__(self,cfg,autoSpeed=False,trace=False,button=None):
+    def __init__(self,cfg,autoSpeed=False,trace=False,button=None, msg=None):
         print(dumps(cfg, indent=4))
         GPIO.setmode(GPIO.BCM)
         self.autoSpeed=autoSpeed
@@ -30,6 +30,7 @@ class TrinamicSilentMotor():
             self.learning=False
             self.learnPin= -1
         self.histo=[]
+        self.msg=msg
         self.skipHisto=3
         self.trace=trace
         self.fault=False
@@ -52,6 +53,15 @@ class TrinamicSilentMotor():
         self.pos=int(0)
         GPIO.setup(self.SensorStopPin, GPIO.IN)
 
+    def message(self, txt):
+        if self.msg != None:
+            self.msg(txt)
+            
+
+    def clearFault(self):
+        self.fault=False
+        self.shortsInARow=0
+        
     def setFormat(self, cfg):
         self.speed=cfg["speed"]
         self.speed2=cfg["speed2"]
@@ -111,7 +121,7 @@ class TrinamicSilentMotor():
                 delay-= 0.0005
             self.forward()
             ticks-= 1
-            
+    
     def move(self):
         ticks=0
         #log=[]
@@ -146,6 +156,7 @@ class TrinamicSilentMotor():
                         self.shortsInARow=0
                     if self.shortsInARow >= 10:
                         self.fault=True
+                        self.message("{} short FAULT".format(self.name))
                         raise Exception("\033[1;31mFAULT\033[0m: only the lowest amount of steps for 10 cycles in a row")
                     if self.autoSpeed:
                         if self.skipHisto > 0:
@@ -178,4 +189,5 @@ class TrinamicSilentMotor():
             ticks+= 1
             waitUntil=self.tick()
         self.fault=True
+        self.message("{} long FAULT".format(self.name))
         raise Exception("Move failed, \033[1;31m{}\033[0m passed its limit without triggering sensor".format(self.name))

@@ -36,7 +36,8 @@ class Lights():
         GPIO.output(self.cfg["lights"]["green"],tab[state][1])
         GPIO.output(self.cfg["lights"]["blue"],tab[state][2])
         
-
+    def getOptions(self):
+        return tab.keys()
 
 
 

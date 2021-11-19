@@ -10,12 +10,19 @@ import RPi.GPIO as GPIO
 from TrinamicSilentMotor import TrinamicSilentMotor
 from Lights import Lights
 GPIO.setmode(GPIO.BCM)
-Lights("on")
+light=Lights("on")
 
 root= Tk()
 
 scr_w = root.winfo_screenwidth()
 scr_h = root.winfo_screenheight()
+
+borderwidth=1
+if scr_w <= 600:
+    borderwidth=0
+if scr_w > 720:
+    borderwidth=2
+
 widget_h=4
 widget_wchars=13
 widget_w=widget_wchars*12
@@ -88,7 +95,6 @@ with open("hardwarecfg.json","rt") as h:
 
 
 
-
     
 def previewHandle():
     if previewHandle.running:
@@ -141,8 +147,25 @@ direction=StringVar(root)
 direction.set(settings["direction"])
 
 projectName=StringVar(root)
-projectName.set(datetime.now().strftime("%Y-%m-%d_%H:%M"))
+projectName.set(datetime.now().strftime("%Y%m%d-%H%M"))
 
+color=StringVar(root)
+color.set("on")
+
+def messagePrint(txt):
+    message3.configure(text=messagePrint.text3)
+    message2.configure(text=messagePrint.text2)
+    message1.configure(text=messagePrint.text1)
+    message.configure(text=txt)    
+    messagePrint.text3=messagePrint.text2
+    messagePrint.text2=messagePrint.text1
+    messagePrint.text1=txt
+messagePrint.text3=""
+messagePrint.text2=""
+messagePrint.text1=""
+
+
+    
 def filterProjectName():
     prj=projectName.get()
     newprj=""
@@ -153,23 +176,33 @@ def filterProjectName():
             newprj="{}_".format(newprj)
     if prj != newprj:
         projectName.set(newprj)
-        message.configure(text="project name filtered")
-        
+        messagePrint("project name filtered")
+
 def saveSettings():
     if saveSettings.settingsChanged == False:
-        message.configure(text="No change to save")
+        messagePrint("No change to save")
         return
     tosave={}
     for item in settingsDefaults:
         tosave[item]=settings[item]
     with open("GugusseSettings.json","wt") as h:
-        message.configure(text="Saving Settings")
+        messagePrint("Saving Settings")
         dump(tosave,h,sort_keys=True, indent=4)
         h.close()
-        message.configure(text="Settings Saved")
+        messagePrint("Settings Saved")
         saveSettings.settingsChanged=False
 
-
+def handleLightChange(event):
+    light.set(event)
+    color.set(event)
+    if event == "off":
+        lightSelector.configure(bg="black",fg="white")
+    elif event == "on":
+        lightSelector.configure(bg="white",fg="black")
+    elif event == "blue":
+        lightSelector.configure(bg="blue", fg="yellow")
+    else:
+        lightSelector.configure(bg=event, fg="black")
         
 def handleExposureChange(event):
     if exposureMode.get() == "off":
@@ -177,12 +210,6 @@ def handleExposureChange(event):
         cam.shutter_speed=int(event)
     saveSettings.settingsChanged=True
         
-#def handleMeterModeChange(event):
-#    val=str(event)
-#    settings["meter_mode"]=val
-#    cam.meter_mode=val
-#    saveSettings.settingsChanged=True
-
 def handleWbGain1(event):    
     settings["awb_gains"][0]=float(event)
     cam.awb_gains=settings["awb_gains"]
@@ -350,14 +377,17 @@ def runHandle():
     global CaptureBG
     global motors
     if runHandle.running:
-        runButton.configure(text="Run",state="disabled",bg="grey")
+        runButton.configure(text="Run",state="disabled",fg="grey")
         runHandle.running=False
         if CaptureBG!=None:
             CaptureBG.stopLoop()
-    else:        
+    else:
+        if runHandle.clean == False:
+            CaptureBG.join()
+            runHandle.clean=True
         filterProjectName()
         if projectName.get()=="":            
-            message.configure(text="You need to set a project name")
+            messagePrint("You need to set a project name")
             return
         runButton.configure(text="Stop")
         runHandle.running=True
@@ -367,14 +397,16 @@ def runHandle():
         prjLbl.configure(fg="grey")
         uiTools={
             "runButton": runButton,
-            "message": message,
-            "runHandle": runHandle
+            "message": messagePrint,
+            "runHandle": runHandle,
+            "prjBox":prjBox
         }        
         for name in motors.keys():
             motors[name].setFormat(settings["filmFormats"][filmFormat.get()][name])        
         CaptureBG=CaptureLoop(cam, motors, settings, projectName.get(),uiTools)
         CaptureBG.start()
 runHandle.running=False
+runHandle.clean=True
 
 def handlePrjNameChange(event):
     print(event)
@@ -440,11 +472,16 @@ compensation=Scale(miniFrame,from_= -25,to=25,resolution=1,length=scr_w/3-widget
 compensation.set(settings["exposure_compensation"])
 compensation.pack(side="right")
 Label(miniFrame,text="Auto Compensate:").pack(side="right")
+lightSelector=OptionMenu(miniFrame, color, *light.getOptions(), command=handleLightChange)
+lightSelector.pack(side="right")
+lightSelector.configure(width=widget_wchars, bg="white")
+Label(miniFrame, text="Light:").pack(side="right")
+
 ###### Film Format
 miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top",fill="x")
 filmFormatSelector=OptionMenu(miniFrame,filmFormat,*settings["filmFormats"],command=handleFilmFormatChange)
-filmFormatSelector.config(width=widget_wchars)
+filmFormatSelector.config(width=widget_wchars, borderwidth=borderwidth)
 filmFormatSelector.pack(side="right")
 lbl=Label(miniFrame,text="Film format:",width=widget_wchars,anchor="e")
 lbl.pack(side="right")
@@ -452,7 +489,7 @@ lbl.pack(side="right")
 miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top",fill="x")
 captureModeSelector=OptionMenu(miniFrame,captureMode,*captureModesList,command=handleCaptureModeChange)
-captureModeSelector.config(width=widget_wchars)
+captureModeSelector.config(width=widget_wchars, borderwidth=borderwidth)
 captureModeSelector.pack(side="right")
 lbl=Label(miniFrame,text="Capture Mode:",width=widget_wchars,anchor="e")
 lbl.pack(side="right")
@@ -460,7 +497,7 @@ lbl.pack(side="right")
 miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top",fill="x")
 exposureModeSelector=OptionMenu(miniFrame,exposureMode,*cam.EXPOSURE_MODES.keys(),command=handleExposureModeChange)
-exposureModeSelector.config(width=widget_wchars)
+exposureModeSelector.config(width=widget_wchars, borderwidth=borderwidth)
 exposureModeSelector.pack(side="right")
 lbl=Label(miniFrame,text="Exposure Mode:",width=widget_wchars,anchor="e")
 lbl.pack(side="right")
@@ -468,7 +505,7 @@ lbl.pack(side="right")
 miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top",fill="x")
 awbModeSelector=OptionMenu(miniFrame,awbMode,*cam.AWB_MODES.keys(),command=handleAwbModeChange)
-awbModeSelector.config(width=widget_wchars)
+awbModeSelector.config(width=widget_wchars, borderwidth=borderwidth)
 awbModeSelector.pack(side="right")
 lbl=Label(miniFrame,text="AWB Mode:",width=widget_wchars,anchor="e")
 lbl.pack(side="right")
@@ -476,7 +513,7 @@ lbl.pack(side="right")
 miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top",fill="x")
 imageEffectSelector=OptionMenu(miniFrame,imageEffect,*cam.IMAGE_EFFECTS,command=handleImageEffectChange)
-imageEffectSelector.config(width=widget_wchars)
+imageEffectSelector.config(width=widget_wchars, borderwidth=borderwidth)
 imageEffectSelector.pack(side="right")
 lbl=Label(miniFrame,text="ImageEffect:",width=widget_wchars,anchor="e")
 lbl.pack(side="right")
@@ -485,7 +522,7 @@ miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top",fill="x")
 possibleDirections=("cw","ccw")
 directionSelector=OptionMenu(miniFrame,direction,*possibleDirections,command=handleDirectionChange)
-directionSelector.config(width=widget_wchars)
+directionSelector.config(width=widget_wchars, borderwidth=borderwidth)
 directionSelector.pack(side="right")
 lbl=Label(miniFrame,text="Reels Direction:",width=widget_wchars,anchor="e")
 lbl.pack(side="right")
@@ -545,10 +582,20 @@ feederPwrButton.pack(side="right")
 feederCcwButton=Button(miniFrame,image=ccwPic,command=handleFeederCcw)
 feederCcwButton.pack(side="right")
 
-miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
-miniFrame.pack(side="top",fill="x")
-message=Label(miniFrame,text="",anchor="e")
-message.pack(side="right")
+
+
+
+message3=Label(leftFrame,text="",anchor="e",width=2*widget_wchars)
+message3.pack(side="top")
+
+message2=Label(leftFrame,text="",anchor="e",width=2*widget_wchars)
+message2.pack(side="top")
+
+message1=Label(leftFrame,text="",anchor="e",width=2*widget_wchars)
+message1.pack(side="top")
+
+message=Label(leftFrame,text="",anchor="e",width=2*widget_wchars)
+message.pack(side="top")
 
 powers={
     "feeder": feederPwrButton,
@@ -556,9 +603,9 @@ powers={
     "pickup":pickupPwrButton
 }
 motors={
-    "feeder": TrinamicSilentMotor(settings["feeder"],autoSpeed=True,button=powers["feeder"]),
-    "pickup": TrinamicSilentMotor(settings["pickup"],autoSpeed=True,button=powers["pickup"]),
-    "filmdrive": TrinamicSilentMotor(settings["filmdrive"], trace=True,button=powers["filmdrive"])
+    "feeder": TrinamicSilentMotor(settings["feeder"],autoSpeed=True,button=powers["feeder"], msg=messagePrint),
+    "pickup": TrinamicSilentMotor(settings["pickup"],autoSpeed=True,button=powers["pickup"], msg=messagePrint),
+    "filmdrive": TrinamicSilentMotor(settings["filmdrive"], trace=True,button=powers["filmdrive"], msg=messagePrint)
 }
 for item in motors:
     if motors[item].getPowerState==0:
@@ -574,7 +621,7 @@ saveSettings.settingsChanged=False
 def click_handler(event):
     global previewSize
     step=sqrt(2.0)
-    zoomLimit=128
+    zoomLimit=16
     z=click_handler.zoom
     oldfactor=1.0/(z[2]-z[0])
     if settings["hflip"]:
@@ -589,7 +636,7 @@ def click_handler(event):
         # reset zoom
         click_handler.zoom=(0.0,0.0,1.0,1.0)
         cam.zoom=click_handler.zoom
-        message.configure(text="zoom factor: 1.00")
+        messagePrint("zoom factor: 1.00")
     elif event.num == 1:
         # ZOOM IN FULL
         if oldfactor >= zoomLimit:
@@ -611,7 +658,7 @@ def click_handler(event):
         z=(newX,newY,newX+(1.0/factor),newY+(1.0/factor))
         cam.zoom=z
         click_handler.zoom=z
-        message.configure(text="zoom factor: {:.2f}".format(factor))
+        messagePrint("zoom factor: {:.2f}".format(factor))
     elif event.num == 4:
         # ZOOM IN
         if oldfactor >= zoomLimit:
@@ -635,7 +682,7 @@ def click_handler(event):
         z=(newX,newY,newX+(1.0/factor),newY+(1.0/factor))
         cam.zoom=z
         click_handler.zoom=z
-        message.configure(text="zoom factor: {:.2f}".format(factor))
+        messagePrint("zoom factor: {:.2f}".format(factor))
     elif event.num == 5:
         # ZOOM OUT
         if oldfactor < 0.0000001:
@@ -659,7 +706,7 @@ def click_handler(event):
         z=(newX,newY,newX+(1.0/factor),newY+(1.0/factor))
         cam.zoom=z
         click_handler.zoom=z
-        message.configure(text="zoom factor: {:.2f}".format(factor))
+        messagePrint("zoom factor: {:.2f}".format(factor))
         
             
 click_handler.zoom=(0.0,0.0,1.0,1.0)    
@@ -668,4 +715,3 @@ picFrame.bind("<Button>",click_handler)
 
 
 root.mainloop()
-
