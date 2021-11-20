@@ -280,11 +280,11 @@ while True:
         c.awb_gains=c.gcSettings["awb_gains"]
             
     elif char == "g":
-        c.awb_mode=c.selectOther(c.awb_mode, c.gcAwbModes, 1)
+        c.awb_mode=c.selectOther(c.awb_mode, c.AWB_MODES.keys(), 1)
         c.gcSettings["awb_mode"]=c.awb_mode
         c.gcSaveSettings()
     elif char == "h":
-        c.exposure_mode=c.selectOther(c.exposure_mode, c.gcCamModes, 1)
+        c.exposure_mode=c.selectOther(c.exposure_mode, c.EXPOSURE_MODES.keys(), 1)
         c.gcSettings["exposure_mode"]=c.exposure_mode
         c.gcSaveSettings()
     elif char == "j":

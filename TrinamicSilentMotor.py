@@ -10,17 +10,16 @@
 from time import sleep, time
 import RPi.GPIO as GPIO
 GPIO.setmode(GPIO.BCM) 
+from json import dumps
+
 
 
 class TrinamicSilentMotor():
-    def __init__(self,cfg,autoSpeed=False,trace=False):
+    def __init__(self,cfg,autoSpeed=False,trace=False,button=None, msg=None):
+        print(dumps(cfg, indent=4))
         GPIO.setmode(GPIO.BCM)
         self.autoSpeed=autoSpeed
         if autoSpeed:
-            if "targetTime" not in cfg:
-                self.targetTime=cfg["defaultTargetTime"]
-            else:
-                self.targetTime=cfg["targetTime"]
             self.minSpeed=cfg["minSpeed"]
             self.maxSpeed=cfg["maxSpeed"]
         if "learnPin" in cfg:
@@ -30,40 +29,56 @@ class TrinamicSilentMotor():
         else:
             self.learning=False
             self.learnPin= -1
-        self.accel=cfg["accel"]
         self.histo=[]
+        self.msg=msg
         self.skipHisto=3
         self.trace=trace
         self.fault=False
         self.name=cfg["name"]
-        self.speed=cfg["speed"]
-        self.speed2=cfg["speed2"]
+        self.button=button
         self.currentSpeed=0
         self.target=0
         self.SensorStopPin=cfg["stopPin"]
-        self.ignoreInitial=cfg["ignoreInitial"]
         self.ignore=0
-        self.faultTreshold=cfg["faultTreshold"]
         self.pinEnable=cfg["pinEnable"]
         self.pinDirection=cfg["pinDirection"]
         self.pinStep=cfg["pinStep"]
         self.SensorStopState=cfg["stopState"]
+        self.inverted=cfg["invert"]
         self.lasttick=time()
         self.toggle=0
         self.shortsInARow=0
         GPIO.setup(self.pinStep, GPIO.OUT, initial=0)
         GPIO.setup(self.pinEnable, GPIO.OUT, initial=0)
-        if cfg["invert"]:
-            GPIO.setup(self.pinDirection, GPIO.OUT, initial=1)
-        else:
-            GPIO.setup(self.pinDirection, GPIO.OUT, initial=0)
         self.pos=int(0)
         GPIO.setup(self.SensorStopPin, GPIO.IN)
+
+    def message(self, txt):
+        if self.msg != None:
+            self.msg(txt)
+            
+
+    def clearFault(self):
+        self.fault=False
+        self.shortsInARow=0
+        
+    def setFormat(self, cfg):
+        self.speed=cfg["speed"]
+        self.speed2=cfg["speed2"]
+        self.accel=cfg["accel"]
+        self.ignoreInitial=cfg["ignoreInitial"]
+        self.faultTreshold=cfg["faultTreshold"]
+        if "targetTime" in cfg:
+            self.targetTime=cfg["targetTime"]
                 
     def enable(self):
         GPIO.output(self.pinEnable, 0)
+        if self.button:
+            self.button.configure(bg="green")
     def disable(self):
         GPIO.output(self.pinEnable, 1)
+        if self.button:
+            self.button.configure(bg="grey")
         
     def forward(self):
         self.pos += 1
@@ -81,7 +96,32 @@ class TrinamicSilentMotor():
                     self.currentSpeed=self.targetSpeed
             return time() + (1.0 / self.currentSpeed)
         return None
-                        
+
+    def getPowerState(self):
+        return GPIO.input(self.pinEnable)
+    
+    def setDirection(self, direction):
+        #  I need XOR but all I got is != which
+        #  does the same for booleans
+        rev=False
+        if direction == "ccw":
+            rev=True
+        elif direction != "cw":
+            raise Exception("Bad direction parameter")        
+        if self.inverted != rev:
+            GPIO.setup(self.pinDirection, GPIO.OUT, initial=0)
+        else:
+            GPIO.setup(self.pinDirection, GPIO.OUT, initial=1)
+        
+    def blindMove(self, ticks):
+        delay=0.020
+        while ticks > 0:
+            sleep(delay)
+            if delay > 0.001:
+                delay-= 0.0005
+            self.forward()
+            ticks-= 1
+    
     def move(self):
         ticks=0
         #log=[]
@@ -116,6 +156,7 @@ class TrinamicSilentMotor():
                         self.shortsInARow=0
                     if self.shortsInARow >= 10:
                         self.fault=True
+                        self.message("{} short FAULT".format(self.name))
                         raise Exception("\033[1;31mFAULT\033[0m: only the lowest amount of steps for 10 cycles in a row")
                     if self.autoSpeed:
                         if self.skipHisto > 0:
@@ -138,8 +179,6 @@ class TrinamicSilentMotor():
                             self.speed2=self.maxSpeed
                         self.speed=self.speed2
                         print("New speed for {}={}ticks/s".format(self.name, self.speed))
-                            
-                        
                     return
             if self.ignore == 0 and self.ignoreInitial != 0:
                 self.currentSpeed=self.speed2
@@ -150,4 +189,5 @@ class TrinamicSilentMotor():
             ticks+= 1
             waitUntil=self.tick()
         self.fault=True
+        self.message("{} long FAULT".format(self.name))
         raise Exception("Move failed, \033[1;31m{}\033[0m passed its limit without triggering sensor".format(self.name))

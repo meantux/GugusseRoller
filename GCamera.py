@@ -5,7 +5,7 @@ import os
 from pidng.core import RPICAM2DNG
 
 class GCamera(PiCamera):
-    def __init__(self, framecount=0, fn="cameraSettings.json"):
+    def __init__(self, framecount=0, fn="GugusseSettings.json"):
         self.framecount=framecount
         PiCamera.__init__(self)
         with open(fn, "r") as h:
@@ -15,10 +15,7 @@ class GCamera(PiCamera):
         with open("captureModes.json","r") as h:
             self.captureModes=json.load(h)
         self.resolution=self.MAX_RESOLUTION
-        self.start_preview(fullscreen=False,resolution=(1024,768),window=(256,0,1024,768),vflip=False,hflip=False)
-        self.gcCamModes=[ "off", "auto", "night", "nightpreview", "backlight", "spotlight", "sports", "snow", "beach", "verylong", "fixedfps", "antishake", "fireworks"]
-        self.gcAwbModes=[ "off", "auto", "sunlight", "cloudy", "shade", "tungsten", "fluorescent", "incandescent", "flash", "horizon"]
-        self.gcMeterModes=[ "average", "spot", "backlit", "matrix" ]
+        #self.start_preview(fullscreen=False,resolution=(1024,768),window=(256,0,1024,768),vflip=False,hflip=False)
         self.gcZooms=[(0.0,0.0,1.0,1.0), (0.0,0.0,0.333,0.333), (0.333,0.0,0.333,0.333), (0.667,0.0,0.333,0.333), (0.0,0.333,0.333,0.333), (0.333,0.333,0.333,0.333), (0.667,0.333,0.333,0.333), (0.0,0.667,0.333,0.333), (0.333,0.667,0.333,0.333), (0.667,0.667,0.333,0.333)]
         # As recommended by the documentation on the raspberri pi camera
         # we have to leave it in automatic a few seconds before setting
@@ -28,8 +25,11 @@ class GCamera(PiCamera):
         self.captureMode=self.gcSettings["captureMode"]
         self.suffix=self.captureModes[self.captureMode]["suffix"]
         self.DNG=RPICAM2DNG()
+
+    def setFileIndex(self, newIndex):
+        self.framecount=newIndex
         
-    def gcSaveSettings(self, fn="cameraSettings.json"):
+    def gcSaveSettings(self, fn="GugusseSettings.json"):
         with open(fn, "w") as h:
             json.dump(self.gcSettings, h, indent=4)
 

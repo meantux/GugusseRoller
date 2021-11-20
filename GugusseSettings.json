@@ -1,0 +1,21 @@
+{
+    "awb_gains": [
+        4.91,
+        1.09
+    ],
+    "awb_mode": "off",
+    "brightness": 51,
+    "captureMode": "PyDNG",
+    "contrast": -1,
+    "direction": "cw",
+    "exposure_compensation": 0,
+    "exposure_mode": "off",
+    "filmFormat": "8mm",
+    "hflip": false,
+    "image_effect": "none",
+    "iso": 100,
+    "saturation": 0,
+    "sharpness": 0,
+    "shutter_speed": 26300,
+    "vflip": false
+}
