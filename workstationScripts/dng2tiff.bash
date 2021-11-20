@@ -1,8 +1,14 @@
 #!/bin/bash
 
+MING=2
+MINM=$((MING*1024))
+
+
+
 function getAvailableMegabytes () {
     df -BM "$1" | tail -n 1 | awk '{print $4}' | tr -d 'M'    
 }
+
 
 USAGE="$0 <dirFrom> [<dirTo>]"
 
@@ -21,7 +27,12 @@ else
     export dirTo="$2"
 fi
 
-fileCount=0
+if [ -n "$startPoint" ]; then
+    fileCount=$startPoint
+else    
+    fileCount=0
+fi
+
 
 pushd "$dirTo"
 lastFile=`ls *.tiff 2> /dev/null | tail -n 1`
@@ -35,7 +46,7 @@ popd
 
 export spaceLeft=`getAvailableMegabytes ${dirTo}`
 cd "$dirFrom"
-while [ "$spaceLeft" -gt 2048 ]; do
+while [ "$spaceLeft" -gt $MINM ]; do
     fin=`printf "%05d.dng" $fileCount`    
     fout=`printf "%05d.tiff" $fileCount`
     export fileCount=$((fileCount+1))
@@ -66,7 +77,7 @@ while [ "$spaceLeft" -gt 2048 ]; do
     export spaceLeft=`getAvailableMegabytes ${dirTo}`
 done
 export spaceLeft=`getAvailableMegabytes ${dirTo}`
-if [ "$spaceLeft" -le 2048 ]; then
-    echo "THERE'S LESS THAN 2G OF HARD DRIVE SPACE LEFT ON ${dirTo}, exit!"
+if [ "$spaceLeft" -le $MINM ]; then
+    echo "THERE'S LESS THAN ${MING}G OF HARD DRIVE SPACE LEFT ON ${dirTo}, exit!"
 fi
 

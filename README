@@ -1,29 +1,54 @@
-The Gugusse Roller is the second machine to transfer film to digital that
-I've created and built.
+The GugusseGUI software for the Gugusse Roller
+Author: Denis-Carl Robidoux
 
-For the moment the project is still under development, there is a lot
-of information available on the Gugusse Roller Facebook page.
+The Gugusse Roller is a DIY project to make a machine that can
+transfer films of all sizes between 8mm (included) and 35mm
+(included) to digital. It comprises of:
+    - 3D printed parts
+    - A Raspberry Pi 4B (with 4GB)
+    - A Raspberry Pi HQ camera
+    - An Adafruit Metro Mini 5V 16Mhz (it's an Arduino)
+    - 3 stepper motors (bipolar 12V Nema 17, 34mm height)
+    - A longboard wheel
+    - Various small electronic parts.
+    - A reliable 5V and 12V power supply
+    - Led strips
+
+You can find all the instructions, the files to make your 3D
+printed parts and the one to make the PCB for free, no strings
+attached, at www.deniscarl.com
+
+DEPENDENCIES:
+  - installable by raspbian's apt-get:
+      - python3-pil
+      - python3-picamera
+      - python3-rpi.gpio
+      - python3-dev
+      - git
+      - nano (you might need an editor for the first time you run it)
+      - imagemagick
+      - python3-numpy
+      - python3-exif
+      - jq
+  - found on Github:
+      - schoolpost/PiDNG (used to be called schoolpost/PyDNG)
+      
+The resulting machine is fully functionnal and stable but it
+is still evolving. You can watch or participate this evolution at
 https://www.facebook.com/Gugusse-Roller-2216783521714775/
 
-In progress also is a website for anyone to build his own Gugusse Roller:
-www.deniscarl.com
-
-The Gugusse Roller uses a Raspberry Pi and various combinations of Raspberry Pi Cameras and lenses.
-the objectives of the software is to:
-    -Drive the 3 stepper motors
-    -read the 3 discrete inputs:
-        1. film hole detector
-        2. left arm aligned in middle
-        3. right arm aligned in middle
-    -capture each frame, save it as jpeg and transfer the file to a ftp server
+The objectives of the software is to:
+    - Drive the 3 stepper motors
+    - Monitor the camera's output
+    - Adjust the various camera settings
+    - read the 3 discrete inputs:
+         1. film hole detector
+         2. left arm aligned in middle
+         3. right arm aligned in middle
+    - capture each frame, save it as jpeg (or better as a 12bits raw DNG)
+    - transfer the file to a ftp server
 
 Files Explained:
 
-    transferMovie.bash: Recommended entry point to perform a transfer, it verifies the sequence number or create a new directory on ftp server, starts a script that upload picture files that are ready and call the main executable.
-    Gugusse.py: Main executable, don't call it directly, use above file
-    manualControl.py: use it directly to adjust camera setting, camera aiming, camera focus, film tension, hole sensor and to control motors.
-    turnoff.py: call it directly to unlock all 3 motors.
-    TrinamicSilentMotor.py: Library used by Gugusse.py
-    GCamera.py: Library used by Gugusse.py and manualControl.py
     
     
