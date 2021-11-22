@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 from tkinter import *
-from json import load,dump
+from json import load,dump,dumps
 from GCamera import GCamera
 from CaptureLoop import CaptureLoop
 from time import sleep
@@ -153,6 +153,7 @@ color=StringVar(root)
 color.set("on")
 
 def messagePrint(txt):
+    print(txt)
     message3.configure(text=messagePrint.text3)
     message2.configure(text=messagePrint.text2)
     message1.configure(text=messagePrint.text1)
@@ -167,7 +168,7 @@ messagePrint.text1=""
 
     
 def filterProjectName():
-    prj=projectName.get()
+    prj=prjBox.get()
     newprj=""
     for aChar in prj:
         if aChar in "-+_:abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789":
@@ -175,7 +176,7 @@ def filterProjectName():
         else:
             newprj="{}_".format(newprj)
     if prj != newprj:
-        projectName.set(newprj)
+        prjBox.set(newprj)
         messagePrint("project name filtered")
 
 def saveSettings():
@@ -203,6 +204,7 @@ def handleLightChange(event):
         lightSelector.configure(bg="blue", fg="yellow")
     else:
         lightSelector.configure(bg=event, fg="black")
+
         
 def handleExposureChange(event):
     if exposureMode.get() == "off":
@@ -240,13 +242,16 @@ def handleContrastChange(event):
 
 def handleFilmFormatChange(event):
     val=str(event)
+    filmFormat.set(event)
     settings["filmFormat"]=val
     saveSettings.settingsChanged=True
 
 def handleCaptureModeChange(event):
-    val=str(event)
+    val=str(event)    
     settings["captureMode"]=val
+    captureMode.set(event)
     saveSettings.settingsChanged=True
+    cam.changeCaptureMode(val)
     
 def handleAwbModeChange(event):
     val=str(event)
@@ -258,11 +263,13 @@ def handleAwbModeChange(event):
         wbGain1.configure(state="disabled",fg="grey")
         wbGain2.configure(state="disabled",fg="grey")
     cam.awb_mode=val
+    awbMode.set(val)
     saveSettings.settingsChanged=True
 
 def handleExposureModeChange(event):
     val=str(event)
     settings["exposure_mode"]=val
+    exposureMode.set(val)
     if val == "off":
         exposition.configure(state="normal",fg="black")
         compensation.configure(state="disabled",fg="gray")
@@ -305,6 +312,7 @@ def handleCompensationChange(event):
 
 def handleDirectionChange(event):
     val=str(event)
+    direction.set(val)
     settings["direction"]=val
     saveSettings.settingsChanged=True
 
@@ -386,24 +394,24 @@ def runHandle():
             CaptureBG.join()
             runHandle.clean=True
         filterProjectName()
-        if projectName.get()=="":            
+        if prjBox.get()=="":            
             messagePrint("You need to set a project name")
             return
+        captureModeSelector.configure(state="disabled",fg="grey")
         runButton.configure(text="Stop")
         runHandle.running=True
-        vflipButton.configure(state="disabled",fg="grey")
-        hflipButton.configure(state="disabled",fg="grey")
         prjBox.configure(state="disabled")
         prjLbl.configure(fg="grey")
         uiTools={
+            "captureModeSelector":captureModeSelector,
             "runButton": runButton,
             "message": messagePrint,
             "runHandle": runHandle,
             "prjBox":prjBox
         }        
         for name in motors.keys():
-            motors[name].setFormat(settings["filmFormats"][filmFormat.get()][name])        
-        CaptureBG=CaptureLoop(cam, motors, settings, projectName.get(),uiTools)
+            motors[name].setFormat(settings["filmFormats"][filmFormat.get()][name])
+        CaptureBG=CaptureLoop(cam, motors, settings, prjBox.get(),uiTools)
         CaptureBG.start()
 runHandle.running=False
 runHandle.clean=True

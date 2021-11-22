@@ -108,6 +108,8 @@ class CaptureLoop(Thread):
         self.uiTools["runHandle"].running=False
         self.uiTools["runHandle"].clean=False
         self.uiTools["runButton"].configure(text="Run",state="normal",fg="black")
+        self.uiTools["captureModeSelector"].configure(state="normal",fg="black")
+
         self.uiTools["prjBox"].configure(text="Run",state="normal",fg="black")
         self.uiTools["message"]("Capture stopped!")
 

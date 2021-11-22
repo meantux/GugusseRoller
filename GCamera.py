@@ -76,6 +76,10 @@ class GCamera(PiCamera):
         self.brightness=s["brightness"]
         self.contrast=s["contrast"]
         self.image_effect=s["image_effect"]
+    def changeCaptureMode(self,newMode):
+        self.captureMode=newMode
+        self.suffix=self.captureModes[newMode]["suffix"]
+        
     def captureCycle(self):
         if self.captureMode == "singleJpg":
             fn="/dev/shm/{:05d}.jpg".format(self.framecount)
