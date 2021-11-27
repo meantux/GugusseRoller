@@ -47,7 +47,7 @@ class FtpThread(Thread):
         
         
     def openConnection(self):
-        with open("ftp.conf","rt") as h:
+        with open("ftp.json","rt") as h:
             cfg=load(h)
         self.ftp=FTP(cfg["server"])
         self.ftp.login(user=cfg["user"],passwd=cfg["passwd"])
