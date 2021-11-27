@@ -78,7 +78,9 @@ def testFTP():
             h.close()
         remove("/dev/shm/0000.txt")
         conn.delete("0000.txt")
-        conn.cwd("/")
+        conn.close()
+        conn=FTP(server.get())
+        conn.login(user=user.get(),passwd=passwd.get())
         if path.get() != "" and path.get() != ".":            
             conn.cwd(path.get())
         conn.rmd(name)
@@ -108,7 +110,7 @@ def testFilmdrive():
     m=TrinamicSilentMotor(cfg)
     m.setDirection("cw")
     m.blindMove(2000)
-    messagebox.showinfo("THE SKATEBOARD WHEEL", "The skateboard wheel should have\nturned counter-clockwise")
+    messagebox.showinfo("THE SKATEBOARD WHEEL", "The skateboard wheel should have turned counter-clockwise")
 
 def testPickup():
     cfg=deepcopy(hardware["pickup"])
