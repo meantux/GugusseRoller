@@ -29,7 +29,6 @@ widget_w=widget_wchars*12
 top_h=180
 left_w=2*widget_w
 
-ftpBG=None
 CaptureBG=None
 
 
@@ -404,6 +403,7 @@ def runHandle():
         prjLbl.configure(fg="grey")
         uiTools={
             "captureModeSelector":captureModeSelector,
+            "handleLightChange":handleLightChange,
             "runButton": runButton,
             "message": messagePrint,
             "runHandle": runHandle,

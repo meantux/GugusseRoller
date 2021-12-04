@@ -1,13 +1,12 @@
 from threading import Thread
 from FtpThread import FtpThread
-
+from LocalThread import LocalThread
 from time import sleep, time
-from Lights import Lights
 from json import load,dumps
 from os import mkdir
 
 class FrameSequence():
-    def __init__(self, cam, motors, cfg, start_frame):
+    def __init__(self, cam, motors, cfg, start_frame,handleLightChange):
         for item in cfg:
            if isinstance(cfg[item], dict):
               cfg[item]["name"]=item
@@ -20,7 +19,8 @@ class FrameSequence():
             print("Ho well... directory already exists, who cares?");
         self.cam=cam
         self.cam.setFileIndex(start_frame)
-        self.lights=Lights("on")
+        self.handleLightChange=handleLightChange
+        self.handleLightChange("on")
         self.feeder.enable()
         self.pickup.enable()
                    
@@ -33,7 +33,7 @@ class FrameSequence():
            self.feeder.disable()
            self.filmdrive.disable()
            self.pickup.disable()
-           self.lights.set("off")
+           self.handleLightChange("off")
            raise Exception("Motor Fault!")
         sleep(0.05)
         try:
@@ -44,7 +44,7 @@ class FrameSequence():
            self.pickup.disable()
            print("Failure to capture image: {}".format(e))
            self.cam.close()
-           self.lights.set("off")
+           self.handleLightChange("off")
            raise Exception("Stop")
         m2.start()
         m3.start()
@@ -86,11 +86,13 @@ class CaptureLoop(Thread):
         self.motors["feeder"].setDirection(self.settings["direction"])
         self.motors["filmdrive"].setDirection("cw")
         self.motors["pickup"].setDirection(self.settings["direction"])
-        
-        self.ftp=FtpThread(self.subDir,self.captureModes[self.settings["captureMode"]]["suffix"], self.uiTools)
-        start=self.ftp.getStartPoint()
-        self.ftp.start()
-        self.sequence=FrameSequence(self.cam, self.motors, self.settings,start)        
+        if "saveMode" in self.settings and self.settings["saveMode"] == "local":
+            self.export=LocalThread(self.subDir, self.captureModes[self.settings["captureMode"]]["suffix"], self.uiTools, self.settings["localFilePath"])
+        else:
+            self.export=FtpThread(self.subDir,self.captureModes[self.settings["captureMode"]]["suffix"], self.uiTools)
+        start=self.export.getStartPoint()
+        self.export.start()
+        self.sequence=FrameSequence(self.cam, self.motors, self.settings,start,self.uiTools["handleLightChange"])        
         self.uiTools["runButton"].configure(state="normal",fg="black")
         self.uiTools["prjBox"].configure(state="disable",fg="grey")
         
@@ -102,9 +104,9 @@ class CaptureLoop(Thread):
                 self.stopLoop()
         self.uiTools["message"]("wait 10secs")
         sleep(10)
-        self.uiTools["message"]("stopping FTP")
-        self.ftp.stopLoop()        
-        self.ftp.join()
+        self.uiTools["message"]("stopping Export")
+        self.export.stopLoop()        
+        self.export.join()
         self.uiTools["runHandle"].running=False
         self.uiTools["runHandle"].clean=False
         self.uiTools["runButton"].configure(text="Run",state="normal",fg="black")

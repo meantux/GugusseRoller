@@ -20,8 +20,6 @@ class FtpThread(Thread):
     def getStartPoint(self):
         if not self.connected:
             self.openConnection()
-        if self.fileIndex>0:
-            return 0
         listdir=[]
         self.message("listing remote (wait)".format(self.subdir))
         try:

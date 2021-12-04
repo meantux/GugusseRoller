@@ -2,6 +2,8 @@
 
 from tkinter import *
 from tkinter import messagebox
+from tkinter import ttk
+from tkinter import filedialog
 from json import load,dump
 from copy import deepcopy
 from ftplib import FTP
@@ -19,6 +21,10 @@ with open("hardwarecfg.json","rt") as h:
 with open("ftp.json","rt") as h:
     ftp=load(h)
 
+if "saveMode" not in hardware:
+    hardware["saveMode"]="ftp"
+    hardware["localFilePath"]="/media"
+    
 server=StringVar(root)
 server.set(ftp["server"])
 user=StringVar(root)
@@ -27,6 +33,8 @@ passwd=StringVar(root)
 passwd.set(ftp["passwd"])
 path=StringVar(root)
 path.set(ftp["path"])
+localFilePath=StringVar(root)
+localFilePath.set(hardware["localFilePath"])
 
 feeder=BooleanVar(root)
 feeder.set(hardware["feeder"]["invert"])
@@ -37,6 +45,45 @@ filmdrive.set(hardware["filmdrive"]["invert"])
 pickup=BooleanVar(root)
 pickup.set(hardware["pickup"]["invert"])
 
+saveMode=StringVar(root)
+saveMode.set(hardware["saveMode"])
+
+def modeChangeHandler(event):
+    val=str(event)
+    hardware["saveMode"]=val
+    if val == "ftp":
+        serverBox.configure(state="normal",fg="black")
+        userBox.configure(state="normal",fg="black")
+        passwdBox.configure(state="normal",fg="black")
+        pathBox.configure(state="normal",fg="black")
+        testButton.configure(state="normal",fg="black")
+        filePathButton.configure(state="disabled",fg="grey")
+    elif val == "local":
+        serverBox.configure(state="disabled",fg="grey")
+        userBox.configure(state="disabled",fg="grey")
+        passwdBox.configure(state="disabled",fg="grey")
+        pathBox.configure(state="disabled",fg="grey")
+        testButton.configure(state="disabled",fg="grey")
+        filePathButton.configure(state="normal",fg="black")
+        
+def getTheFileDialog():
+    oldLocalPath=hardware["localFilePath"]
+    newLocalPath=str(filedialog.askdirectory(initialdir=oldLocalPath,mustexist=True))
+    print("We got \"{}\"".format(newLocalPath))
+    # why sometimes we click Cancel in askdirectory,
+    # it returns "" and other times "()" eludes me...
+    if newLocalPath!="" and newLocalPath!="()":
+        hardware["localFilePath"]=newLocalPath
+        filePathButton.configure(text=newLocalPath)
+
+
+miniFrame=Frame(root, highlightbackground="black", highlightthickness=1)
+miniFrame.pack(side="top", fill="x")
+saveModeSelect=OptionMenu(miniFrame,saveMode,"ftp","local",command=modeChangeHandler)
+saveModeSelect.pack(side="right")
+Label(miniFrame,text="Export Mode:",anchor="e").pack(side="right")
+
+                      
 miniFrame=Frame(root, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top", fill="x")
 serverBox=Entry(miniFrame,textvariable=server)
@@ -60,6 +107,11 @@ miniFrame.pack(side="top", fill="x")
 pathBox=Entry(miniFrame,textvariable=path)
 pathBox.pack(side="right")
 Label(miniFrame,text="ftp path:",anchor="e").pack(side="right")
+
+miniFrame=Frame(root, highlightbackground="black", highlightthickness=1)
+miniFrame.pack(side="top", fill="x")
+filePathButton=Button(miniFrame,text=hardware["localFilePath"], command=getTheFileDialog)
+filePathButton.pack(side="left")
 
 def testFTP():
     name=datetime.now().strftime("%Y%m%d%H%M%S%f")
@@ -93,7 +145,8 @@ def testFTP():
 
 miniFrame=Frame(root, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top", fill="x")
-Button(miniFrame,text="Test FTP settings",command=testFTP).pack(side="left")
+testButton=Button(miniFrame,text="Test FTP settings",command=testFTP)
+testButton.pack(side="left")
 
 
 def testFeeder():
@@ -167,5 +220,6 @@ miniFrame.pack(side="top", fill="x")
 Button(miniFrame,text="Save And Exit",command=saveExit).pack(side="right")
 Button(miniFrame,text="Cancel",command=root.destroy).pack(side="left")
 
+modeChangeHandler(hardware["saveMode"])
 root.mainloop()
 
