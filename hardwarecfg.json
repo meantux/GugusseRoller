@@ -62,6 +62,31 @@
                 "targetTime": 0.5
             }
         },
+        "35mmBigReels": {
+            "feeder": {
+                "accel": 10.0,
+                "faultTreshold": 8000,
+                "ignoreInitial": 20,
+                "speed": 100.0,
+                "speed2": 100.0,
+                "targetTime": 2.0
+            },
+            "filmdrive": {
+                "accel": 10.0,
+                "faultTreshold": 10000,
+                "ignoreInitial": 4675,
+                "speed": 4000.0,
+                "speed2": 100.0
+            },
+            "pickup": {
+                "accel": 10.0,
+                "faultTreshold": 8000,
+                "ignoreInitial": 20,
+                "speed": 400.0,
+                "speed2": 400.0,
+                "targetTime": 2.0
+            }
+        },
         "35mmSoundtrack": {
             "feeder": {
                 "accel": 400.0,
