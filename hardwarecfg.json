@@ -67,25 +67,25 @@
                 "accel": 10.0,
                 "faultTreshold": 8000,
                 "ignoreInitial": 20,
-                "speed": 800.0,
-                "speed2": 200.0,
-                "targetTime": 0.667
+                "speed": 400.0,
+                "speed2": 100.0,
+                "targetTime": 0.7
             },
             "filmdrive": {
                 "accel": 10.0,
                 "faultTreshold": 10000,
                 "ignoreInitial": 4675,
-                "speed": 10000.0,
+                "speed": 14000.0,
                 "speed2": 200.0,
-		"targetTime": 1.0
+		"targetTime": 1.1
             },
             "pickup": {
                 "accel": 10.0,
                 "faultTreshold": 8000,
                 "ignoreInitial": 20,
-                "speed": 3000.0,
-                "speed2": 200.0,
-                "targetTime": 0.667
+                "speed": 700.0,
+                "speed2": 100.0,
+                "targetTime": 0.7
             }
         },
         "35mmSoundtrack": {
