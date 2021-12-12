@@ -47,6 +47,7 @@ class TrinamicSilentMotor():
         self.lasttick=time()
         self.toggle=0
         self.shortsInARow=0
+        self.forceSpeed2=False
         GPIO.setup(self.pinStep, GPIO.OUT, initial=0)
         GPIO.setup(self.pinEnable, GPIO.OUT, initial=0)
         self.pos=int(0)
@@ -64,7 +65,6 @@ class TrinamicSilentMotor():
     def setFormat(self, cfg):
         self.speed=cfg["speed"]
         self.speed2=cfg["speed2"]
-        self.accel=cfg["accel"]
         self.ignoreInitial=cfg["ignoreInitial"]
         self.faultTreshold=cfg["faultTreshold"]
         if "targetTime" in cfg:
@@ -89,11 +89,13 @@ class TrinamicSilentMotor():
     def nextDelay(self):
         moveStart=self.moveStart
         now=time()
+        speed2=float(self.speed2)
+        if self.forceSpeed2:
+            return now+(1.0/speed2)
+        speed=float(self.speed)
         pos=now-moveStart
         target=self.targetTime
-        speed=self.speed
-        speed2=self.speed2
-        delta=speed-speed2        
+        delta=speed-speed2
         if pos >= target:
             newspeed=speed2
         elif pos <= (target/2):
@@ -105,7 +107,7 @@ class TrinamicSilentMotor():
         
     def tick(self):
         if self.target != self.pos:
-            self.direction()            
+            self.direction()
             return self.nextDelay()
         return None
 
@@ -147,6 +149,7 @@ class TrinamicSilentMotor():
         else:
             self.direction=self.forward
         self.moveStart=time()
+        self.forceSpeed2=False
         waitUntil=self.tick()
         while waitUntil != None:
             reading=GPIO.input(self.SensorStopPin)
@@ -167,6 +170,8 @@ class TrinamicSilentMotor():
                         print("\033[1;32m{}\033[0m ticks for {}".format(ticks,self.name))
                     if ticks == self.ignoreInitial:
                         self.shortsInARow+= 1;
+                        if self.slowEnd:
+                            self.forceSpeed2=True
                     else:
                         self.shortsInARow=0
                     if self.shortsInARow >= 10:
