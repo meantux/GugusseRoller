@@ -36,7 +36,6 @@ class TrinamicSilentMotor():
         self.fault=False
         self.name=cfg["name"]
         self.button=button
-        self.currentSpeed=0
         self.target=0
         self.SensorStopPin=cfg["stopPin"]
         self.ignore=0
@@ -87,14 +86,27 @@ class TrinamicSilentMotor():
             self.toggle=0
         else:
             self.toggle=1
+    def nextDelay(self):
+        moveStart=self.moveStart
+        now=time()
+        pos=now-moveStart
+        target=self.targetTime
+        speed=self.speed
+        speed2=self.speed2
+        delta=speed-speed2        
+        if pos >= target:
+            newspeed=speed2
+        elif pos <= (target/2):
+            newspeed=speed2 + 2 * delta * pos / target
+        else:
+            newspeed=speed2 + 2 * delta * (target - pos) / target
+        return now + (1.0/newspeed)
+        
+        
     def tick(self):
         if self.target != self.pos:
             self.direction()            
-            if self.currentSpeed < self.targetSpeed:
-                self.currentSpeed += self.accel
-                if self.currentSpeed > self.targetSpeed:
-                    self.currentSpeed=self.targetSpeed
-            return time() + (1.0 / self.currentSpeed)
+            return self.nextDelay()
         return None
 
     def getPowerState(self):
@@ -118,18 +130,14 @@ class TrinamicSilentMotor():
         while ticks > 0:
             sleep(delay)
             if delay > 0.001:
-                delay-= 0.0005
+                delay-= 0.0005                
             self.forward()
             ticks-= 1
     
     def move(self):
         ticks=0
         #log=[]
-        if self.autoSpeed:
-            self.moveStart=time()
         self.target= self.pos+self.faultTreshold
-        self.targetSpeed=self.speed
-        self.currentSpeed=0
         self.ignore=self.ignoreInitial
         if self.learning:
             GPIO.output(self.learnPin, 1)
@@ -138,6 +146,7 @@ class TrinamicSilentMotor():
             raise Exception("We do not support backward yet")
         else:
             self.direction=self.forward
+        self.moveStart=time()
         waitUntil=self.tick()
         while waitUntil != None:
             reading=GPIO.input(self.SensorStopPin)
@@ -148,6 +157,7 @@ class TrinamicSilentMotor():
                 self.ignore -= 1
             else:
                 if reading == self.SensorStopState:
+                    delta=time()-self.moveStart
                     if self.trace:
                         print("\033[1;32m{}\033[0m ticks for {}".format(ticks,self.name))
                     if ticks == self.ignoreInitial:
@@ -162,27 +172,23 @@ class TrinamicSilentMotor():
                         if self.skipHisto > 0:
                             self.skipHisto-= 1
                             return
-                        delta=time()-self.moveStart
                         self.histo.append(delta)
                         if len(self.histo)<3:
                             return
                         self.histo=self.histo[-3:]
                         avg=sum(self.histo)/len(self.histo)
-                        if abs(avg-self.targetTime)<0.001:
+                        if abs(avg-self.targetTime)<0.01:
                             return
                         gamma=10.0*(avg-self.targetTime)/(self.targetTime*100.0)
-                        newspeed=self.speed2 * (1.0 + gamma)
-                        self.speed2=int(newspeed)
-                        if self.speed2 < self.minSpeed:
-                            self.speed2=self.minSpeed
-                        elif self.speed2 > self.maxSpeed:
-                            self.speed2=self.maxSpeed
-                        self.speed=self.speed2
+                        newspeed=self.speed * (1.0 + gamma)
+                        self.speed=int(newspeed)
+                        if self.speed < self.speed2:
+                            self.speed=self.speed2
+                            print("WARNING: speed={} and speed2={}, the fact that speed was smaller than speed2 is unexpected".format(self.speed, self.speed2))
+                        elif self.speed > self.maxSpeed:
+                            self.speed=self.maxSpeed
                         print("New speed for {}={}ticks/s".format(self.name, self.speed))
                     return
-            if self.ignore == 0 and self.ignoreInitial != 0:
-                self.currentSpeed=self.speed2
-                self.targetSpeed=self.speed2
             delay=waitUntil - time()
             if delay>0.000001:
                 sleep(delay)
