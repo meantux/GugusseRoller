@@ -15,13 +15,11 @@ from json import dumps
 
 
 class TrinamicSilentMotor():
-    def __init__(self,cfg,autoSpeed=False,trace=False,button=None, msg=None):
+    def __init__(self,cfg,slowEnd=False,trace=False,button=None, msg=None):
         print(dumps(cfg, indent=4))
         GPIO.setmode(GPIO.BCM)
-        self.autoSpeed=autoSpeed
-        if autoSpeed:
-            self.minSpeed=cfg["minSpeed"]
-            self.maxSpeed=cfg["maxSpeed"]
+        self.minSpeed=cfg["minSpeed"]
+        self.maxSpeed=cfg["maxSpeed"]
         if "learnPin" in cfg:
             self.learning=True
             self.learnPin=cfg["learnPin"]
@@ -30,8 +28,10 @@ class TrinamicSilentMotor():
             self.learning=False
             self.learnPin= -1
         self.histo=[]
+        self.slowEnd=slowEnd
         self.msg=msg
-        self.skipHisto=3
+        self.skipHisto=2
+        self.skipAdjust=0
         self.trace=trace
         self.fault=False
         self.name=cfg["name"]
@@ -155,6 +155,11 @@ class TrinamicSilentMotor():
                 GPIO.output(self.learnPin,0)
             if self.ignore > 0:
                 self.ignore -= 1
+            elif self.ignore == 0 and self.slowEnd:
+                self.ignore = -1
+                if self.skipHisto <= 0:
+                    delta=time()-self.moveStart
+                    self.histo.append(delta)          
             else:
                 if reading == self.SensorStopState:
                     delta=time()-self.moveStart
@@ -168,31 +173,33 @@ class TrinamicSilentMotor():
                         self.fault=True
                         self.message("{} short FAULT".format(self.name))
                         raise Exception("\033[1;31mFAULT\033[0m: only the lowest amount of steps for 10 cycles in a row")
-                    if self.autoSpeed:
-                        if self.skipHisto > 0:
-                            self.skipHisto-= 1
-                            return
+                    if self.skipHisto > 0:
+                        self.skipHisto-= 1
+                        return
+                    if not self.slowEnd:
                         self.histo.append(delta)
-                        if len(self.histo)<3:
-                            return
-                        self.histo=self.histo[-3:]
-                        avg=sum(self.histo)/len(self.histo)
-                        if abs(avg-self.targetTime)<0.01:
-                            return
-                        gamma=2.0*(avg-self.targetTime)/(self.targetTime*100.0)
-                        if gamma > 0.02:
-                            gamma=0.02
-                        elif gamma < -0.02:
-                            gamma= -0.02
-                        newspeed=self.speed * (1.0 + gamma)
-                        self.speed=int(newspeed)
-                        if self.speed < self.speed2:
-                            self.speed=self.speed2
-                            print("WARNING: speed={} and speed2={}, the fact that speed was smaller than speed2 is unexpected".format(self.speed, self.speed2))
-                        elif self.speed > self.maxSpeed:
-                            self.speed=self.maxSpeed
-                        print("New speed for {}={}ticks/s".format(self.name, self.speed))
-                        self.skipHisto=2
+                    if self.skipAdjust > 0:
+                        self.skipAdjust-= 1
+                        return
+                    if len(self.histo)<3:
+                        return
+                    self.histo=self.histo[-3:]
+                    avg=sum(self.histo)/len(self.histo)
+                    if abs(avg-self.targetTime)<0.01:
+                        return
+                    gamma=2.0*(avg-self.targetTime)/(self.targetTime*100.0)
+                    if gamma > 0.02:
+                        gamma=0.02
+                    elif gamma < -0.02:
+                        gamma= -0.02
+                    newspeed=self.speed * (1.0 + gamma)
+                    self.speed=int(newspeed)
+                    if self.speed < self.speed2:
+                        self.speed=self.speed2
+                        print("WARNING: speed={} and speed2={}, the fact that speed was smaller than speed2 is unexpected".format(self.speed, self.speed2))
+                    elif self.speed > self.maxSpeed:
+                        self.speed=self.maxSpeed
+                    print("New speed for {}={}ticks/s".format(self.name, self.speed))
                     return
             delay=waitUntil - time()
             if delay>0.000001:

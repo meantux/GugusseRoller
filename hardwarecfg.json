@@ -75,9 +75,9 @@
                 "accel": 10.0,
                 "faultTreshold": 10000,
                 "ignoreInitial": 4675,
-                "speed": 9000.0,
-                "speed2": 80.0,
-		"targetTime": 1.5
+                "speed": 10000.0,
+                "speed2": 200.0,
+		"targetTime": 1.0
             },
             "pickup": {
                 "accel": 10.0,
