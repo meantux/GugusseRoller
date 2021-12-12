@@ -4,10 +4,10 @@
         1.39
     ],
     "awb_mode": "off",
-    "brightness": 52,
+    "brightness": 50,
     "captureMode": "singleJpg",
-    "contrast": -3,
-    "direction": "cw",
+    "contrast": -6,
+    "direction": "ccw",
     "exposure_compensation": 0,
     "exposure_mode": "off",
     "filmFormat": "35mmBigReels",
@@ -16,6 +16,6 @@
     "iso": 100,
     "saturation": 0,
     "sharpness": 0,
-    "shutter_speed": 20000,
+    "shutter_speed": 17600,
     "vflip": false
 }
