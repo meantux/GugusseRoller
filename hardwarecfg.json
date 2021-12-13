@@ -68,8 +68,8 @@
             },
             "filmdrive": {
                 "faultTreshold": 15000,
-                "ignoreInitial": 4675,
-                "speed": 18000.0,
+                "ignoreInitial": 4650,
+                "speed": 15000.0,
                 "speed2": 200.0,
 		"targetTime": 1.0
             },
@@ -91,8 +91,8 @@
             },
             "filmdrive": {
                 "faultTreshold": 15000,
-                "ignoreInitial": 4675,
-                "speed": 18000.0,
+                "ignoreInitial": 4650,
+                "speed": 15000.0,
                 "speed2": 200.0,
 		"targetTime": 1.0
             },

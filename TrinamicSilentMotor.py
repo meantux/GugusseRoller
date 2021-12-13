@@ -163,6 +163,7 @@ class TrinamicSilentMotor():
                 if self.skipHisto <= 0:
                     delta=time()-self.moveStart
                     self.histo.append(delta)          
+                self.forceSpeed2=True
             else:
                 if reading == self.SensorStopState:
                     delta=time()-self.moveStart
@@ -170,8 +171,6 @@ class TrinamicSilentMotor():
                         print("\033[1;32m{}\033[0m ticks for {}".format(ticks,self.name))
                     if ticks == self.ignoreInitial:
                         self.shortsInARow+= 1;
-                        if self.slowEnd:
-                            self.forceSpeed2=True
                     else:
                         self.shortsInARow=0
                     if self.shortsInARow >= 10:
@@ -211,6 +210,7 @@ class TrinamicSilentMotor():
             if delay>0.000001:
                 sleep(delay)
             ticks+= 1
+
             waitUntil=self.tick()
         self.fault=True
         self.message("{} long FAULT".format(self.name))
