@@ -7,15 +7,15 @@
     "brightness": 50,
     "captureMode": "singleJpg",
     "contrast": -6,
-    "direction": "ccw",
+    "direction": "cw",
     "exposure_compensation": 0,
     "exposure_mode": "off",
-    "filmFormat": "35mmBigReels",
+    "filmFormat": "35mm",
     "hflip": false,
     "image_effect": "none",
     "iso": 100,
     "saturation": 0,
     "sharpness": 0,
-    "shutter_speed": 17600,
+    "shutter_speed": 17200,
     "vflip": false
 }

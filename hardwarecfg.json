@@ -17,7 +17,7 @@
                 "faultTreshold": 8000,
                 "ignoreInitial": 10,
                 "speed": 1000.0,
-                "speed2": 1000.0,
+                "speed2": 100.0,
                 "targetTime": 0.33
             },
             "filmdrive": {
@@ -31,7 +31,7 @@
                 "faultTreshold": 8000,
                 "ignoreInitial": 10,
                 "speed": 1000.0,
-                "speed2": 1000.0,
+                "speed2": 100.0,
                 "targetTime": 0.33
             }
         },
@@ -40,7 +40,7 @@
                 "faultTreshold": 8000,
                 "ignoreInitial": 10,
                 "speed": 800.0,
-                "speed2": 800.0,
+                "speed2": 100.0,
                 "targetTime": 0.5
             },
             "filmdrive": {
@@ -54,7 +54,7 @@
                 "faultTreshold": 8000,
                 "ignoreInitial": 10,
                 "speed": 800.0,
-                "speed2": 800.0,
+                "speed2": 100.0,
                 "targetTime": 0.5
             }
         },
@@ -62,9 +62,9 @@
             "feeder": {
                 "faultTreshold": 8000,
                 "ignoreInitial": 20,
-                "speed": 1800.0,
-                "speed2": 800.0,
-                "targetTime": 0.5
+                "speed": 2500.0,
+                "speed2": 500.0,
+                "targetTime": 0.67
             },
             "filmdrive": {
                 "faultTreshold": 15000,
@@ -76,9 +76,9 @@
             "pickup": {
                 "faultTreshold": 8000,
                 "ignoreInitial": 20,
-                "speed": 800.0,
-                "speed2": 1800.0,
-                "targetTime": 0.5
+                "speed": 4000.0,
+                "speed2": 500.0,
+                "targetTime": 0.67
             }
         },
         "35mmBigReels": {
