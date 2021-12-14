@@ -16,23 +16,23 @@
             "feeder": {
                 "faultTreshold": 8000,
                 "ignoreInitial": 10,
-                "speed": 1000.0,
+                "speed": 2000.0,
                 "speed2": 100.0,
-                "targetTime": 0.33
+                "targetTime": 0.3
             },
             "filmdrive": {
                 "faultTreshold": 8000,
                 "ignoreInitial": 1800,
-                "speed": 12000.0,
+                "speed": 14000.0,
                 "speed2": 100.0,
-		"targetTime": 0.667
+		"targetTime": 0.45
             },
             "pickup": {
                 "faultTreshold": 8000,
                 "ignoreInitial": 10,
-                "speed": 1000.0,
+                "speed": 2000.0,
                 "speed2": 100.0,
-                "targetTime": 0.33
+                "targetTime": 0.3
             }
         },
         "16mmBigReels": {
