@@ -132,68 +132,68 @@
                 "faultTreshold": 8000,
                 "ignoreInitial": 10,
                 "speed": 800.0,
-                "speed2": 800.0,
-                "targetTime": 0.3
+                "speed2": 100.0,
+                "targetTime": 0.33
             },
             "filmdrive": {
                 "faultTreshold": 8000,
                 "ignoreInitial": 860,
-                "speed": 10000.0,
-                "speed2": 80.0,
-		"targetTime": 0.25
-            },
-            "pickup": {
-                "faultTreshold": 8000,
-                "ignoreInitial": 10,
-                "speed": 800.0,
-                "speed2": 800.0,
-                "targetTime": 0.3
-            }
-        },
-        "pathex": {
-            "feeder": {
-                "faultTreshold": 8000,
-                "ignoreInitial": 10,
-                "speed": 400.0,
-                "speed2": 400.0,
-                "targetTime": 0.4
-            },
-            "filmdrive": {
-                "faultTreshold": 15500,
-                "ignoreInitial": 3600,
-                "speed": 10000.0,
+                "speed": 8000.0,
                 "speed2": 100.0,
 		"targetTime": 0.33
             },
             "pickup": {
                 "faultTreshold": 8000,
                 "ignoreInitial": 10,
-                "speed": 400.0,
-                "speed2": 400.0,
-                "targetTime": 0.4
+                "speed": 800.0,
+                "speed2": 100.0,
+                "targetTime": 0.33
+            }
+        },
+        "pathex": {
+            "feeder": {
+                "faultTreshold": 8000,
+                "ignoreInitial": 10,
+                "speed": 800.0,
+                "speed2": 100.0,
+                "targetTime": 0.5
+            },
+            "filmdrive": {
+                "faultTreshold": 8000,
+                "ignoreInitial": 1800,
+                "speed": 12000.0,
+                "speed2": 100.0,
+		"targetTime": 0.667
+            },
+            "pickup": {
+                "faultTreshold": 8000,
+                "ignoreInitial": 10,
+                "speed": 800.0,
+                "speed2": 100.0,
+                "targetTime": 0.5
             }
         },
         "super8": {
             "feeder": {
                 "faultTreshold": 8000,
                 "ignoreInitial": 0,
-                "speed": 300.0,
-                "speed2": 400.0,
-                "targetTime": 0.3
+                "speed": 800.0,
+                "speed2": 100.0,
+                "targetTime": 0.33
             },
             "filmdrive": {
                 "faultTreshold": 16000,
                 "ignoreInitial": 950,
-                "speed": 10000.0,
-                "speed2": 50.0,
-		"targetTime": 0.3
+                "speed": 9000.0,
+                "speed2": 80.0,
+		"targetTime": 0.33
             },
             "pickup": {
                 "faultTreshold": 8000,
                 "ignoreInitial": 0,
-                "speed": 300.0,
-                "speed2": 300.0,
-                "targetTime": 0.3
+                "speed": 800.0,
+                "speed2": 100.0,
+                "targetTime": 0.33
             }
         }
     },

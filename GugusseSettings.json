@@ -10,12 +10,12 @@
     "direction": "cw",
     "exposure_compensation": 0,
     "exposure_mode": "off",
-    "filmFormat": "16mm",
+    "filmFormat": "super8",
     "hflip": false,
     "image_effect": "none",
     "iso": 100,
     "saturation": 0,
     "sharpness": 0,
-    "shutter_speed": 18800,
+    "shutter_speed": 26900,
     "vflip": false
 }
