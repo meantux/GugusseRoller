@@ -4,18 +4,18 @@
         1.39
     ],
     "awb_mode": "off",
-    "brightness": 52,
+    "brightness": 50,
     "captureMode": "singleJpg",
-    "contrast": -3,
+    "contrast": -6,
     "direction": "cw",
     "exposure_compensation": 0,
     "exposure_mode": "off",
-    "filmFormat": "35mmBigWheels",
+    "filmFormat": "super8",
     "hflip": false,
     "image_effect": "none",
     "iso": 100,
     "saturation": 0,
     "sharpness": 0,
-    "shutter_speed": 20000,
+    "shutter_speed": 26900,
     "vflip": false
 }

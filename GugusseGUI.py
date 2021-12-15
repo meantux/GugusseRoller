@@ -611,9 +611,9 @@ powers={
     "pickup":pickupPwrButton
 }
 motors={
-    "feeder": TrinamicSilentMotor(settings["feeder"],autoSpeed=True,button=powers["feeder"], msg=messagePrint),
-    "pickup": TrinamicSilentMotor(settings["pickup"],autoSpeed=True,button=powers["pickup"], msg=messagePrint),
-    "filmdrive": TrinamicSilentMotor(settings["filmdrive"], trace=True,button=powers["filmdrive"], msg=messagePrint)
+    "feeder": TrinamicSilentMotor(settings["feeder"],slowEnd=False,button=powers["feeder"], msg=messagePrint),
+    "pickup": TrinamicSilentMotor(settings["pickup"],slowEnd=False,button=powers["pickup"], msg=messagePrint),
+    "filmdrive": TrinamicSilentMotor(settings["filmdrive"], slowEnd=True,trace=True,button=powers["filmdrive"], msg=messagePrint)
 }
 for item in motors:
     if motors[item].getPowerState==0:

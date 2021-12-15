@@ -1,13 +1,45 @@
 import json
 from picamera import PiCamera
-from time import sleep
+from time import sleep, time
 import os
 from pidng.core import RPICAM2DNG
+from threading import Thread
+
+
+class SaveDNG(Thread):
+    def __init__(self, cam, fn, fnSecond, fnComplete):
+        Thread.__init__(self)
+        self.cam=cam
+        self.fn=fn
+        self.fnSecond=fnSecond
+        self.fnComplete=fnComplete
+
+    def run(self):
+        self.cam.capture(self.fn,bayer=True)
+        self.cam.DNG.convert(self.fn,process=False, compress=False)
+        os.rename(self.fnSecond, self.fnComplete)
+        os.remove(self.fn)
+       
+class SaveJPG(Thread):
+    def __init__(self, cam, fn, fnComplete):
+        Thread.__init__(self)
+        self.cam=cam
+        self.fn=fn
+        self.fnComplete=fnComplete
+
+    def run(self):
+        self.cam.capture(self.fn)
+        os.rename(self.fn, self.fnComplete)
+       
+
+
+
 
 class GCamera(PiCamera):
     def __init__(self, framecount=0, fn="GugusseSettings.json"):
+        self.backgroundProcess=None
         self.framecount=framecount
-        PiCamera.__init__(self)
+        PiCamera.__init__(self)        
         with open(fn, "r") as h:
             self.gcSettings=json.load(h)
         if "image_effect" not in self.gcSettings:
@@ -84,8 +116,13 @@ class GCamera(PiCamera):
         if self.captureMode == "singleJpg":
             fn="/dev/shm/{:05d}.jpg".format(self.framecount)
             fnComplete="/dev/shm/complete/{:05d}.jpg".format(self.framecount)
-            self.capture(fn)
-            os.rename(fn, fnComplete)            
+            if self.backgroundProcess != None:
+                self.backgroundProcess.join()
+            self.backgroundProcess=SaveJPG(self,fn,fnComplete)
+            self.backgroundProcess.start()
+            # wait 1/5th of a second to be sure the camera has time
+            # to capture a frame before we start moving.
+            sleep(0.2)
 
         elif self.captureMode == "bracketing":
             fn="/dev/shm/{:05d}_m.jpg".format(self.framecount)
@@ -110,10 +147,14 @@ class GCamera(PiCamera):
             fn="/dev/shm/{:05d}.jpg".format(self.framecount)
             fnSecond="/dev/shm/{:05d}.dng".format(self.framecount)
             fnComplete="/dev/shm/complete/{:05d}.dng".format(self.framecount)
-            self.capture(fn, bayer=True)
-            self.DNG.convert(fn,process=False, compress=False)
-            os.rename(fnSecond, fnComplete)
-            os.remove(fn)
+            if self.backgroundProcess != None:
+                self.backgroundProcess.join()
+            self.backgroundProcess=SaveDNG(self,fn,fnSecond,fnComplete)
+            self.backgroundProcess.start()
+            # wait 1/15th of a second to be sure the camera has time
+            # to capture a frame before we start moving.
+            sleep(0.0667) 
+                          
 
         self.framecount+= 1
         print ("Next:{}".format(self.framecount)) 
