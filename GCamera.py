@@ -6,20 +6,7 @@ from pidng.core import RPICAM2DNG
 from threading import Thread
 
 
-class SaveDNG(Thread):
-    def __init__(self, cam, fn, fnSecond, fnComplete):
-        Thread.__init__(self)
-        self.cam=cam
-        self.fn=fn
-        self.fnSecond=fnSecond
-        self.fnComplete=fnComplete
 
-    def run(self):
-        self.cam.capture(self.fn,bayer=True)
-        self.cam.DNG.convert(self.fn,process=False, compress=False)
-        os.rename(self.fnSecond, self.fnComplete)
-        os.remove(self.fn)
-       
 class SaveJPG(Thread):
     def __init__(self, cam, fn, fnComplete):
         Thread.__init__(self)
@@ -120,9 +107,9 @@ class GCamera(PiCamera):
                 self.backgroundProcess.join()
             self.backgroundProcess=SaveJPG(self,fn,fnComplete)
             self.backgroundProcess.start()
-            # wait 1/5th of a second to be sure the camera has time
+            # wait 1/2th of a second to be sure the camera has time
             # to capture a frame before we start moving.
-            sleep(0.2)
+            sleep(0.5)
 
         elif self.captureMode == "bracketing":
             fn="/dev/shm/{:05d}_m.jpg".format(self.framecount)
@@ -147,13 +134,10 @@ class GCamera(PiCamera):
             fn="/dev/shm/{:05d}.jpg".format(self.framecount)
             fnSecond="/dev/shm/{:05d}.dng".format(self.framecount)
             fnComplete="/dev/shm/complete/{:05d}.dng".format(self.framecount)
-            if self.backgroundProcess != None:
-                self.backgroundProcess.join()
-            self.backgroundProcess=SaveDNG(self,fn,fnSecond,fnComplete)
-            self.backgroundProcess.start()
-            # wait 1/15th of a second to be sure the camera has time
-            # to capture a frame before we start moving.
-            sleep(0.0667) 
+            self.capture(fn,bayer=True)
+            self.DNG.convert(fn,process=False, compress=False)
+            os.rename(fnSecond, fnComplete)
+            os.remove(fn)
                           
 
         self.framecount+= 1
