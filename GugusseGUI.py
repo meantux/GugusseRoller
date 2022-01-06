@@ -8,6 +8,7 @@ from datetime import datetime
 from math import sqrt
 import RPi.GPIO as GPIO
 from TrinamicSilentMotor import TrinamicSilentMotor
+from SensorReport import SensorReport
 from Lights import Lights
 GPIO.setmode(GPIO.BCM)
 light=Lights("on")
@@ -590,6 +591,28 @@ feederPwrButton.pack(side="right")
 feederCcwButton=Button(miniFrame,image=ccwPic,command=handleFeederCcw)
 feederCcwButton.pack(side="right")
 
+def handleLearn():
+    # Hack! using prjBox state as it reflects if we're capturing or not.
+    if prjBox["state"]=="disabled":
+        messagePrint("not while capturing")
+    else:
+        sensors.toggleLearn()
+
+miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
+miniFrame.pack(side="top",fill="x")
+RDetector=Label(miniFrame,text="R", width=1)
+RDetector.pack(side="right")
+HDetector=Label(miniFrame,text="H", width=1)
+HDetector.pack(side="right")
+LDetector=Label(miniFrame,text="L", width=1)
+LDetector.pack(side="right")
+LearnButton=Button(miniFrame,text="learn",command=handleLearn)
+LearnButton.pack(side="right")
+sensors=SensorReport(settings, LDetector, HDetector, RDetector, LearnButton)
+
+
+
+
 
 
 
@@ -645,6 +668,7 @@ def click_handler(event):
         click_handler.zoom=(0.0,0.0,1.0,1.0)
         cam.zoom=click_handler.zoom
         messagePrint("zoom factor: 1.00")
+        messagePrint("zoom (0.000,0.000,1.000,1.000)")
     elif event.num == 1:
         # ZOOM IN FULL
         if oldfactor >= zoomLimit:
@@ -663,10 +687,13 @@ def click_handler(event):
             newY = 0.0
         if newY > maxXY:
             newY=maxXY
-        z=(newX,newY,newX+(1.0/factor),newY+(1.0/factor))
+        newXb=newX+(1.0/factor)
+        newYb=newY+(1.0/factor)
+        z=(newX,newY,newXb,newYb)
         cam.zoom=z
         click_handler.zoom=z
         messagePrint("zoom factor: {:.2f}".format(factor))
+        messagePrint("zoom ({:.3f},{:.3f},{:.3f},{:.3f})".format(newX,newY,newXb,newYb))
     elif event.num == 4:
         # ZOOM IN
         if oldfactor >= zoomLimit:
@@ -687,10 +714,13 @@ def click_handler(event):
             newY = 0.0
         if newY > maxXY:
             newY=maxXY
-        z=(newX,newY,newX+(1.0/factor),newY+(1.0/factor))
+        newXb=newX+(1.0/factor)
+        newYb=newY+(1.0/factor)
+        z=(newX,newY,newXb,newYb)
         cam.zoom=z
         click_handler.zoom=z
         messagePrint("zoom factor: {:.2f}".format(factor))
+        messagePrint("zoom ({:.3f},{:.3f},{:.3f},{:.3f})".format(newX,newY,newXb,newYb))
     elif event.num == 5:
         # ZOOM OUT
         if oldfactor < 0.0000001:
@@ -711,15 +741,21 @@ def click_handler(event):
             newY = 0.0
         if newY > maxXY:
             newY=maxXY
-        z=(newX,newY,newX+(1.0/factor),newY+(1.0/factor))
+        newXb=newX+(1.0/factor)
+        newYb=newY+(1.0/factor)
+        z=(newX,newY,newXb,newYb)
         cam.zoom=z
         click_handler.zoom=z
         messagePrint("zoom factor: {:.2f}".format(factor))
+        messagePrint("zoom ({:.3f},{:.3f},{:.3f},{:.3f})".format(newX,newY,newXb,newYb))
         
             
 click_handler.zoom=(0.0,0.0,1.0,1.0)    
     
 picFrame.bind("<Button>",click_handler)
 
+sensors.start()
 
 root.mainloop()
+sensors.stopLoop()
+sensors.join()
