@@ -38,7 +38,7 @@ class FtpThread(Thread):
         listdir.sort()
         lastFile=listdir[len(listdir)-1]        
         self.message("last file in {}={}".format(self.subdir,lastFile))
-        self.fileIndex=1+int(lastFile.split(".")[0],10)
+        self.fileIndex=1+int(lastFile.split(".")[0].split("_")[0],10)
         self.message("File index now at: {}".format(self.fileIndex))
         return self.fileIndex
         
