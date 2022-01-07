@@ -12,7 +12,7 @@ from SensorReport import SensorReport
 from Lights import Lights
 GPIO.setmode(GPIO.BCM)
 light=Lights("on")
-
+sensors=None
 root= Tk()
 
 scr_w = root.winfo_screenwidth()
@@ -598,19 +598,40 @@ def handleLearn():
     else:
         sensors.toggleLearn()
 
-miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
-miniFrame.pack(side="top",fill="x")
-RDetector=Label(miniFrame,text="R", width=1)
+
+sensorFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
+def handleSensors():
+    global sensors
+    if handleSensors.running:
+        sensors.stopLoop()
+        sensors.join()
+        sensorsButton.configure(bg="black", fg="white")
+        RDetector.configure(bg="grey", fg="grey")
+        LDetector.configure(bg="grey", fg="grey")
+        HDetector.configure(bg="grey", fg="grey")
+        LearnButton.configure(state="disabled",bg="grey",fg="grey")
+        handleSensors.running=False
+    else:
+        
+        sensors=SensorReport(settings, LDetector, HDetector, RDetector, LearnButton)
+        sensors.start()
+        sensorsButton.configure(bg="white", fg="black")
+        LearnButton.configure(state="normal")
+        handleSensors.running=True
+handleSensors.running=False
+
+sensorFrame.pack(side="top",fill="x")
+RDetector=Label(sensorFrame,text="R", width=1,fg="grey", bg="grey")
 RDetector.pack(side="right")
-HDetector=Label(miniFrame,text="H", width=1)
+HDetector=Label(sensorFrame,text="H", width=1,fg="grey", bg="grey")
 HDetector.pack(side="right")
-LDetector=Label(miniFrame,text="L", width=1)
+LDetector=Label(sensorFrame,text="L", width=1,fg="grey", bg="grey")
 LDetector.pack(side="right")
-LearnButton=Button(miniFrame,text="learn",command=handleLearn)
+LearnButton=Button(sensorFrame,text="learn",command=handleLearn,state="disabled")
 LearnButton.pack(side="right")
-sensors=SensorReport(settings, LDetector, HDetector, RDetector, LearnButton)
-
-
+sensorsButton=Button(sensorFrame, text="Monitoring Sensors", command=handleSensors)
+sensorsButton.pack(side="right")
+sensorsButton.configure(bg="black", fg="white")
 
 
 
@@ -754,8 +775,8 @@ click_handler.zoom=(0.0,0.0,1.0,1.0)
     
 picFrame.bind("<Button>",click_handler)
 
-sensors.start()
 
 root.mainloop()
-sensors.stopLoop()
-sensors.join()
+if handleSensors.running:
+    sensors.stopLoop()
+    sensors.join()
