@@ -317,6 +317,10 @@ def handleDirectionChange(event):
     saveSettings.settingsChanged=True
 
 def handleHFlip():
+    # Hack! using prjBox state as it reflects if we're capturing or not.
+    if prjBox["state"]=="disabled":
+        messagePrint("not while capturing")
+        return
     val= not settings["hflip"]
     settings["hflip"]=val    
     if previewHandle.running:
@@ -326,6 +330,10 @@ def handleHFlip():
     saveSettings.settingsChanged=True
     
 def handleVFlip():
+    # Hack! using prjBox state as it reflects if we're capturing or not.
+    if prjBox["state"]=="disabled":
+        messagePrint("not while capturing")
+        return
     val= not settings["vflip"]
     settings["vflip"]=val
     if previewHandle.running:
@@ -672,10 +680,15 @@ handleExposureModeChange(exposureMode.get())
 saveSettings.settingsChanged=False
 def click_handler(event):
     global previewSize
+    # Hack! using prjBox state as it reflects if we're capturing or not.
+    if prjBox["state"]=="disabled":
+        messagePrint("not while capturing")
+        return
     step=sqrt(2.0)
-    zoomLimit=16
+    zoomLimit=4.0
     z=click_handler.zoom
-    oldfactor=1.0/(z[2]-z[0])
+    oldfactor=1.0/z[2]
+    #messagePrint("num={},old={}".format(event.num,oldfactor))
     if settings["hflip"]:
         flippedX=previewSize[0]-event.x
     else:
@@ -692,24 +705,26 @@ def click_handler(event):
         messagePrint("zoom (0.000,0.000,1.000,1.000)")
     elif event.num == 1:
         # ZOOM IN FULL
-        if oldfactor >= zoomLimit:
-            return
         factor=zoomLimit
-        maxXY=1.0-(1/factor)
+        maxXY=1.0-(1.0/factor)
+        minXY=0.0
+        course=maxXY-minXY
         posX=float(flippedX)/float(previewSize[0])
-        newX=z[0]+posX/oldfactor-(0.5/factor)
+        newX=minXY+posX*course
+        #newX=z[0]+posX/oldfactor-(0.5/factor)
         if newX < 0.0:
             newX = 0.0
         if newX > maxXY:
             newX=maxXY
         posY=float(flippedY)/float(previewSize[1])
-        newY=z[1]+posY/oldfactor-(0.5/factor)
+        #newY=z[1]+posY/oldfactor-(0.5/factor)
+        newY=minXY+posY*course
         if newY < 0.0:
             newY = 0.0
         if newY > maxXY:
             newY=maxXY
-        newXb=newX+(1.0/factor)
-        newYb=newY+(1.0/factor)
+        newXb=1.0/factor
+        newYb=1.0/factor
         z=(newX,newY,newXb,newYb)
         cam.zoom=z
         click_handler.zoom=z
@@ -735,8 +750,8 @@ def click_handler(event):
             newY = 0.0
         if newY > maxXY:
             newY=maxXY
-        newXb=newX+(1.0/factor)
-        newYb=newY+(1.0/factor)
+        newXb=1.0/factor
+        newYb=1.0/factor
         z=(newX,newY,newXb,newYb)
         cam.zoom=z
         click_handler.zoom=z
@@ -744,8 +759,6 @@ def click_handler(event):
         messagePrint("zoom ({:.3f},{:.3f},{:.3f},{:.3f})".format(newX,newY,newXb,newYb))
     elif event.num == 5:
         # ZOOM OUT
-        if oldfactor < 0.0000001:
-            return
         factor=oldfactor/step
         if factor < 1.0:
             factor=1.0
@@ -762,8 +775,8 @@ def click_handler(event):
             newY = 0.0
         if newY > maxXY:
             newY=maxXY
-        newXb=newX+(1.0/factor)
-        newYb=newY+(1.0/factor)
+        newXb=1.0/factor
+        newYb=1.0/factor
         z=(newX,newY,newXb,newYb)
         cam.zoom=z
         click_handler.zoom=z

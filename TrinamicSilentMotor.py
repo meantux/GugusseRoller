@@ -191,11 +191,14 @@ class TrinamicSilentMotor():
                     avg=sum(self.histo)/len(self.histo)
                     if abs(avg-self.targetTime)<0.01:
                         return
-                    gamma=5.0*(avg-self.targetTime)/(self.targetTime*100.0)
+                    if avg > self.targetTime:
+                        gamma=5.0*(avg-self.targetTime)/(self.targetTime*100.0)
+                    else:
+                        gamma=20.0*(avg-self.targetTime)/(self.targetTime*100.0)
                     if gamma > 0.05:
                         gamma=0.05
-                    elif gamma < -0.05:
-                        gamma= -0.05
+                    elif gamma < -0.2:
+                        gamma= -0.2
                     newspeed=self.speed * (1.0 + gamma)
                     self.speed=int(newspeed)
                     if self.speed < self.speed2:
