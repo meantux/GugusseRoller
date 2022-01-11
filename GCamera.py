@@ -103,13 +103,8 @@ class GCamera(PiCamera):
         if self.captureMode == "singleJpg":
             fn="/dev/shm/{:05d}.jpg".format(self.framecount)
             fnComplete="/dev/shm/complete/{:05d}.jpg".format(self.framecount)
-            if self.backgroundProcess != None:
-                self.backgroundProcess.join()
-            self.backgroundProcess=SaveJPG(self,fn,fnComplete)
-            self.backgroundProcess.start()
-            # wait 1/2th of a second to be sure the camera has time
-            # to capture a frame before we start moving.
-            sleep(0.5)
+            self.capture(fn)
+            os.rename(fn,fnComplete)
 
         elif self.captureMode == "bracketing":
             fn="/dev/shm/{:05d}_m.jpg".format(self.framecount)
