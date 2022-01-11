@@ -3,7 +3,7 @@ from FtpThread import FtpThread
 from LocalThread import LocalThread
 from time import sleep, time
 from json import load,dumps
-from os import mkdir
+from os import mkdir,listdir
 
 class FrameSequence():
     def __init__(self, cam, motors, cfg, start_frame,handleLightChange):
@@ -102,6 +102,15 @@ class CaptureLoop(Thread):
             except Exception as e:
                 print(e)
                 self.stopLoop()
+            if len(listdir('/dev/shm/complete'))>6:
+                self.uiTools["message"]("too many files waiting")
+                self.uiTools["message"]("pausing up to 5 mins")
+                timeout=time()+300
+                while (self.Loop and timeout>time() and len(listdir('/dev/shm/complete'))>6):
+                    sleep(0.1)
+                if timeout <= time():
+                    self.uiTools["message"]("timeout xfer error")
+                    self.stopLoop()
         self.uiTools["message"]("wait 10secs")
         sleep(10)
         self.uiTools["message"]("stopping Export")
