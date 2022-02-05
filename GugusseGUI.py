@@ -10,6 +10,8 @@ import RPi.GPIO as GPIO
 from TrinamicSilentMotor import TrinamicSilentMotor
 from SensorReport import SensorReport
 from Lights import Lights
+from FtpThread import FtpThread
+from LocalThread import LocalThread
 GPIO.setmode(GPIO.BCM)
 light=Lights("on")
 sensors=None
@@ -99,7 +101,7 @@ with open("hardwarecfg.json","rt") as h:
 def previewHandle():
     if previewHandle.running:
         previewButton.configure(text="Preview On")
-        cam.stop_preview();
+        cam.stop_preview()
         previewHandle.running=False
     else:
         previewHandle.running=True
@@ -316,6 +318,35 @@ def handleDirectionChange(event):
     settings["direction"]=val
     saveSettings.settingsChanged=True
 
+def handleSnapshot():
+    # Hack
+    if prjBox["state"]=="disabled":
+        messagePrint("not while capturing")
+        return
+    print("Snapshot")
+    if handleSnapshot.lastDir != prjBox.get() or handleSnapshot.mode != captureMode.get() or handleSnapshot.export == None:
+        handleSnapshot.lastDir=str(prjBox.get())
+        handleSnapshot.mode=str(captureMode.get())
+        if handleSnapshot.export != None:
+            handleSnapshot.export.stopLoop()
+            handleSnapshot.export.join()
+        if "saveMode" in settings and settings["saveMode"] == "local":
+            handleSnapshot.export=LocalThread(prjBox.get(), handleSnapshot.captureModes[settings["captureMode"]]["suffix"], handleSnapshot.uiTools, settings["localFilePath"])
+        else:
+            handleSnapshot.export=FtpThread(prjBox.get(),handleSnapshot.captureModes[settings["captureMode"]]["suffix"], handleSnapshot.uiTools)
+        handleSnapshot.lastCount=handleSnapshot.export.getStartPoint()
+        cam.setFileIndex(handleSnapshot.lastCount)
+        handleSnapshot.export.start()
+    cam.captureCycle()
+        
+      
+with open("captureModes.json","rt") as h:
+    handleSnapshot.captureModes=load(h)
+    h.close()
+
+
+
+    
 def handleHFlip():
     # Hack! using prjBox state as it reflects if we're capturing or not.
     if prjBox["state"]=="disabled":
@@ -392,6 +423,10 @@ def handleFeederPwr():
 def runHandle():
     global CaptureBG
     global motors
+    if handleSnapshot.export != None:
+        handleSnapshot.export.stopLoop()
+        handleSnapshot.export.join()
+        handleSnapshot.export=None
     if runHandle.running:
         runButton.configure(text="Run",state="disabled",fg="grey")
         runHandle.running=False
@@ -564,12 +599,18 @@ runButton.pack(side="right")
 previewButton=Button(miniFrame, text="Preview Off", width=widget_wchars, command=previewHandle)
 previewButton.pack(side="right")
 
-miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
+miniFrame=Frame(leftFrame)
 miniFrame.pack(side="top",fill="x")
 prjLbl=Label(miniFrame,text="Project name",width=widget_wchars)
-prjLbl.pack(side="top")
+prjLbl.pack(side="right")
+
+miniFrame=Frame(leftFrame)
+miniFrame.pack(side="top",fill="x")
 prjBox=Entry(miniFrame,textvariable=projectName)
-prjBox.pack()
+prjBox.pack(side="right")
+phPic=PhotoImage(file="camera.png")
+SnapShotBtn=Button(miniFrame, image=phPic,command=handleSnapshot)
+SnapShotBtn.pack(side="right")
 
 
 Label(leftFrame, text="Feeder    |  MainDrive  |    Pickup ").pack(side="top")
@@ -788,8 +829,27 @@ click_handler.zoom=(0.0,0.0,1.0,1.0)
     
 picFrame.bind("<Button>",click_handler)
 
+handleSnapshot.lastDir=None
+handleSnapshot.mode=None
+handleSnapshot.export=None
+handleSnapshot.lastCount= 0
+handleSnapshot.uiTools={
+    "captureModeSelector":captureModeSelector,
+    "handleLightChange":handleLightChange,
+    "runButton": runButton,
+    "message": messagePrint,
+    "runHandle": runHandle,
+    "prjBox":prjBox
+}        
+
 
 root.mainloop()
 if handleSensors.running:
     sensors.stopLoop()
     sensors.join()
+if handleSnapshot.export != None:
+    handleSnapshot.export.stopLoop()
+    handleSnapshot.export.join()
+    handleSnapshot.export=None
+if previewHandle.running:
+    cam.stop_preview()

@@ -6,22 +6,6 @@ from pidng.core import RPICAM2DNG
 from threading import Thread
 
 
-
-class SaveJPG(Thread):
-    def __init__(self, cam, fn, fnComplete):
-        Thread.__init__(self)
-        self.cam=cam
-        self.fn=fn
-        self.fnComplete=fnComplete
-
-    def run(self):
-        self.cam.capture(self.fn)
-        os.rename(self.fn, self.fnComplete)
-       
-
-
-
-
 class GCamera(PiCamera):
     def __init__(self, framecount=0, fn="GugusseSettings.json"):
         self.backgroundProcess=None
