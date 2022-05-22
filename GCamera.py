@@ -84,6 +84,7 @@ class GCamera(PiCamera):
         self.suffix=self.captureModes[newMode]["suffix"]
         
     def captureCycle(self):
+        sleep(0.333)
         if self.captureMode == "singleJpg":
             fn="/dev/shm/{:05d}.jpg".format(self.framecount)
             fnComplete="/dev/shm/complete/{:05d}.jpg".format(self.framecount)
