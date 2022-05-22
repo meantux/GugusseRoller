@@ -46,8 +46,8 @@ class GCamera(PiCamera):
         return choices[idx]
         
     def freezeWhiteBalance(self):
-        if self.gcSettings["awb_mode"] != "auto":
-            print("AWB needs to be in auto to freeze")
+        print("freezeWhiteBalance()")
+        if self.gcSettings["awb_mode"] == "off":
             return
         values=self.awb_gains
         a=float(values[0])
@@ -55,9 +55,8 @@ class GCamera(PiCamera):
         print("a={}".format(a))
         print("b={}".format(b))
         self.gcSettings["awb_gains"]=[a,b]
-        self.awb_mode="off"
         self.gcSettings["awb_mode"]="off"
-        self.gcSaveSettings()
+        self.gcApplySettings()
         return [a,b]
 
     def gcApplySettings(self, settings=None):

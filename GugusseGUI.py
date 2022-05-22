@@ -73,7 +73,8 @@ settingsDefaults={
     "vflip": False    
 }
 settings=dict(settingsDefaults)
-
+wbGain1Var=DoubleVar()
+wbGain2Var=DoubleVar()
 
 with open("GugusseSettings.json","rt") as h:
     settingsFromFile=load(h)
@@ -207,19 +208,32 @@ def handleLightChange(event):
     else:
         lightSelector.configure(bg=event, fg="black")
 
+def handleFreeze():
+    cam.freezeWhiteBalance()
+    print(f'cam.gcSettings["awb_mode"]={cam.gcSettings["awb_mode"]}')
+    print(f'cam.gcSettings["awb_gains"]={cam.gcSettings["awb_gains"]}')
+    settings["awb_mode"]=cam.gcSettings["awb_mode"]
+    settings["awb_gains"]=cam.gcSettings["awb_gains"]    
+    wbGain1Var.set(settings["awb_gains"][0])
+    wbGain2Var.set(settings["awb_gains"][1])
+    handleAwbModeChange("off")
+    saveSettings.settingsChanged=True
+    
         
-def handleExposureChange(event):
+def handleExposureChange(event):    
     if exposureMode.get() == "off":
         settings["shutter_speed"]=int(event)
         cam.shutter_speed=int(event)
     saveSettings.settingsChanged=True
         
-def handleWbGain1(event):    
+def handleWbGain1(event):
+    #print(f"handleWbGain1({event})")
     settings["awb_gains"][0]=float(event)
     cam.awb_gains=settings["awb_gains"]
     saveSettings.settingsChanged=True
 
 def handleWbGain2(event):
+    #print(f"handleWbGain2({event})")
     settings["awb_gains"][1]=float(event)
     cam.awb_gains=settings["awb_gains"]
     saveSettings.settingsChanged=True
@@ -264,7 +278,7 @@ def handleAwbModeChange(event):
     else:
         wbGain1.configure(state="disabled",fg="grey")
         wbGain2.configure(state="disabled",fg="grey")
-    cam.awb_mode=val
+    cam.gcApplySettings(settings)
     awbMode.set(val)
     saveSettings.settingsChanged=True
 
@@ -484,12 +498,12 @@ Label(miniFrame, text="Sharpness:").pack(side="right")
 miniFrame=Frame(topFrame, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top",fill="x")
 ###### WBGAIN2 SCALE
-wbGain2=Scale(miniFrame,from_=0.1,to=7.95,length=int(scr_w/2-widget_w),width=8,resolution=0.005,orient=HORIZONTAL,command=handleWbGain2)
+wbGain2=Scale(miniFrame,from_=0.1,to=7.95,length=int(scr_w/2-widget_w),width=8,resolution=0.005,orient=HORIZONTAL,variable=wbGain2Var,command=handleWbGain2)
 wbGain2.set(settings["awb_gains"][1])
 wbGain2.pack(side="right")
 Label(miniFrame,text="      WB Gain 2:",width=widget_wchars,anchor="e").pack(side="right")
 ####### WBGAIN1 SCALE
-wbGain1=Scale(miniFrame,from_=0.1,to=7.95,length=int(scr_w/2-widget_w),width=8,resolution=0.005,orient=HORIZONTAL,command=handleWbGain1)
+wbGain1=Scale(miniFrame,from_=0.1,to=7.95,length=int(scr_w/2-widget_w),width=8,resolution=0.005,orient=HORIZONTAL,variable=wbGain1Var,command=handleWbGain1)
 wbGain1.set(settings["awb_gains"][0])
 wbGain1.pack(side="right")
 Label(miniFrame,text="WB Gain 1:").pack(side="right")
@@ -559,8 +573,11 @@ miniFrame.pack(side="top",fill="x")
 awbModeSelector=OptionMenu(miniFrame,awbMode,*cam.AWB_MODES.keys(),command=handleAwbModeChange)
 awbModeSelector.config(width=widget_wchars, borderwidth=borderwidth)
 awbModeSelector.pack(side="right")
-lbl=Label(miniFrame,text="AWB Mode:",width=widget_wchars,anchor="e")
+lbl=Label(miniFrame,text="AWB:",width=int(widget_wchars/2),anchor="e")
 lbl.pack(side="right")
+freezeButton=Button(miniFrame, text="Freeze",command=handleFreeze,anchor="e")
+freezeButton.pack(side="right")
+
 
 miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
 miniFrame.pack(side="top",fill="x")
