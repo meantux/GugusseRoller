@@ -35,7 +35,7 @@ class FrameSequence():
            self.pickup.disable()
            self.handleLightChange("off")
            raise Exception("Motor Fault!")
-        sleep(0.05)
+        sleep(0.1)
         try:
            self.cam.captureCycle()
         except Exception as e:
@@ -111,8 +111,14 @@ class CaptureLoop(Thread):
                 if timeout <= time():
                     self.uiTools["message"]("timeout xfer error")
                     self.stopLoop()
-        self.uiTools["message"]("wait 10secs")
-        sleep(10)
+        self.uiTools["message"]("wait end of transfers")
+        timeout=time()+20
+        while len(listdir('/dev/shm/complete'))>0:
+            sleep (0.1)
+            if time() > timeout:
+                self.uiTools["message"]("TIMEOUT waiting for end")
+                break
+        
         self.uiTools["message"]("stopping Export")
         self.export.stopLoop()        
         self.export.join()

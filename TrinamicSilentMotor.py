@@ -8,9 +8,10 @@
 #
 ################################################################################
 from time import sleep, time
+from datetime import datetime
 import RPi.GPIO as GPIO
 GPIO.setmode(GPIO.BCM) 
-from json import dumps
+from json import dumps, dump
 
 
 
@@ -52,6 +53,7 @@ class TrinamicSilentMotor():
         GPIO.setup(self.pinEnable, GPIO.OUT, initial=0)
         self.pos=int(0)
         GPIO.setup(self.SensorStopPin, GPIO.IN)
+        self.log={}
 
     def message(self, txt):
         if self.msg != None:
@@ -78,6 +80,12 @@ class TrinamicSilentMotor():
         GPIO.output(self.pinEnable, 1)
         if self.button:
             self.button.configure(bg="grey")
+        if self.trace and self.log != {}:
+            fn=f"{datetime.now().isoformat()}-{self.name}.json"
+            self.log["name"]=self.name
+            with open(fn,"wt") as h:
+                dump(self.log, h, indent=4)
+            self.log={}
         
     def forward(self):
         self.pos += 1
@@ -138,7 +146,7 @@ class TrinamicSilentMotor():
     
     def move(self):
         ticks=0
-        #log=[]
+
         self.target= self.pos+self.faultTreshold
         self.ignore=self.ignoreInitial
         if self.learning:
@@ -153,7 +161,6 @@ class TrinamicSilentMotor():
         waitUntil=self.tick()
         while waitUntil != None:
             reading=GPIO.input(self.SensorStopPin)
-            #log.append(reading)
             if self.learning and self.ignore == 5:
                 GPIO.output(self.learnPin,0)
             if self.ignore > 0:
@@ -169,6 +176,11 @@ class TrinamicSilentMotor():
                     delta=time()-self.moveStart
                     if self.trace:
                         print("\033[1;32m{}\033[0m ticks for {}".format(ticks,self.name))
+                        idx=str(ticks)
+                        if idx in self.log:
+                            self.log[idx]+= 1
+                        else:
+                            self.log[idx]= 1
                     if ticks == self.ignoreInitial:
                         self.shortsInARow+= 1;
                     else:
