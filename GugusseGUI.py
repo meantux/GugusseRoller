@@ -1,872 +1,174 @@
-#!/usr/bin/python3
-from tkinter import *
-from json import load,dump,dumps
-from GCamera import GCamera
-from CaptureLoop import CaptureLoop
-from time import sleep
-from datetime import datetime
-from math import sqrt
-import RPi.GPIO as GPIO
-from TrinamicSilentMotor import TrinamicSilentMotor
-from SensorReport import SensorReport
-from Lights import Lights
-from FtpThread import FtpThread
-from LocalThread import LocalThread
-GPIO.setmode(GPIO.BCM)
-light=Lights("on")
-sensors=None
-root= Tk()
+import sys
+import json
+from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QLabel, QSlider, QComboBox, QPushButton, QLineEdit, QTextEdit, QSplitter, QSizePolicy
+from PyQt5.QtCore import Qt
 
-scr_w = root.winfo_screenwidth()
-scr_h = root.winfo_screenheight()
+from picamera2 import Picamera2
+from picamera2.previews.qt import QGlPicamera2
 
-borderwidth=1
-if scr_w <= 600:
-    borderwidth=0
-if scr_w > 720:
-    borderwidth=2
-
-widget_h=4
-widget_wchars=13
-widget_w=widget_wchars*12
-top_h=180
-left_w=2*widget_w
-
-CaptureBG=None
-
-
-cam=GCamera()
-root.attributes("-fullscreen",True)
-
-topFrame=Frame(root, highlightbackground="black", highlightthickness=1)
-topFrame.pack(side="top",fill="both")
-leftFrame=Frame(root, highlightbackground="black", highlightthickness=1)
-leftFrame.pack(side="left",fill="both")
-previewSize=(scr_w-left_w,scr_h-top_h)
-picFrame=Frame(root, width=previewSize[0],height=previewSize[1])
-picFrame.pack(side="right",fill="both")
-topLabel=Label(topFrame,text="Gugusse Roller")
-topLabel.pack(side="top")
-
-capture=None
-
-
-settingsDefaults={
-    "awb_gains": [
-        3.0,
-        2.0
-    ],
-    "awb_mode": "auto",
-    "brightness": 50,
-    "captureMode": "PyDNG",
-    "contrast": 0,
-    "exposure_compensation": 0,
-    "exposure_mode": "auto",
-    "filmFormat": "35mm",
-    "hflip": False,
-    "image_effect": "none",
-    "iso": 100,
-    "direction": "cw",
-    "saturation": 0,
-    "sharpness": 0,
-    "shutter_speed": 24000,
-    "vflip": False    
-}
-settings=dict(settingsDefaults)
-wbGain1Var=DoubleVar()
-wbGain2Var=DoubleVar()
-
-with open("GugusseSettings.json","rt") as h:
-    settingsFromFile=load(h)
-    h.close()
-    for item in settingsFromFile:
-        settings[item]=settingsFromFile[item]
-
-with open("captureModes.json","rt") as h:
-    captureModesDetails=load(h)
-    h.close()
-
-captureModesList=[]
-for item in captureModesDetails:
-    captureModesList.append(str(item))
-    
-with open("hardwarecfg.json","rt") as h:
-    hardware=load(h)
-    for item in hardware:
-        settings[item]=hardware[item]
-    h.close()
+import CameraSettings as cs
 
 
 
-    
-def previewHandle():
-    if previewHandle.running:
-        previewButton.configure(text="Preview On")
-        cam.stop_preview()
-        previewHandle.running=False
-    else:
-        previewHandle.running=True
-        previewButton.configure(text="Preview Off")
-        start_preview(settings["hflip"],settings["vflip"])
-previewHandle.running=True
+class MainWindow(QMainWindow):
+    def __init__(self, *args, **kwargs):
+        super(MainWindow, self).__init__(*args, **kwargs)
+        self.setWindowTitle("QtGugusse")
         
-def start_preview(hflip, vflip):
-    global widget_w
-    global top_h
-    global scr_w
-    global scr_h
-    global previewHandle
-    px=2*widget_w
-    py=top_h
-    pw=scr_w-px
-    ph=scr_h-py
-    if previewHandle.running:
-        cam.start_preview(fullscreen=False,resolution=(2880,2160),window=(px,py,pw,ph),hflip=hflip,vflip=vflip)
+        with open("CameraSettings.json","rt") as h:
+            self.settings=json.load(h)
+        fps=self.settings["fps"]
+        
+        self.picam2=Picamera2()
 
-start_preview(settings["hflip"],settings["vflip"])
+        self.preview_config=self.picam2.create_preview_configuration({"size":(4056,3040)},controls={"FrameRate":fps,"FrameDurationLimits": (1000, 1000000//fps),"NoiseReductionMode":0})
+        self.still_config=self.picam2.create_still_configuration(controls={"FrameRate":fps,"FrameDurationLimits": (1000, 1000000//fps),"NoiseReductionMode":0})
+        
+        print(self.preview_config)
+        print(self.still_config)
+        self.picam2.configure(self.preview_config)
+        self.camWidget=cs.previewWindowWidget(self)
+        
+        self.main_layout = QVBoxLayout()
+        self.out = QTextEdit()
 
-captureMode=StringVar(root)
-captureMode.set(settings["captureMode"])
+        #topWidget=QWidget()
+        #top=QHBoxLayout(topWidget)
+        #topWidget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        #self.main_layout.addLayout(top)
 
-filmFormat=StringVar(root)
-filmFormat.set(settings["filmFormat"])
+        
+        row_layout=QHBoxLayout()
+        
+        # Row 1  | Exposure stuff
+        self.AutoExposure=cs.AutoExposureWidget(self)
+        row_layout.addWidget(self.AutoExposure.getLabel())
+        row_layout.addWidget(self.AutoExposure)
+        self.ExposureDual=cs.ExposureDualWidget(self)
+        row_layout.addWidget(self.ExposureDual.getLabel())
+        row_layout.addWidget(self.ExposureDual)
+        self.Iso=cs.IsoWidget(self)
+        row_layout.addWidget(self.Iso.getLabel())
+        row_layout.addWidget(self.Iso)
+        self.main_layout.addLayout(row_layout)
+        
+        row_layout=QHBoxLayout()
 
-exposureMode=StringVar(root)
-exposureMode.set(settings["exposure_mode"])
-
-#meterMode=StringVar(root)
-#meterMode.set(settings["meter_mode"])
-#cam.meter_mode=settings["meter_mode"]
-
-awbMode=StringVar(root)
-awbMode.set(settings["awb_mode"])
-cam.awb_mode=settings["awb_mode"]
-
-imageEffect=StringVar(root)
-imageEffect.set(settings["image_effect"])
-cam.image_effect=settings["image_effect"]
-
-direction=StringVar(root)
-direction.set(settings["direction"])
-
-projectName=StringVar(root)
-projectName.set(datetime.now().strftime("%Y%m%d-%H%M"))
-
-color=StringVar(root)
-color.set("on")
-
-def messagePrint(txt):
-    print(txt)
-    message3.configure(text=messagePrint.text3)
-    message2.configure(text=messagePrint.text2)
-    message1.configure(text=messagePrint.text1)
-    message.configure(text=txt)    
-    messagePrint.text3=messagePrint.text2
-    messagePrint.text2=messagePrint.text1
-    messagePrint.text1=txt
-messagePrint.text3=""
-messagePrint.text2=""
-messagePrint.text1=""
-
-
-    
-def filterProjectName():
-    prj=prjBox.get()
-    newprj=""
-    for aChar in prj:
-        if aChar in "-+_:abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789":
-            newprj="{}{}".format(newprj, aChar)
-        else:
-            newprj="{}_".format(newprj)
-    if prj != newprj:
-        prjBox.set(newprj)
-        messagePrint("project name filtered")
-
-def saveSettings():
-    if saveSettings.settingsChanged == False:
-        messagePrint("No change to save")
-        return
-    tosave={}
-    for item in settingsDefaults:
-        tosave[item]=settings[item]
-    with open("GugusseSettings.json","wt") as h:
-        messagePrint("Saving Settings")
-        dump(tosave,h,sort_keys=True, indent=4)
-        h.close()
-        messagePrint("Settings Saved")
-        saveSettings.settingsChanged=False
-
-def handleLightChange(event):
-    light.set(event)
-    color.set(event)
-    if event == "off":
-        lightSelector.configure(bg="black",fg="white")
-    elif event == "on":
-        lightSelector.configure(bg="white",fg="black")
-    elif event == "blue":
-        lightSelector.configure(bg="blue", fg="yellow")
-    else:
-        lightSelector.configure(bg=event, fg="black")
-
-def handleFreeze():
-    cam.freezeWhiteBalance()
-    print(f'cam.gcSettings["awb_mode"]={cam.gcSettings["awb_mode"]}')
-    print(f'cam.gcSettings["awb_gains"]={cam.gcSettings["awb_gains"]}')
-    settings["awb_mode"]=cam.gcSettings["awb_mode"]
-    settings["awb_gains"]=cam.gcSettings["awb_gains"]    
-    wbGain1Var.set(settings["awb_gains"][0])
-    wbGain2Var.set(settings["awb_gains"][1])
-    handleAwbModeChange("off")
-    saveSettings.settingsChanged=True
+        # Row 2 White balance stuff
+        self.WBMode=cs.WhiteBalanceModeWidget(self)
+        row_layout.addWidget(self.WBMode.getLabel())
+        row_layout.addWidget(self.WBMode)
+        self.Freeze=cs.FreezeWidget(self)
+        row_layout.addWidget(self.Freeze)
+        self.RedGain=cs.ColorGainWidget(self, 0)
+        row_layout.addWidget(self.RedGain.getLabel())
+        row_layout.addWidget(self.RedGain)
+        self.BlueGain=cs.ColorGainWidget(self, 1)
+        row_layout.addWidget(self.BlueGain.getLabel())
+        row_layout.addWidget(self.BlueGain)
+        self.main_layout.addLayout(row_layout)
     
         
-def handleExposureChange(event):    
-    if exposureMode.get() == "off":
-        settings["shutter_speed"]=int(event)
-        cam.shutter_speed=int(event)
-    saveSettings.settingsChanged=True
+        # Row 3  | LightControl    AWB mode              WBGain1   WBGain2
+        # Row 2  | Effects         Contrast              Sharpness Saturation
+
         
-def handleWbGain1(event):
-    #print(f"handleWbGain1({event})")
-    settings["awb_gains"][0]=float(event)
-    cam.awb_gains=settings["awb_gains"]
-    saveSettings.settingsChanged=True
 
-def handleWbGain2(event):
-    #print(f"handleWbGain2({event})")
-    settings["awb_gains"][1]=float(event)
-    cam.awb_gains=settings["awb_gains"]
-    saveSettings.settingsChanged=True
+#        # Top section split into 4 rows
+#        self.controls = ['Sharpness', 'Saturation', 'WBGain1', 'WBGain2', 'Exposure', 'Contrast', 'AutoCompensate', 'iso', 'Brightness']
+#        controls_split = [self.controls[i:i + 4] for i in range(0, len(self.controls), 4)]
+#        for controls_row in controls_split:
+#            row_layout = QHBoxLayout()
+#            for control in controls_row:
+#                label = QLabel(control)
+#                slider = QSlider(Qt.Horizontal)
+#                slider.setRange(0, 100)
+#                slider.valueChanged.connect(lambda value, c=control: self.on_slider_value_changed(c, value))
+#                row_layout.addWidget(label)
+#                row_layout.addWidget(slider)
+#            self.main_layout.addLayout(row_layout)
 
-def handleImageEffectChange(event):
-    val=str(event)
-    settings["image_effect"]=val
-    cam.image_effect=val
-    saveSettings.settingsChanged=True
+        self.light_selector = QComboBox()
+        self.light_selector.addItems(['white', 'off', 'red', 'green', 'blue', 'cyan', 'magenta','yellow'])
+        self.light_selector.currentTextChanged.connect(self.on_light_selector_changed)
+        self.main_layout.addWidget(self.light_selector)
 
-def handleBrightnessChange(event):
-    val=int(event)
-    settings["brightness"]=val
-    cam.brightness=val
-    saveSettings.settingsChanged=True
+        # Bottom section divided into left and right
+        self.bottom_layout = QSplitter(Qt.Horizontal)
 
-def handleContrastChange(event):
-    val=int(event)
-    settings["contrast"]=val
-    cam.contrast=val
-    saveSettings.settingsChanged=True
+        left_widget = QWidget()
+        left_layout = QVBoxLayout()
 
-def handleFilmFormatChange(event):
-    val=str(event)
-    filmFormat.set(event)
-    settings["filmFormat"]=val
-    saveSettings.settingsChanged=True
+        # Project name field
+        project_label = QLabel("Project name")
+        self.project_name = QLineEdit()
+        project_layout = QHBoxLayout()
+        project_layout.addWidget(project_label)
+        project_layout.addWidget(self.project_name)
+        left_layout.addLayout(project_layout)
 
-def handleCaptureModeChange(event):
-    val=str(event)    
-    settings["captureMode"]=val
-    captureMode.set(event)
-    saveSettings.settingsChanged=True
-    cam.changeCaptureMode(val)
-    
-def handleAwbModeChange(event):
-    val=str(event)
-    settings["awb_mode"]=val
-    if val == "off":
-        wbGain1.configure(state="normal",fg="black")
-        wbGain2.configure(state="normal",fg="black")        
-    else:
-        wbGain1.configure(state="disabled",fg="grey")
-        wbGain2.configure(state="disabled",fg="grey")
-    cam.gcApplySettings(settings)
-    awbMode.set(val)
-    saveSettings.settingsChanged=True
 
-def handleExposureModeChange(event):
-    val=str(event)
-    settings["exposure_mode"]=val
-    exposureMode.set(val)
-    if val == "off":
-        exposition.configure(state="normal",fg="black")
-        compensation.configure(state="disabled",fg="gray")
-        iso.configure(state="disabled",fg="gray")
-        if handleExposureModeChange.ExposureWasNotOff:            
-            cam.shutter_speed=exposition.get()
-            handleExposureModeChange.ExposureWasNotOff=False
-    else:
-        iso.configure(state="normal",fg="black")
-        compensation.configure(state="normal",fg="black")
-        cam.shutter_speed=0
-        exposition.configure(state="disabled",fg="gray")
-        handleExposureModeChange.ExposureWasNotOff=True
-    cam.exposure_mode=val
-    saveSettings.settingsChanged=True
+        self.selectors_controls = ['FilmFormat', 'CaptureMode', 'ExposureMode', 'AWB', 'ReelsDirection']
+        for control in self.selectors_controls:
+            label = QLabel(control)
+            selector = QComboBox()
+            selector.addItems(['Option1', 'Option2', 'Option3'])
+            selector.currentTextChanged.connect(lambda text, c=control: self.on_selector_changed(c, text))
+            selector_layout = QHBoxLayout()
+            selector_layout.addWidget(label)
+            selector_layout.addWidget(selector)
+            left_layout.addLayout(selector_layout)
 
-def handleSaturationChange(event):
-    val=int(event)
-    cam.saturation=val
-    settings["saturation"]=val
-    saveSettings.settingsChanged=True
+        self.buttons_controls = ['hflip', 'vflip', 'SaveSettings', 'PreviewToggle', 'Run', 'Photo']
+        for control in self.buttons_controls:
+            button = QPushButton(control)
+            button.clicked.connect(lambda _, c=control: self.on_button_clicked(c))
+            left_layout.addWidget(button)
 
-def handleSharpnessChange(event):
-    val=int(event)
-    cam.sharpness=val
-    settings["saturation"]=val
-    saveSettings.settingsChanged=True
+        left_widget.setLayout(left_layout)
+        self.bottom_layout.addWidget(left_widget)
 
-def handleIsoChange(event):
-    val=int(event)
-    settings["iso"]=val
-    cam.iso=val
-    saveSettings.settingsChanged=True
+        # Text output area
+        self.out.setReadOnly(True)
+        left_layout.addWidget(self.out)
+        self.main_layout.addWidget(self.bottom_layout)
 
-def handleCompensationChange(event):
-    val=int(event)
-    settings["compensation"]=val
-    cam.exposure_compensation=val
-    saveSettings.settingsChanged=True
+        # Camera preview area
+        self.bottom_layout.addWidget(self.camWidget)
 
-def handleDirectionChange(event):
-    val=str(event)
-    direction.set(val)
-    settings["direction"]=val
-    saveSettings.settingsChanged=True
-
-def handleSnapshot():
-    # Hack
-    if prjBox["state"]=="disabled":
-        messagePrint("not while capturing")
-        return
-    print("Snapshot")
-    if handleSnapshot.lastDir != prjBox.get() or handleSnapshot.mode != captureMode.get() or handleSnapshot.export == None:
-        handleSnapshot.lastDir=str(prjBox.get())
-        handleSnapshot.mode=str(captureMode.get())
-        if handleSnapshot.export != None:
-            handleSnapshot.export.stopLoop()
-            handleSnapshot.export.join()
-        if "saveMode" in settings and settings["saveMode"] == "local":
-            handleSnapshot.export=LocalThread(prjBox.get(), handleSnapshot.captureModes[settings["captureMode"]]["suffix"], handleSnapshot.uiTools, settings["localFilePath"])
-        else:
-            handleSnapshot.export=FtpThread(prjBox.get(),handleSnapshot.captureModes[settings["captureMode"]]["suffix"], handleSnapshot.uiTools)
-        handleSnapshot.lastCount=handleSnapshot.export.getStartPoint()
-        cam.setFileIndex(handleSnapshot.lastCount)
-        handleSnapshot.export.start()
-    cam.captureCycle()
         
-      
-with open("captureModes.json","rt") as h:
-    handleSnapshot.captureModes=load(h)
-    h.close()
+        widget = QWidget()
+        widget.setLayout(self.main_layout)
+        self.setCentralWidget(widget)
 
-
-
-    
-def handleHFlip():
-    # Hack! using prjBox state as it reflects if we're capturing or not.
-    if prjBox["state"]=="disabled":
-        messagePrint("not while capturing")
-        return
-    val= not settings["hflip"]
-    settings["hflip"]=val    
-    if previewHandle.running:
-        cam.stop_preview()
-    sleep (0.1)
-    start_preview(val, settings["vflip"])
-    saveSettings.settingsChanged=True
-    
-def handleVFlip():
-    # Hack! using prjBox state as it reflects if we're capturing or not.
-    if prjBox["state"]=="disabled":
-        messagePrint("not while capturing")
-        return
-    val= not settings["vflip"]
-    settings["vflip"]=val
-    if previewHandle.running:
-        cam.stop_preview()
-    sleep (0.1)
-    start_preview(settings["hflip"], val)
-    saveSettings.settingsChanged=True
-
-    
-def pwrMotor(name):
-    global motors
-    global powers
-    val=motors[name].getPowerState()
-    if val:
-        motors[name].enable()
-    else:
-        motors[name].disable()
-
-def advMotor(name,direction):
-    motors[name].setDirection(direction)
-    motors[name].blindMove(1000)
-
-def handlePickupCw():
-    advMotor("pickup","cw")
-
-def handlePickupCcw():
-    advMotor("pickup","ccw")
-
-def handlePickupPwr():
-    pwrMotor("pickup")
-
-def handleMainDriveCw():
-    advMotor("filmdrive","cw")
-
-def handleMainDriveCcw():
-    advMotor("filmdrive","ccw")
-    pass
-
-def handleMainDrivePwr():
-    pwrMotor("filmdrive")
-    pass
-
-def handleFeederCw():
-    advMotor("feeder","cw")
-    pass
-
-def handleFeederCcw():
-    advMotor("feeder","ccw")
-    pass
-
-def handleFeederPwr():
-    pwrMotor("feeder")
-    pass
-
-
-def runHandle():
-    global CaptureBG
-    global motors
-    if handleSnapshot.export != None:
-        handleSnapshot.export.stopLoop()
-        handleSnapshot.export.join()
-        handleSnapshot.export=None
-    if runHandle.running:
-        runButton.configure(text="Run",state="disabled",fg="grey")
-        runHandle.running=False
-        if CaptureBG!=None:
-            CaptureBG.stopLoop()
-    else:
-        if runHandle.clean == False:
-            CaptureBG.join()
-            runHandle.clean=True
-        filterProjectName()
-        if prjBox.get()=="":            
-            messagePrint("You need to set a project name")
-            return
-        captureModeSelector.configure(state="disabled",fg="grey")
-        runButton.configure(text="Stop")
-        runHandle.running=True
-        prjBox.configure(state="disabled")
-        prjLbl.configure(fg="grey")
-        uiTools={
-            "captureModeSelector":captureModeSelector,
-            "handleLightChange":handleLightChange,
-            "runButton": runButton,
-            "message": messagePrint,
-            "runHandle": runHandle,
-            "prjBox":prjBox
-        }        
-        for name in motors.keys():
-            motors[name].setFormat(settings["filmFormats"][filmFormat.get()][name])
-        CaptureBG=CaptureLoop(cam, motors, settings, prjBox.get(),uiTools)
-        CaptureBG.start()
-runHandle.running=False
-runHandle.clean=True
-
-def handlePrjNameChange(event):
-    print(event)
-
-
-handleExposureModeChange.ExposureWasNotOff=False
-
-
-
-miniFrame=Frame(topFrame, highlightbackground="black", highlightthickness=1)
-miniFrame.pack(side="top",fill="x")
-###### SATURATION SCALE
-saturation=Scale(miniFrame,from_= -100,to=100,length=int(scr_w/2-widget_w),width=8,resolution=1,orient=HORIZONTAL,command=handleSaturationChange)
-saturation.set(settings["saturation"])
-saturation.pack(side="right")
-Label(miniFrame, text="Saturation:",width=widget_wchars,anchor="e").pack(side="right")
-###### SHARPNESS SCALE
-sharpness=Scale(miniFrame,from_= -100,to=100,length=int(scr_w/2-widget_w),width=8,resolution=1,orient=HORIZONTAL,command=handleSharpnessChange)
-sharpness.set(settings["sharpness"])
-sharpness.pack(side="right")
-Label(miniFrame, text="Sharpness:").pack(side="right")
-
-miniFrame=Frame(topFrame, highlightbackground="black", highlightthickness=1)
-miniFrame.pack(side="top",fill="x")
-###### WBGAIN2 SCALE
-wbGain2=Scale(miniFrame,from_=0.1,to=7.95,length=int(scr_w/2-widget_w),width=8,resolution=0.005,orient=HORIZONTAL,variable=wbGain2Var,command=handleWbGain2)
-wbGain2.set(settings["awb_gains"][1])
-wbGain2.pack(side="right")
-Label(miniFrame,text="      WB Gain 2:",width=widget_wchars,anchor="e").pack(side="right")
-####### WBGAIN1 SCALE
-wbGain1=Scale(miniFrame,from_=0.1,to=7.95,length=int(scr_w/2-widget_w),width=8,resolution=0.005,orient=HORIZONTAL,variable=wbGain1Var,command=handleWbGain1)
-wbGain1.set(settings["awb_gains"][0])
-wbGain1.pack(side="right")
-Label(miniFrame,text="WB Gain 1:").pack(side="right")
-
-miniFrame=Frame(topFrame, highlightbackground="black", highlightthickness=1)
-miniFrame.pack(side="top",fill="x")
-####### CONTRAST SCALE
-contrast=Scale(miniFrame,from_= -100,to=100,length=int(scr_w/2-widget_w),width=8,resolution=1,orient=HORIZONTAL,command=handleContrastChange)
-contrast.set(settings["contrast"])
-contrast.pack(side="right")
-Label(miniFrame,text="Contrast:",width=widget_wchars,anchor="e").pack(side="right")
-###### EXPOSITION SCALE
-exposition=Scale(miniFrame,from_=1,to=32700,resolution=100,length=scr_w/2-widget_w,width=8,orient=HORIZONTAL,command=handleExposureChange)
-exposition.set(settings["shutter_speed"])
-exposition.pack(side="right")
-Label(miniFrame,text="Exposure:",width=widget_wchars,anchor="e").pack(side="right")
-
-miniFrame=Frame(topFrame, highlightbackground="black", highlightthickness=1)
-miniFrame.pack(side="top",fill="x")
-###### BRIGHTNESS SCALE
-brightness=Scale(miniFrame,from_=0,to=100,length=int(scr_w/3-widget_w),width=8,resolution=1,orient=HORIZONTAL,command=handleBrightnessChange)
-brightness.set(settings["brightness"])
-brightness.pack(side="right")
-Label(miniFrame,text="Brightness:",width=widget_wchars,anchor="e").pack(side="right")
-###### ISO SCALE
-iso=Scale(miniFrame,from_=100,to=800,resolution=100,length=scr_w/4-widget_w,width=8,orient=HORIZONTAL,command=handleIsoChange)
-iso.set(settings["iso"])
-iso.pack(side="right")
-Label(miniFrame,text="Iso:",width=widget_wchars,anchor="e").pack(side="right")
-###### AUTO-EXPOSURE COMPENSATION SCALE
-compensation=Scale(miniFrame,from_= -25,to=25,resolution=1,length=scr_w/3-widget_w,width=8,orient=HORIZONTAL,command=handleCompensationChange)
-compensation.set(settings["exposure_compensation"])
-compensation.pack(side="right")
-Label(miniFrame,text="Auto Compensate:").pack(side="right")
-lightSelector=OptionMenu(miniFrame, color, *light.getOptions(), command=handleLightChange)
-lightSelector.pack(side="right")
-lightSelector.configure(width=widget_wchars, bg="white")
-Label(miniFrame, text="Light:").pack(side="right")
-
-###### Film Format
-miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
-miniFrame.pack(side="top",fill="x")
-filmFormatSelector=OptionMenu(miniFrame,filmFormat,*settings["filmFormats"],command=handleFilmFormatChange)
-filmFormatSelector.config(width=widget_wchars, borderwidth=borderwidth)
-filmFormatSelector.pack(side="right")
-lbl=Label(miniFrame,text="Film format:",width=widget_wchars,anchor="e")
-lbl.pack(side="right")
-###### Capture Mode
-miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
-miniFrame.pack(side="top",fill="x")
-captureModeSelector=OptionMenu(miniFrame,captureMode,*captureModesList,command=handleCaptureModeChange)
-captureModeSelector.config(width=widget_wchars, borderwidth=borderwidth)
-captureModeSelector.pack(side="right")
-lbl=Label(miniFrame,text="Capture Mode:",width=widget_wchars,anchor="e")
-lbl.pack(side="right")
-##### Exposure Mode
-miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
-miniFrame.pack(side="top",fill="x")
-exposureModeSelector=OptionMenu(miniFrame,exposureMode,*cam.EXPOSURE_MODES.keys(),command=handleExposureModeChange)
-exposureModeSelector.config(width=widget_wchars, borderwidth=borderwidth)
-exposureModeSelector.pack(side="right")
-lbl=Label(miniFrame,text="Exposure Mode:",width=widget_wchars,anchor="e")
-lbl.pack(side="right")
-
-miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
-miniFrame.pack(side="top",fill="x")
-awbModeSelector=OptionMenu(miniFrame,awbMode,*cam.AWB_MODES.keys(),command=handleAwbModeChange)
-awbModeSelector.config(width=widget_wchars, borderwidth=borderwidth)
-awbModeSelector.pack(side="right")
-lbl=Label(miniFrame,text="AWB:",width=int(widget_wchars/2),anchor="e")
-lbl.pack(side="right")
-freezeButton=Button(miniFrame, text="Freeze",command=handleFreeze,anchor="e")
-freezeButton.pack(side="right")
-
-
-miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
-miniFrame.pack(side="top",fill="x")
-imageEffectSelector=OptionMenu(miniFrame,imageEffect,*cam.IMAGE_EFFECTS,command=handleImageEffectChange)
-imageEffectSelector.config(width=widget_wchars, borderwidth=borderwidth)
-imageEffectSelector.pack(side="right")
-lbl=Label(miniFrame,text="ImageEffect:",width=widget_wchars,anchor="e")
-lbl.pack(side="right")
-
-miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
-miniFrame.pack(side="top",fill="x")
-possibleDirections=("cw","ccw")
-directionSelector=OptionMenu(miniFrame,direction,*possibleDirections,command=handleDirectionChange)
-directionSelector.config(width=widget_wchars, borderwidth=borderwidth)
-directionSelector.pack(side="right")
-lbl=Label(miniFrame,text="Reels Direction:",width=widget_wchars,anchor="e")
-lbl.pack(side="right")
-
-
-
-miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
-miniFrame.pack(side="top",fill="x")
-SaveButton=Button(miniFrame, text="Save Settings", width=widget_wchars, command=saveSettings)
-SaveButton.pack(side="right")
-vflipButton=Button(miniFrame, text="vflip",command=handleVFlip)
-vflipButton.pack(side="right")
-hflipButton=Button(miniFrame, text="hflip",command=handleHFlip)
-hflipButton.pack(side="right")
-
-
-miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
-miniFrame.pack(side="top",fill="x")
-runButton=Button(miniFrame, text="Run", width=widget_wchars, command=runHandle)
-runButton.pack(side="right")
-
-previewButton=Button(miniFrame, text="Preview Off", width=widget_wchars, command=previewHandle)
-previewButton.pack(side="right")
-
-miniFrame=Frame(leftFrame)
-miniFrame.pack(side="top",fill="x")
-prjLbl=Label(miniFrame,text="Project name",width=widget_wchars)
-prjLbl.pack(side="right")
-
-miniFrame=Frame(leftFrame)
-miniFrame.pack(side="top",fill="x")
-prjBox=Entry(miniFrame,textvariable=projectName)
-prjBox.pack(side="right")
-phPic=PhotoImage(file="camera.png")
-SnapShotBtn=Button(miniFrame, image=phPic,command=handleSnapshot)
-SnapShotBtn.pack(side="right")
-
-
-Label(leftFrame, text="Feeder    |  MainDrive  |    Pickup ").pack(side="top")
-cwPic=PhotoImage(file="cw.png")
-ccwPic=PhotoImage(file="ccw.png")
-powerPic=PhotoImage(file="power.png")
-miniFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
-miniFrame.pack(side="top",fill="x")
-pickupCwButton=Button(miniFrame,image=cwPic,command=handlePickupCw)
-pickupCwButton.pack(side="right")
-pickupPwrButton=Button(miniFrame,image=powerPic,command=handlePickupPwr)
-pickupPwrButton.pack(side="right")
-pickupCcwButton=Button(miniFrame,image=ccwPic,command=handlePickupCcw)
-pickupCcwButton.pack(side="right")
-
-mainDriveCwButton=Button(miniFrame,image=cwPic,command=handleMainDriveCw)
-mainDriveCwButton.pack(side="right")
-mainDrivePwrButton=Button(miniFrame,image=powerPic,command=handleMainDrivePwr)
-mainDrivePwrButton.pack(side="right")
-mainDriveCcwButton=Button(miniFrame,image=ccwPic,command=handleMainDriveCcw)
-mainDriveCcwButton.pack(side="right")
-
-feederCwButton=Button(miniFrame,image=cwPic,command=handleFeederCw)
-feederCwButton.pack(side="right")
-feederPwrButton=Button(miniFrame,image=powerPic,command=handleFeederPwr)
-feederPwrButton.pack(side="right")
-feederCcwButton=Button(miniFrame,image=ccwPic,command=handleFeederCcw)
-feederCcwButton.pack(side="right")
-
-def handleLearn():
-    # Hack! using prjBox state as it reflects if we're capturing or not.
-    if prjBox["state"]=="disabled":
-        messagePrint("not while capturing")
-    else:
-        sensors.toggleLearn()
-
-
-sensorFrame=Frame(leftFrame, highlightbackground="black", highlightthickness=1)
-def handleSensors():
-    global sensors
-    if handleSensors.running:
-        sensors.stopLoop()
-        sensors.join()
-        sensorsButton.configure(bg="black", fg="white")
-        RDetector.configure(bg="grey", fg="grey")
-        LDetector.configure(bg="grey", fg="grey")
-        HDetector.configure(bg="grey", fg="grey")
-        LearnButton.configure(state="disabled",bg="grey",fg="grey")
-        handleSensors.running=False
-    else:
+        # forcing a sync with the auto-exposure value will fix all exposure related values
+        self.AutoExposure.syncCamera()
+        self.WBMode.syncCamera()
+        self.picam2.start()
         
-        sensors=SensorReport(settings, LDetector, HDetector, RDetector, LearnButton)
-        sensors.start()
-        sensorsButton.configure(bg="white", fg="black")
-        LearnButton.configure(state="normal")
-        handleSensors.running=True
-handleSensors.running=False
 
-sensorFrame.pack(side="top",fill="x")
-RDetector=Label(sensorFrame,text="R", width=1,fg="grey", bg="grey")
-RDetector.pack(side="right")
-HDetector=Label(sensorFrame,text="H", width=1,fg="grey", bg="grey")
-HDetector.pack(side="right")
-LDetector=Label(sensorFrame,text="L", width=1,fg="grey", bg="grey")
-LDetector.pack(side="right")
-LearnButton=Button(sensorFrame,text="learn",command=handleLearn,state="disabled")
-LearnButton.pack(side="right")
-sensorsButton=Button(sensorFrame, text="Monitoring Sensors", command=handleSensors)
-sensorsButton.pack(side="right")
-sensorsButton.configure(bg="black", fg="white")
+    def getBottomLayout(self):
+        return self.bottom_layout
+
+    def on_slider_value_changed(self, control, value):
+        self.out.append(f'Slider value changed for control: {control} to {value}')
+
+    def on_light_selector_changed(self, text):
+        self.out.append(f'Light selector changed to {text}')
+
+    def on_selector_changed(self, control, text):
+        self.out.append(f'Selector changed for control: {control} to {text}')
+
+    def on_button_clicked(self, control):
+        self.bottom_layout.repaint()
+        self.out.append(f'Button clicked for control: {control}')
 
 
 
+app = QApplication(sys.argv)
+window = MainWindow()
+blayout=window.getBottomLayout()
 
 
-message3=Label(leftFrame,text="",anchor="e",width=2*widget_wchars)
-message3.pack(side="top")
-
-message2=Label(leftFrame,text="",anchor="e",width=2*widget_wchars)
-message2.pack(side="top")
-
-message1=Label(leftFrame,text="",anchor="e",width=2*widget_wchars)
-message1.pack(side="top")
-
-message=Label(leftFrame,text="",anchor="e",width=2*widget_wchars)
-message.pack(side="top")
-
-powers={
-    "feeder": feederPwrButton,
-    "filmdrive": mainDrivePwrButton,
-    "pickup":pickupPwrButton
-}
-motors={
-    "feeder": TrinamicSilentMotor(settings["feeder"],slowEnd=False,button=powers["feeder"], msg=messagePrint),
-    "pickup": TrinamicSilentMotor(settings["pickup"],slowEnd=False,button=powers["pickup"], msg=messagePrint),
-    "filmdrive": TrinamicSilentMotor(settings["filmdrive"], slowEnd=True,trace=True,button=powers["filmdrive"], msg=messagePrint)
-}
-for item in motors:
-    if motors[item].getPowerState==0:
-        powers[item].configure(bg="grey")
-    else:
-        powers[item].configure(bg="green")
-
-
-handleAwbModeChange(awbMode.get())
-handleExposureModeChange(exposureMode.get())
-
-saveSettings.settingsChanged=False
-def click_handler(event):
-    global previewSize
-    # Hack! using prjBox state as it reflects if we're capturing or not.
-    if prjBox["state"]=="disabled":
-        messagePrint("not while capturing")
-        return
-    step=sqrt(2.0)
-    zoomLimit=4.0
-    z=click_handler.zoom
-    oldfactor=1.0/z[2]
-    #messagePrint("num={},old={}".format(event.num,oldfactor))
-    if settings["hflip"]:
-        flippedX=previewSize[0]-event.x
-    else:
-        flippedX=event.x
-    if settings["vflip"]:
-        flippedY=previewSize[1]-event.y
-    else:
-        flippedY=event.y    
-    if event.num == 3:
-        # reset zoom
-        click_handler.zoom=(0.0,0.0,1.0,1.0)
-        cam.zoom=click_handler.zoom
-        messagePrint("zoom factor: 1.00")
-        messagePrint("zoom (0.000,0.000,1.000,1.000)")
-    elif event.num == 1:
-        # ZOOM IN FULL
-        factor=zoomLimit
-        maxXY=1.0-(1.0/factor)
-        minXY=0.0
-        course=maxXY-minXY
-        posX=float(flippedX)/float(previewSize[0])
-        newX=minXY+posX*course
-        #newX=z[0]+posX/oldfactor-(0.5/factor)
-        if newX < 0.0:
-            newX = 0.0
-        if newX > maxXY:
-            newX=maxXY
-        posY=float(flippedY)/float(previewSize[1])
-        #newY=z[1]+posY/oldfactor-(0.5/factor)
-        newY=minXY+posY*course
-        if newY < 0.0:
-            newY = 0.0
-        if newY > maxXY:
-            newY=maxXY
-        newXb=1.0/factor
-        newYb=1.0/factor
-        z=(newX,newY,newXb,newYb)
-        cam.zoom=z
-        click_handler.zoom=z
-        messagePrint("zoom factor: {:.2f}".format(factor))
-        messagePrint("zoom ({:.3f},{:.3f},{:.3f},{:.3f})".format(newX,newY,newXb,newYb))
-    elif event.num == 4:
-        # ZOOM IN
-        if oldfactor >= zoomLimit:
-            return
-        factor=step*oldfactor
-        if factor > zoomLimit:
-            factor=zoomLimit
-        maxXY=1.0-(1/factor)
-        posX=float(flippedX)/float(previewSize[0])
-        newX=z[0]+posX/oldfactor-(0.5/factor)
-        if newX < 0.0:
-            newX = 0.0
-        if newX > maxXY:
-            newX=maxXY
-        posY=float(flippedY)/float(previewSize[1])
-        newY=z[1]+posY/oldfactor-(0.5/factor)
-        if newY < 0.0:
-            newY = 0.0
-        if newY > maxXY:
-            newY=maxXY
-        newXb=1.0/factor
-        newYb=1.0/factor
-        z=(newX,newY,newXb,newYb)
-        cam.zoom=z
-        click_handler.zoom=z
-        messagePrint("zoom factor: {:.2f}".format(factor))
-        messagePrint("zoom ({:.3f},{:.3f},{:.3f},{:.3f})".format(newX,newY,newXb,newYb))
-    elif event.num == 5:
-        # ZOOM OUT
-        factor=oldfactor/step
-        if factor < 1.0:
-            factor=1.0
-        maxXY=1.0-(1/factor)
-        posX=float(flippedX)/float(previewSize[0])
-        newX=z[0]+posX/oldfactor-(0.5/factor)
-        if newX < 0.0:
-            newX = 0.0
-        if newX > maxXY:
-            newX=maxXY
-        posY=float(flippedY)/float(previewSize[1])
-        newY=z[1]+posY/oldfactor-(0.5/factor)
-        if newY < 0.0:
-            newY = 0.0
-        if newY > maxXY:
-            newY=maxXY
-        newXb=1.0/factor
-        newYb=1.0/factor
-        z=(newX,newY,newXb,newYb)
-        cam.zoom=z
-        click_handler.zoom=z
-        messagePrint("zoom factor: {:.2f}".format(factor))
-        messagePrint("zoom ({:.3f},{:.3f},{:.3f},{:.3f})".format(newX,newY,newXb,newYb))
-        
-            
-click_handler.zoom=(0.0,0.0,1.0,1.0)    
-    
-picFrame.bind("<Button>",click_handler)
-
-handleSnapshot.lastDir=None
-handleSnapshot.mode=None
-handleSnapshot.export=None
-handleSnapshot.lastCount= 0
-handleSnapshot.uiTools={
-    "captureModeSelector":captureModeSelector,
-    "handleLightChange":handleLightChange,
-    "runButton": runButton,
-    "message": messagePrint,
-    "runHandle": runHandle,
-    "prjBox":prjBox
-}        
-
-
-root.mainloop()
-if handleSensors.running:
-    sensors.stopLoop()
-    sensors.join()
-if handleSnapshot.export != None:
-    handleSnapshot.export.stopLoop()
-    handleSnapshot.export.join()
-    handleSnapshot.export=None
-if previewHandle.running:
-    cam.stop_preview()
+window.showMaximized()
+sys.exit(app.exec_())
