@@ -1,87 +1,44 @@
 import json
-from picamera import PiCamera
+from picamera2 import Picamera2
+from picamera2.previews.qt import QGlPicamera2
 from time import sleep, time
 import os
-from pidng.core import RPICAM2DNG
 from threading import Thread
+import CameraSettings as cs
 
 
-class GCamera(PiCamera):
-    def __init__(self, framecount=0, fn="GugusseSettings.json"):
-        self.backgroundProcess=None
-        self.framecount=framecount
-        PiCamera.__init__(self)        
-        with open(fn, "r") as h:
-            self.gcSettings=json.load(h)
-        if "image_effect" not in self.gcSettings:
-            self.gcSettings["image_effect"]="none"
+
+defaultValues={
+    "fps":10
+}
+def setMissingToDefault(settings):
+    for key in defaultValues:
+        if key not in settings:
+            settings[key]=defaultValues[key]
+
+class GCamera(Picamera2):
+    def __init__(self, win):
+        Picamera2.__init__(self)
+        self.win=win
+        setMissingToDefault(win.settings)
+        self.framecount=0
         with open("captureModes.json","r") as h:
             self.captureModes=json.load(h)
-        self.resolution=self.MAX_RESOLUTION
-        #self.start_preview(fullscreen=False,resolution=(1024,768),window=(256,0,1024,768),vflip=False,hflip=False)
-        self.gcZooms=[(0.0,0.0,1.0,1.0), (0.0,0.0,0.333,0.333), (0.333,0.0,0.333,0.333), (0.667,0.0,0.333,0.333), (0.0,0.333,0.333,0.333), (0.333,0.333,0.333,0.333), (0.667,0.333,0.333,0.333), (0.0,0.667,0.333,0.333), (0.333,0.667,0.333,0.333), (0.667,0.667,0.333,0.333)]
-        # As recommended by the documentation on the raspberri pi camera
-        # we have to leave it in automatic a few seconds before setting
-        # up manual values.
-        sleep (4)
-        self.gcApplySettings()
-        self.captureMode=self.gcSettings["captureMode"]
-        self.suffix=self.captureModes[self.captureMode]["suffix"]
-        self.DNG=RPICAM2DNG()
+
+        fps=win.settings["fps"]
+        self.preview_config=self.create_preview_configuration({"size":(4056,3040)},controls={"FrameRate":fps,"FrameDurationLimits": (1000, 1000000//fps),"NoiseReductionMode":0})
+        self.still_config=self.create_still_configuration(controls={"FrameRate":fps,"FrameDurationLimits": (1000, 1000000//fps),"NoiseReductionMode":0})
+        
+        print(self.preview_config)
+        print(self.still_config)
+        self.configure(self.preview_config)        
+    def createPreviewWidget(self):
+        self.camWidget=cs.previewWindowWidget(self.win)
+            
 
     def setFileIndex(self, newIndex):
         self.framecount=newIndex
-        
-    def gcSaveSettings(self, fn="GugusseSettings.json"):
-        with open(fn, "w") as h:
-            json.dump(self.gcSettings, h, indent=4)
-
-    def selectOther(self, actual, choices, direction):
-        idx=choices.index(actual)
-        idx+= direction
-        if idx < 0:
-            idx=len(choices)-1
-        elif idx >= len(choices):
-            idx=0
-        return choices[idx]
-        
-    def freezeWhiteBalance(self):
-        print("freezeWhiteBalance()")
-        if self.gcSettings["awb_mode"] == "off":
-            return
-        values=self.awb_gains
-        a=float(values[0])
-        b=float(values[1])
-        print("a={}".format(a))
-        print("b={}".format(b))
-        self.gcSettings["awb_gains"]=[a,b]
-        self.gcSettings["awb_mode"]="off"
-        self.gcApplySettings()
-        return [a,b]
-
-    def gcApplySettings(self, settings=None):
-        if settings != None:
-            self.gcSettings=settings
-        s=self.gcSettings
-        self.exposure_mode=s["exposure_mode"]
-        #self.iso=s["iso"]
-        if s["exposure_mode"] == "off":
-            self.shutter_speed=int(s["shutter_speed"])
-            self.exposure_compensation=0
-        else:
-            self.shutter_speed=int(0)
-            self.exposure_compensation=s["exposure_compensation"]
-            
-        self.awb_mode=s["awb_mode"]
-        if s["awb_mode"] == "off":
-            self.awb_gains=s["awb_gains"]
-        self.brightness=s["brightness"]
-        self.contrast=s["contrast"]
-        self.image_effect=s["image_effect"]
-    def changeCaptureMode(self,newMode):
-        self.captureMode=newMode
-        self.suffix=self.captureModes[newMode]["suffix"]
-        
+                
     def captureCycle(self):
         sleep(0.333)
         if self.captureMode == "singleJpg":

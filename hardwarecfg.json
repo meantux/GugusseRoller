@@ -8,6 +8,7 @@
         "pinDirection": 23,
         "pinEnable": 25,
         "pinStep": 24,
+	"slowEnd": false,
         "stopPin": 6,
         "stopState": 1
     },
@@ -229,6 +230,7 @@
         "pinDirection": 14,
         "pinEnable": 18,
         "pinStep": 15,
+	"slowEnd": true,
         "stopPin": 26,
         "stopState": 1
     },
@@ -245,6 +247,7 @@
         "pinDirection": 8,
         "pinEnable": 21,
         "pinStep": 7,
+	"slowEnd": false,
         "stopPin": 13,
         "stopState": 1
     }

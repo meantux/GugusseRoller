@@ -5,6 +5,7 @@ from time import sleep
 from json import load
 from sys import argv,exit
 
+from PyQt5.QtWidgets import QComboBox, QLabel
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
@@ -39,8 +40,22 @@ class Lights():
     def getOptions(self):
         return tab.keys()
 
+class LightControlWidget(QComboBox):
+    def __init__(self, win):
+        QComboBox.__init__(self)
+        self.win=win
+        self.lights=Lights()
+        self.addItems(self.lights.getOptions())
+        self.lights.set("on")
+        self.setCurrentText("on")
+        self.currentTextChanged.connect(self.handle)
+        self.label=QLabel("Lights")
 
+    def handle(self, text):
+        self.lights.set(text)
 
+    def getLabel(self):
+        return self.label
 
 if __name__=="__main__":
     usage="USAGE: {} <on|off|red|green|blue|cyan|magenta|yellow>".format(argv[0])
@@ -48,6 +63,3 @@ if __name__=="__main__":
         print(usage)
         exit(0)
     l=Lights(argv[1])
-    
-    
-

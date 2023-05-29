@@ -1,35 +1,34 @@
 import sys
 import json
-from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QLabel, QSlider, QComboBox, QPushButton, QLineEdit, QTextEdit, QSplitter, QSizePolicy
+from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QLabel, QSlider, QComboBox, QPushButton, QLineEdit, QTextEdit, QSplitter, QSizePolicy, QWidget
 from PyQt5.QtCore import Qt
 
-from picamera2 import Picamera2
+from TrinamicSilentMotor import MotorControlWidgets
+
+from GCamera import GCamera
+from Lights import LightControlWidget
+
 from picamera2.previews.qt import QGlPicamera2
 
 import CameraSettings as cs
 
-
-
 class MainWindow(QMainWindow):
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
-        self.setWindowTitle("QtGugusse")
+        self.setWindowTitle("GugusseGUI 2.0")
         
         with open("CameraSettings.json","rt") as h:
             self.settings=json.load(h)
         fps=self.settings["fps"]
         
-        self.picam2=Picamera2()
+        self.picam2=GCamera(self)
+        self.picam2.createPreviewWidget()
 
-        self.preview_config=self.picam2.create_preview_configuration({"size":(4056,3040)},controls={"FrameRate":fps,"FrameDurationLimits": (1000, 1000000//fps),"NoiseReductionMode":0})
-        self.still_config=self.picam2.create_still_configuration(controls={"FrameRate":fps,"FrameDurationLimits": (1000, 1000000//fps),"NoiseReductionMode":0})
-        
-        print(self.preview_config)
-        print(self.still_config)
-        self.picam2.configure(self.preview_config)
-        self.camWidget=cs.previewWindowWidget(self)
         
         self.main_layout = QVBoxLayout()
+
+        
+        
         self.out = QTextEdit()
 
         #topWidget=QWidget()
@@ -69,36 +68,44 @@ class MainWindow(QMainWindow):
         self.main_layout.addLayout(row_layout)
     
         
-        # Row 3  | LightControl    AWB mode              WBGain1   WBGain2
-        # Row 2  | Effects         Contrast              Sharpness Saturation
-
-        
-
-#        # Top section split into 4 rows
-#        self.controls = ['Sharpness', 'Saturation', 'WBGain1', 'WBGain2', 'Exposure', 'Contrast', 'AutoCompensate', 'iso', 'Brightness']
-#        controls_split = [self.controls[i:i + 4] for i in range(0, len(self.controls), 4)]
-#        for controls_row in controls_split:
-#            row_layout = QHBoxLayout()
-#            for control in controls_row:
-#                label = QLabel(control)
-#                slider = QSlider(Qt.Horizontal)
-#                slider.setRange(0, 100)
-#                slider.valueChanged.connect(lambda value, c=control: self.on_slider_value_changed(c, value))
-#                row_layout.addWidget(label)
-#                row_layout.addWidget(slider)
-#            self.main_layout.addLayout(row_layout)
-
-        self.light_selector = QComboBox()
-        self.light_selector.addItems(['white', 'off', 'red', 'green', 'blue', 'cyan', 'magenta','yellow'])
-        self.light_selector.currentTextChanged.connect(self.on_light_selector_changed)
-        self.main_layout.addWidget(self.light_selector)
-
         # Bottom section divided into left and right
         self.bottom_layout = QSplitter(Qt.Horizontal)
 
         left_widget = QWidget()
         left_layout = QVBoxLayout()
 
+        lights_layout=QHBoxLayout()
+        self.light_selector = LightControlWidget(self)
+        lights_layout.addWidget(self.light_selector.getLabel())
+        lights_layout.addWidget(self.light_selector)
+        left_layout.addLayout(lights_layout)
+
+        with open("hardwarecfg.json") as h:
+            self.hwSettings=json.load(h)
+        
+        threeMotorsLayout=QHBoxLayout()
+        self.motors={}
+        for motor in ["feeder","filmdrive","pickup"]:
+            #bordered_widget=QWidget()
+            #bordered_widget.setStyleSheet("border: 1px solid black;")            
+            motorSeparatorLayout=QVBoxLayout()
+            label=QLabel(motor)
+            label.setAlignment(Qt.AlignCenter)
+            label.setStyleSheet("border: 1px solid black;")
+            motorSeparatorLayout.addWidget(label)
+            threeButtonsLayout=QHBoxLayout()
+        
+            self.motors[motor]=MotorControlWidgets(self, self.hwSettings[motor])
+            threeButtonsLayout.addWidget(self.motors[motor].ccw)
+            threeButtonsLayout.addWidget(self.motors[motor])
+            threeButtonsLayout.addWidget(self.motors[motor].cw)
+        
+            motorSeparatorLayout.addLayout(threeButtonsLayout)
+            threeMotorsLayout.addLayout(motorSeparatorLayout)
+
+        left_layout.addLayout(threeMotorsLayout)
+        
+        
         # Project name field
         project_label = QLabel("Project name")
         self.project_name = QLineEdit()
@@ -134,7 +141,7 @@ class MainWindow(QMainWindow):
         self.main_layout.addWidget(self.bottom_layout)
 
         # Camera preview area
-        self.bottom_layout.addWidget(self.camWidget)
+        self.bottom_layout.addWidget(self.picam2.camWidget)
 
         
         widget = QWidget()

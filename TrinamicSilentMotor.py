@@ -12,11 +12,14 @@ from datetime import datetime
 import RPi.GPIO as GPIO
 GPIO.setmode(GPIO.BCM) 
 from json import dumps, dump
+from PyQt5.QtWidgets import QPushButton
+from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt5.QtGui import QIcon
 
 
 
 class TrinamicSilentMotor():
-    def __init__(self,cfg,slowEnd=False,trace=False,button=None, msg=None):
+    def __init__(self,cfg,slowEnd=False,trace=False, msg=None):
         print(dumps(cfg, indent=4))
         GPIO.setmode(GPIO.BCM)
         self.minSpeed=cfg["minSpeed"]
@@ -29,14 +32,13 @@ class TrinamicSilentMotor():
             self.learning=False
             self.learnPin= -1
         self.histo=[]
-        self.slowEnd=slowEnd
+        self.slowEnd=cfg["slowEnd"]
         self.msg=msg
         self.skipHisto=2
         self.skipAdjust=0
         self.trace=trace
         self.fault=False
         self.name=cfg["name"]
-        self.button=button
         self.target=0
         self.SensorStopPin=cfg["stopPin"]
         self.ignore=0
@@ -74,12 +76,9 @@ class TrinamicSilentMotor():
                 
     def enable(self):
         GPIO.output(self.pinEnable, 0)
-        if self.button:
-            self.button.configure(bg="green")
+
     def disable(self):
         GPIO.output(self.pinEnable, 1)
-        if self.button:
-            self.button.configure(bg="grey")
         if self.trace and self.log != {}:
             fn=f"{datetime.now().isoformat()}-{self.name}.json"
             self.log["name"]=self.name
@@ -120,7 +119,7 @@ class TrinamicSilentMotor():
         return None
 
     def getPowerState(self):
-        return GPIO.input(self.pinEnable)
+        return 1-GPIO.input(self.pinEnable)
     
     def setDirection(self, direction):
         #  I need XOR but all I got is != which
@@ -230,3 +229,33 @@ class TrinamicSilentMotor():
         self.fault=True
         self.message("{} long FAULT".format(self.name))
         raise Exception("Move failed, \033[1;31m{}\033[0m passed its limit without triggering sensor".format(self.name))
+
+
+class MotorControlWidgets(QPushButton):
+    def __init__(self, win, cfg):
+        globalPowerIcon=QIcon('power.png')
+        globalCcwIcon=QIcon('ccw.png')
+        globalCwIcon=QIcon('cw.png')
+        QPushButton.__init__(self)        
+        self.setIcon(globalPowerIcon)
+        self.clicked.connect(self.powerHandle)
+        self.motor=TrinamicSilentMotor(cfg)
+        self.syncMotorStatus()
+        self.cw=QPushButton()
+        self.cw.setIcon(globalCwIcon)
+        self.ccw=QPushButton()
+        self.ccw.setIcon(globalCcwIcon)
+
+    def syncMotorStatus(self):
+        if self.motor.getPowerState():
+            self.setStyleSheet("background-color: green;")
+        else:
+            self.setStyleSheet("background-color: grey;")
+
+    def powerHandle(self):
+        if self.motor.getPowerState():
+            self.motor.disable()
+        else:
+            self.motor.enable()
+        self.syncMotorStatus()
+

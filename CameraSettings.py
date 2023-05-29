@@ -4,6 +4,64 @@ from libcamera import controls
 
 from picamera2.previews.qt import QGlPicamera2
 
+
+
+defaultValues={
+    "Exposure": "Manual",
+    "ExposureMicroseconds": 30000,
+    "ExposureCompensationStops":0.0,
+    "ISO":100,
+    "RedGain":"2.1",
+    "BlueGain": "2.1",
+    "WhileBalanceMode":"Auto"
+}
+
+
+def SetMissingsToDefault(settings):
+    for key in defaultValues:
+        if key not in settings:
+            settings[key]=defaultValues[key]
+
+class AutoExposureWidget(QComboBox):
+    def __init__(self, win):
+        QComboBox.__init__(self)
+        self.label=QLabel("Exposure")
+        self.addItems(["Manual","CentreWeighted", "Spot", "Matrix"])
+        self.win=win
+        SetMissingsToDefault(win.settings)
+        mode=win.settings["Exposure"]
+        self.setCurrentText(mode)
+        self.currentTextChanged.connect(self.handle)
+        
+    def handle(self, text):
+        self.syncCamera()
+
+    def syncCamera(self):
+        choice=self.currentText()
+        self.win.settings["Exposure"]=choice
+        if  choice == "Manual":
+            self.win.picam2.set_controls({"AeEnable":False})
+            self.win.ExposureDual.changeMode()
+            self.win.Iso.setEnabled(True)
+            self.win.Iso.syncCamera()
+        else:
+            self.win.picam2.set_controls({"AeEnable":True})
+            self.win.ExposureDual.changeMode()
+            self.win.Iso.setEnabled(False)
+            self.win.ExposureDual.syncCamera()            
+        if choice == "CentreWeighted":
+            self.win.picam2.set_controls({"AeMeteringMode":controls.AeMeteringModeEnum.CentreWeighted})
+        elif choice == "Spot":
+            self.win.picam2.set_controls({"AeMeteringMode":controls.AeMeteringModeEnum.Spot})
+        elif choice == "Matrix":
+            self.win.picam2.set_controls({"AeMeteringMode":controls.AeMeteringModeEnum.CentreWeighted})
+
+    def getLabel(self):
+        return self.label
+            
+            
+
+
 class previewWindowWidget(QGlPicamera2):
     def __init__(self, win):
         QGlPicamera2.__init__(self, win.picam2)
@@ -16,8 +74,8 @@ class previewWindowWidget(QGlPicamera2):
         y=pos.y()
         winw=self.width()
         winh=self.height()
-        sensorw=self.win.preview_config["main"]["size"][0]
-        sensorh=self.win.preview_config["main"]["size"][1]
+        sensorw=self.win.picam2.preview_config["main"]["size"][0]
+        sensorh=self.win.picam2.preview_config["main"]["size"][1]
         if self.zoomed:
             self.win.picam2.set_controls({"ScalerCrop":(0,0,sensorw,sensorh)})
             self.zoomed=False
@@ -46,14 +104,18 @@ class previewWindowWidget(QGlPicamera2):
 
         self.win.picam2.set_controls({"ScalerCrop":(x1,y1,winw,winh)})
         self.zoomed=True
-        
+
+
+
+
 
 
 class ExposureDualWidget(QSlider):
     def __init__(self, win):
         QSlider.__init__(self, Qt.Horizontal)
-        self.win=win
+        self.win=win        
         self.label=QLabel(".........")
+        
         self.changeMode()
         self.valueChanged.connect(self.handle)
                         
@@ -93,7 +155,7 @@ class ExposureDualWidget(QSlider):
         else:
             realValue=float(self.value())/2.0
             self.win.picam2.set_controls({"ExposureValue":realValue})
-            
+
     def getLabel(self):
         return self.label
 
@@ -169,44 +231,6 @@ class ColorGainWidget(QSlider):
         
         
     
-class AutoExposureWidget(QComboBox):
-    def __init__(self, win):
-        QComboBox.__init__(self)
-        self.label=QLabel("Exposure")
-        self.addItems(["Manual","CentreWeighted", "Spot", "Matrix"])
-        self.win=win
-        mode=win.settings["Exposure"]
-        self.setCurrentText(mode)
-        self.currentTextChanged.connect(self.handle)
-        
-
-    def handle(self, text):
-        self.syncCamera()
-
-    def syncCamera(self):
-        choice=self.currentText()
-        self.win.settings["Exposure"]=choice
-        if  choice == "Manual":
-            self.win.picam2.set_controls({"AeEnable":False})
-            self.win.ExposureDual.changeMode()
-            self.win.Iso.setEnabled(True)
-            self.win.Iso.syncCamera()
-        else:
-            self.win.picam2.set_controls({"AeEnable":True})
-            self.win.ExposureDual.changeMode()
-            self.win.Iso.setEnabled(False)
-            self.win.ExposureDual.syncCamera()            
-        if choice == "CentreWeighted":
-            self.win.picam2.set_controls({"AeMeteringMode":controls.AeMeteringModeEnum.CentreWeighted})
-        elif choice == "Spot":
-            self.win.picam2.set_controls({"AeMeteringMode":controls.AeMeteringModeEnum.Spot})
-        elif choice == "Matrix":
-            self.win.picam2.set_controls({"AeMeteringMode":controls.AeMeteringModeEnum.CentreWeighted})
-
-    def getLabel(self):
-        return self.label
-            
-            
 class WhiteBalanceModeWidget(QComboBox):
     def __init__(self, win):
         QComboBox.__init__(self)
@@ -259,11 +283,11 @@ class FreezeWidget(QPushButton):
         self.win=win
         self.setEnabled(False) # Will be enable if WB's not Manual
         self.clicked.connect(self.handle)
-        self.win.camWidget.done_signal.connect(self.handleMetadata)
+        self.win.picam2.camWidget.done_signal.connect(self.handleMetadata)
         
     def handle(self):
         self.setEnabled(False)
-        self.win.picam2.capture_metadata(signal_function=self.win.camWidget.signal_done)
+        self.win.picam2.capture_metadata(signal_function=self.win.picam2.camWidget.signal_done)
 
     def handleMetadata(self, job):
         metadata=self.win.picam2.wait(job)        
