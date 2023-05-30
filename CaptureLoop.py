@@ -1,5 +1,4 @@
-from threading import Thread
-from FtpThread import FtpThread
+
 from LocalThread import LocalThread
 from time import sleep, time
 from json import load,dumps

@@ -1,6 +1,6 @@
 {
     "fps":10,
-    "ExposureMicroseconds":40000,
+    "ExposureMicroseconds":100000,
     "ExposureCompensationStops":0.0,
     "Exposure":"Manual",
     "ISO": 100,

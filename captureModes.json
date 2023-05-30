@@ -1,5 +1,5 @@
 {
-    "PyDNG": {
+    "DNG": {
         "description":"12bits DNGs",
         "suffix":"dng",
 	"next": "singleJpg"

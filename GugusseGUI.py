@@ -10,7 +10,8 @@ from Lights import LightControlWidget
 
 from picamera2.previews.qt import QGlPicamera2
 
-import CameraSettings as cs
+import CameraSettings
+import FileSettings
 
 class MainWindow(QMainWindow):
     def __init__(self, *args, **kwargs):
@@ -40,13 +41,13 @@ class MainWindow(QMainWindow):
         row_layout=QHBoxLayout()
         
         # Row 1  | Exposure stuff
-        self.AutoExposure=cs.AutoExposureWidget(self)
+        self.AutoExposure=CameraSettings.AutoExposureWidget(self)
         row_layout.addWidget(self.AutoExposure.getLabel())
         row_layout.addWidget(self.AutoExposure)
-        self.ExposureDual=cs.ExposureDualWidget(self)
+        self.ExposureDual=CameraSettings.ExposureDualWidget(self)
         row_layout.addWidget(self.ExposureDual.getLabel())
         row_layout.addWidget(self.ExposureDual)
-        self.Iso=cs.IsoWidget(self)
+        self.Iso=CameraSettings.IsoWidget(self)
         row_layout.addWidget(self.Iso.getLabel())
         row_layout.addWidget(self.Iso)
         self.main_layout.addLayout(row_layout)
@@ -54,15 +55,15 @@ class MainWindow(QMainWindow):
         row_layout=QHBoxLayout()
 
         # Row 2 White balance stuff
-        self.WBMode=cs.WhiteBalanceModeWidget(self)
+        self.WBMode=CameraSettings.WhiteBalanceModeWidget(self)
         row_layout.addWidget(self.WBMode.getLabel())
         row_layout.addWidget(self.WBMode)
-        self.Freeze=cs.FreezeWidget(self)
+        self.Freeze=CameraSettings.FreezeWidget(self)
         row_layout.addWidget(self.Freeze)
-        self.RedGain=cs.ColorGainWidget(self, 0)
+        self.RedGain=CameraSettings.ColorGainWidget(self, 0)
         row_layout.addWidget(self.RedGain.getLabel())
         row_layout.addWidget(self.RedGain)
-        self.BlueGain=cs.ColorGainWidget(self, 1)
+        self.BlueGain=CameraSettings.ColorGainWidget(self, 1)
         row_layout.addWidget(self.BlueGain.getLabel())
         row_layout.addWidget(self.BlueGain)
         self.main_layout.addLayout(row_layout)
@@ -107,15 +108,23 @@ class MainWindow(QMainWindow):
         
         
         # Project name field
-        project_label = QLabel("Project name")
-        self.project_name = QLineEdit()
+        self.project_name = FileSettings.ProjectNameWidget(self)        
         project_layout = QHBoxLayout()
-        project_layout.addWidget(project_label)
+        project_layout.addWidget(self.project_name.getLabel())
         project_layout.addWidget(self.project_name)
         left_layout.addLayout(project_layout)
 
+        self.filmFormat = FileSettings.FilmFormatWidget(self)
+        format_layout=QHBoxLayout()
+        format_layout.addWidget(self.filmFormat.getLabel())
+        format_layout.addWidget(self.filmFormat)
+        self.captureMode = FileSettings.CaptureModeWidget(self)
+        format_layout.addWidget(self.captureMode.getLabel())
+        format_layout.addWidget(self.captureMode)
+        left_layout.addLayout(format_layout)
+        
 
-        self.selectors_controls = ['FilmFormat', 'CaptureMode', 'ExposureMode', 'AWB', 'ReelsDirection']
+        self.selectors_controls = ['ReelsDirection']
         for control in self.selectors_controls:
             label = QLabel(control)
             selector = QComboBox()
@@ -152,7 +161,18 @@ class MainWindow(QMainWindow):
         self.AutoExposure.syncCamera()
         self.WBMode.syncCamera()
         self.picam2.start()
-        
+
+    def disableWidgetsWhenCapture(self):
+        self.light_selector.setEnabled(False)
+        self.project_name.setEnabled(False)
+        self.filmFormat.setEnabled(False)
+        self.captureMode.setEnabled(False)
+
+    def reenableWidgetsAfterCapture(self):
+        self.light_selector.setEnabled(True)
+        self.project_name.setEnabled(True)
+        self.filmFormat.setEnabled(True)
+        self.captureMode.setEnabled(True)
 
     def getBottomLayout(self):
         return self.bottom_layout

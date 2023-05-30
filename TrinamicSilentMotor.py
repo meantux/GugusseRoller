@@ -13,7 +13,7 @@ import RPi.GPIO as GPIO
 GPIO.setmode(GPIO.BCM) 
 from json import dumps, dump
 from PyQt5.QtWidgets import QPushButton
-from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QIcon
 
 
@@ -21,6 +21,7 @@ from PyQt5.QtGui import QIcon
 class TrinamicSilentMotor():
     def __init__(self,cfg,slowEnd=False,trace=False, msg=None):
         print(dumps(cfg, indent=4))
+        self.cfg=cfg
         GPIO.setmode(GPIO.BCM)
         self.minSpeed=cfg["minSpeed"]
         self.maxSpeed=cfg["maxSpeed"]
@@ -55,12 +56,14 @@ class TrinamicSilentMotor():
         GPIO.setup(self.pinEnable, GPIO.OUT, initial=0)
         self.pos=int(0)
         GPIO.setup(self.SensorStopPin, GPIO.IN)
+        GPIO.setup(self.pinDirection, GPIO.OUT, initial=0)
         self.log={}
 
     def message(self, txt):
         if self.msg != None:
             self.msg(txt)
-            
+    def getConfig(self):
+        return self.cfg
 
     def clearFault(self):
         self.fault=False
@@ -127,12 +130,10 @@ class TrinamicSilentMotor():
         rev=False
         if direction == "ccw":
             rev=True
-        elif direction != "cw":
-            raise Exception("Bad direction parameter")        
         if self.inverted != rev:
-            GPIO.setup(self.pinDirection, GPIO.OUT, initial=0)
+            GPIO.output(self.pinDirection,0)
         else:
-            GPIO.setup(self.pinDirection, GPIO.OUT, initial=1)
+            GPIO.output(self.pinDirection,1)
         
     def blindMove(self, ticks):
         delay=0.020
@@ -231,20 +232,66 @@ class TrinamicSilentMotor():
         raise Exception("Move failed, \033[1;31m{}\033[0m passed its limit without triggering sensor".format(self.name))
 
 
+class PinToggler(QThread):
+    def __init__(self, pin):
+        QThread.__init__(self)
+        self.loop=True
+        self.pin=pin
+        self.toggle=GPIO.input(pin)
+
+    def run(self):
+        while self.loop:
+            self.toggle= not self.toggle
+            GPIO.output(self.pin, self.toggle)
+            sleep(0.001)
+
+    def killLoop(self):
+        self.loop=False
+
+
+class MotorManualWidget(QPushButton):
+    def __init__(self, motor, direction):
+        if direction=="cw":
+            icon=QIcon('cw.png')
+        else:
+            icon=QIcon('ccw.png')
+        QPushButton.__init__(self)
+        self.setIcon(icon)
+        self.motor=motor
+        self.cfg=motor.getConfig()
+        self.pin=self.cfg["pinStep"]
+        self.direction=direction
+        self.pressed.connect(self.startMotor)
+        self.released.connect(self.stopMotor)
+        self.toggler=None
+
+    def startMotor(self):
+        if self.toggler:
+            print("Weird bug where the previous task is still there")
+            return
+        self.toggler=PinToggler(self.pin)
+        dirval=self.cfg["invert"]
+        if self.direction=="ccw":
+            dirval= not dirval
+        self.motor.setDirection(self.direction)
+        self.toggler.start()
+                
+    def stopMotor(self):
+        #if self.toggler:
+        self.toggler.killLoop()        
+        self.toggler=None
+        
+    
 class MotorControlWidgets(QPushButton):
     def __init__(self, win, cfg):
         globalPowerIcon=QIcon('power.png')
-        globalCcwIcon=QIcon('ccw.png')
-        globalCwIcon=QIcon('cw.png')
         QPushButton.__init__(self)        
         self.setIcon(globalPowerIcon)
         self.clicked.connect(self.powerHandle)
         self.motor=TrinamicSilentMotor(cfg)
         self.syncMotorStatus()
-        self.cw=QPushButton()
-        self.cw.setIcon(globalCwIcon)
-        self.ccw=QPushButton()
-        self.ccw.setIcon(globalCcwIcon)
+        self.cw=MotorManualWidget(self.motor,"cw")
+        self.ccw=MotorManualWidget(self.motor,"ccw")
 
     def syncMotorStatus(self):
         if self.motor.getPowerState():
