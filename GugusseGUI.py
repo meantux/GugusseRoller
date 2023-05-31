@@ -11,14 +11,14 @@ from Lights import LightControlWidget
 from picamera2.previews.qt import QGlPicamera2
 
 import CameraSettings
-import FileSettings
+import CaptureSettings
 
 class MainWindow(QMainWindow):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):        
         super(MainWindow, self).__init__(*args, **kwargs)
         self.setWindowTitle("GugusseGUI 2.0")
         
-        with open("CameraSettings.json","rt") as h:
+        with open("GugusseSettings.json","rt") as h:
             self.settings=json.load(h)
         fps=self.settings["fps"]
         
@@ -38,35 +38,35 @@ class MainWindow(QMainWindow):
         #self.main_layout.addLayout(top)
 
         
-        row_layout=QHBoxLayout()
+        hlayout=QHBoxLayout()
         
         # Row 1  | Exposure stuff
         self.AutoExposure=CameraSettings.AutoExposureWidget(self)
-        row_layout.addWidget(self.AutoExposure.getLabel())
-        row_layout.addWidget(self.AutoExposure)
+        hlayout.addWidget(self.AutoExposure.getLabel())
+        hlayout.addWidget(self.AutoExposure)
         self.ExposureDual=CameraSettings.ExposureDualWidget(self)
-        row_layout.addWidget(self.ExposureDual.getLabel())
-        row_layout.addWidget(self.ExposureDual)
+        hlayout.addWidget(self.ExposureDual.getLabel())
+        hlayout.addWidget(self.ExposureDual)
         self.Iso=CameraSettings.IsoWidget(self)
-        row_layout.addWidget(self.Iso.getLabel())
-        row_layout.addWidget(self.Iso)
-        self.main_layout.addLayout(row_layout)
+        hlayout.addWidget(self.Iso.getLabel())
+        hlayout.addWidget(self.Iso)
+        self.main_layout.addLayout(hlayout)
         
-        row_layout=QHBoxLayout()
+        hlayout=QHBoxLayout()
 
         # Row 2 White balance stuff
         self.WBMode=CameraSettings.WhiteBalanceModeWidget(self)
-        row_layout.addWidget(self.WBMode.getLabel())
-        row_layout.addWidget(self.WBMode)
+        hlayout.addWidget(self.WBMode.getLabel())
+        hlayout.addWidget(self.WBMode)
         self.Freeze=CameraSettings.FreezeWidget(self)
-        row_layout.addWidget(self.Freeze)
+        hlayout.addWidget(self.Freeze)
         self.RedGain=CameraSettings.ColorGainWidget(self, 0)
-        row_layout.addWidget(self.RedGain.getLabel())
-        row_layout.addWidget(self.RedGain)
+        hlayout.addWidget(self.RedGain.getLabel())
+        hlayout.addWidget(self.RedGain)
         self.BlueGain=CameraSettings.ColorGainWidget(self, 1)
-        row_layout.addWidget(self.BlueGain.getLabel())
-        row_layout.addWidget(self.BlueGain)
-        self.main_layout.addLayout(row_layout)
+        hlayout.addWidget(self.BlueGain.getLabel())
+        hlayout.addWidget(self.BlueGain)
+        self.main_layout.addLayout(hlayout)
     
         
         # Bottom section divided into left and right
@@ -75,11 +75,21 @@ class MainWindow(QMainWindow):
         left_widget = QWidget()
         left_layout = QVBoxLayout()
 
-        lights_layout=QHBoxLayout()
+        hlayout=QHBoxLayout()        
+        self.vflip=CameraSettings.FlipWidget(self, "vflip")
+        self.hflip=CameraSettings.FlipWidget(self, "hflip")
+        saveSettings=CaptureSettings.SaveSettingsWidget(self)
+        hlayout.addWidget(self.hflip)
+        hlayout.addWidget(self.vflip)
+        hlayout.addWidget(saveSettings)
+        left_layout.addLayout(hlayout)
+        
+        
+        hlayout=QHBoxLayout()
         self.light_selector = LightControlWidget(self)
-        lights_layout.addWidget(self.light_selector.getLabel())
-        lights_layout.addWidget(self.light_selector)
-        left_layout.addLayout(lights_layout)
+        hlayout.addWidget(self.light_selector.getLabel())
+        hlayout.addWidget(self.light_selector)
+        left_layout.addLayout(hlayout)
 
         with open("hardwarecfg.json") as h:
             self.hwSettings=json.load(h)
@@ -108,34 +118,33 @@ class MainWindow(QMainWindow):
         
         
         # Project name field
-        self.project_name = FileSettings.ProjectNameWidget(self)        
-        project_layout = QHBoxLayout()
-        project_layout.addWidget(self.project_name.getLabel())
-        project_layout.addWidget(self.project_name)
-        left_layout.addLayout(project_layout)
+        self.project_name = CaptureSettings.ProjectNameWidget(self)        
+        hlayout = QHBoxLayout()
+        hlayout.addWidget(self.project_name.getLabel())
+        hlayout.addWidget(self.project_name)
+        left_layout.addLayout(hlayout)
 
-        self.filmFormat = FileSettings.FilmFormatWidget(self)
-        format_layout=QHBoxLayout()
-        format_layout.addWidget(self.filmFormat.getLabel())
-        format_layout.addWidget(self.filmFormat)
-        self.captureMode = FileSettings.CaptureModeWidget(self)
-        format_layout.addWidget(self.captureMode.getLabel())
-        format_layout.addWidget(self.captureMode)
-        left_layout.addLayout(format_layout)
+        #Capture Mode
+        self.filmFormat = CaptureSettings.FilmFormatWidget(self)
+        hlayout=QHBoxLayout()
+        hlayout.addWidget(self.filmFormat.getLabel())
+        hlayout.addWidget(self.filmFormat)
+        self.captureMode = CaptureSettings.CaptureModeWidget(self)
+        hlayout.addWidget(self.captureMode.getLabel())
+        hlayout.addWidget(self.captureMode)
+        left_layout.addLayout(hlayout)
+        
+        #Reels Direction
+        self.reelsDirection=CaptureSettings.ReelsDirectionWidget(self)
+        hlayout=QHBoxLayout()
+        hlayout.addWidget(self.reelsDirection.getLabel())
+        hlayout.addWidget(self.reelsDirection)
+        left_layout.addLayout(hlayout)
+
+        
         
 
-        self.selectors_controls = ['ReelsDirection']
-        for control in self.selectors_controls:
-            label = QLabel(control)
-            selector = QComboBox()
-            selector.addItems(['Option1', 'Option2', 'Option3'])
-            selector.currentTextChanged.connect(lambda text, c=control: self.on_selector_changed(c, text))
-            selector_layout = QHBoxLayout()
-            selector_layout.addWidget(label)
-            selector_layout.addWidget(selector)
-            left_layout.addLayout(selector_layout)
-
-        self.buttons_controls = ['hflip', 'vflip', 'SaveSettings', 'PreviewToggle', 'Run', 'Photo']
+        self.buttons_controls = ['hflip', 'vflip', 'SaveSettings', 'Run', 'Photo']
         for control in self.buttons_controls:
             button = QPushButton(control)
             button.clicked.connect(lambda _, c=control: self.on_button_clicked(c))
@@ -160,6 +169,7 @@ class MainWindow(QMainWindow):
         # forcing a sync with the auto-exposure value will fix all exposure related values
         self.AutoExposure.syncCamera()
         self.WBMode.syncCamera()
+        self.hflip.syncCamera() # syncing one syncs the other, and start cam
         self.picam2.start()
 
     def disableWidgetsWhenCapture(self):

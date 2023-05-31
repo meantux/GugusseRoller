@@ -1,7 +1,6 @@
-from PyQt5.QtWidgets import QSlider, QComboBox, QLabel, QPushButton
+from PyQt5.QtWidgets import QSlider, QComboBox, QLabel, QPushButton, QCheckBox
 from PyQt5.QtCore import Qt
-from libcamera import controls
-
+from libcamera import controls, Transform
 from picamera2.previews.qt import QGlPicamera2
 
 
@@ -216,6 +215,7 @@ class ColorGainWidget(QSlider):
     def handle(self, value):
         self.registerValue=float(value)/1000.0
         self.label.setText(f"{self.color} Gain {self.registerValue:6.3f}")
+        self.win.settings[f"{self.color}Gain"]=self.registerValue
         self.syncCamera()
         
     def syncCamera(self):
@@ -294,4 +294,29 @@ class FreezeWidget(QPushButton):
         newValues=metadata["ColourGains"]
         self.win.RedGain.setValue(int(newValues[0]*1000.0))
         self.win.BlueGain.setValue(int(newValues[1]*1000.0))
+        self.win.settings["RedGain"]=newValues[0]
+        self.win.settings["BlueGain"]=newValues[1]
         self.win.WBMode.handle("Manual")
+
+class FlipWidget(QCheckBox):
+    def __init__(self, win, which):
+        QCheckBox.__init__(self, which)
+        self.win=win
+        self.which=which
+        if which in self.win.settings:
+            current=self.win.settings[which]
+            self.setChecked(current)            
+        else:
+            self.setChecked(False)
+            self.win.settings[which]=False                
+        self.stateChanged.connect(self.handle)
+        
+    def handle(self):        
+        self.win.settings[self.which]=self.isChecked()
+        self.win.out.append("Change requires save and restart")
+        self.syncCamera()
+
+    def syncCamera(self):
+        pass
+        # we don't know how to do that yet.
+    

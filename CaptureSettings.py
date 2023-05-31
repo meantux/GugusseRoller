@@ -3,8 +3,8 @@ from PyQt5.QtCore import Qt
 from datetime import datetime
 import json
 import re
+import os
 
-import re
 
 def makeValidFilename(input_str):
     s = input_str.replace(' ', '_')
@@ -78,3 +78,47 @@ class CaptureModeWidget(QComboBox):
 
     def getLabel(self):
         return self.label
+
+class ReelsDirectionWidget(QComboBox):
+    def __init__(self, win):
+        QComboBox.__init__(self)
+        choices=["cw","ccw"]
+        self.win=win
+        self.label=QLabel("Reels Direction")
+        self.label.setAlignment(Qt.AlignRight)
+        self.addItems(choices)        
+        if "ReelsDirection" in self.win.settings:
+            setting=self.win.settings["ReelsDirection"]
+        else:
+            setting="cw"
+            self.win.settings["ReelsDirection"]=setting
+
+        if setting in choices:
+            self.setCurrentText(setting)
+        else:
+            self.setCurrentText("cw")
+            self.win.settings["ReelsDirection"]="cw"
+        self.currentTextChanged.connect(self.handle)
+
+    def handle(self, text):
+        self.win.settings["ReelsDirection"]=text
+
+    def getLabel(self):
+        return self.label
+
+class SaveSettingsWidget(QPushButton):
+    def __init__(self, win):
+        QPushButton.__init__(self, "Save Settings")
+        self.clicked.connect(self.handle)
+        self.win=win
+        self.lastSaved=dict(self.win.settings)
+
+    def handle(self):
+        if self.lastSaved==self.win.settings:
+            self.win.out.append("No setting was changed")
+            return
+        h=open(".buildingJson", "wt")
+        json.dump(self.win.settings, h, indent=4)
+        h.close()
+        os.rename(".buildingJson", "GugusseSettings.json")
+        self.lastSaved=dict(self.win.settings)

@@ -5,6 +5,7 @@ from time import sleep, time
 import os
 from threading import Thread
 import CameraSettings
+from libcamera import Transform
 
 
 
@@ -26,7 +27,15 @@ class GCamera(Picamera2):
             self.captureModes=json.load(h)
 
         self.fps=win.settings["fps"]
-        self.preview_config=self.create_preview_configuration({"size":(4056,3040)},controls={"FrameRate":self.fps,"FrameDurationLimits": (1000, 1000000//self.fps),"NoiseReductionMode":0})
+        vflip=False
+        hflip=False
+        if "hflip" in win.settings:
+            hflip=win.settings["hflip"]        
+        if "vflip" in win.settings:
+            vflip=win.settings["vflip"]
+        transform=Transform(vflip=vflip,hflip=hflip)
+        
+        self.preview_config=self.create_preview_configuration({"size":(4056,3040)},controls={"FrameRate":self.fps,"FrameDurationLimits": (1000, 1000000//self.fps),"NoiseReductionMode":0},transform=transform)
         self.still_config=self.create_still_configuration(display=None, raw={},controls={"FrameRate":self.fps,"FrameDurationLimits": (1000, 1000000//self.fps),"NoiseReductionMode":0})
         
         print(self.preview_config)
