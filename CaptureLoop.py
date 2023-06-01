@@ -1,6 +1,7 @@
 
-from LocalThread import LocalThread
-from time import sleep, time
+from PyQt5.QtCore import QThread, pyqtSignal
+from threading import Thread
+import sleep, time
 from json import load,dumps
 from os import mkdir,listdir
 
@@ -59,41 +60,36 @@ class MotorThread (Thread):
    def run(self):
       self.motor.move()
 
-class CaptureLoop(Thread):
-    def __init__ (self, cam, motors, settings, subDir, uiTools):
-        Thread.__init__(self)
-        self.cam=cam
-        self.motors=motors
-        self.settings=dict(settings)
-        self.subDir=subDir
+class CaptureLoop(QThread):
+    signal=pyqtSignal('CaptureLoopStatus')
+    def __init__ (self, win):        
+        QThread.__init__(self)
+        self.win=win
         self.Loop=True
-        self.Pause=False
-        self.uiTools=uiTools
-        with open("captureModes.json","rt") as h:
-            self.captureModes=load(h)
-            h.close()
 
     def run(self):
-        self.motors["feeder"].enable()
-        self.motors["filmdrive"].enable()
-        self.motors["pickup"].enable()
+        # send msgs
+        self.signal.emit("Capture loop start")
         
-        self.motors["feeder"].clearFault()
-        self.motors["filmdrive"].clearFault()
-        self.motors["pickup"].clearFault()
+        self.win.motors["feeder"].motor.enable()
+        self.win.motors["filmdrive"].motor.enable()
+        self.win.motors["pickup"].motor.enable()
         
-        self.motors["feeder"].setDirection(self.settings["direction"])
-        self.motors["filmdrive"].setDirection("cw")
-        self.motors["pickup"].setDirection(self.settings["direction"])
-        if "saveMode" in self.settings and self.settings["saveMode"] == "local":
-            self.export=LocalThread(self.subDir, self.captureModes[self.settings["captureMode"]]["suffix"], self.uiTools, self.settings["localFilePath"])
+        self.win.motors["feeder"].motor.clearFault()
+        self.win.motors["filmdrive"].motor.clearFault()
+        self.win.motors["pickup"].motor.clearFault()
+        
+        self.win.motors["feeder"].motor.setDirection(self.win.settings["direction"])
+        self.win.motors["filmdrive"].motor.setDirection("cw")
+        self.win.motors["pickup"].motor.setDirection(self.win.settings["direction"])
+        if "saveMode" in self.win.settings and self.win.settings["saveMode"] == "local":
+            self.export=LocalThread(self.subDir, self.captureModes[self.win.settings["captureMode"]]["suffix"], self.signal, self.win.settings["localFilePath"])
         else:
-            self.export=FtpThread(self.subDir,self.captureModes[self.settings["captureMode"]]["suffix"], self.uiTools)
+            self.export=FtpThread(self.subDir,self.captureModes[self.win.settings["captureMode"]]["suffix"], self.)
         start=self.export.getStartPoint()
         self.export.start()
-        self.sequence=FrameSequence(self.cam, self.motors, self.settings,start,self.uiTools["handleLightChange"])        
-        self.uiTools["runButton"].configure(state="normal",fg="black")
-        self.uiTools["prjBox"].configure(state="disable",fg="grey")
+        self.sequence=FrameSequence(self.cam, self.win.motors, self.win.settings,start,self.uiTools["handleLightChange"])
+        
         
         while self.Loop:
             try:
@@ -102,33 +98,29 @@ class CaptureLoop(Thread):
                 print(e)
                 self.stopLoop()
             if len(listdir('/dev/shm/complete'))>6:
-                self.uiTools["message"]("too many files waiting")
-                self.uiTools["message"]("pausing up to 5 mins")
+                self.signal.emit("too many files waiting")
+                self.signal.emit("pausing up to 5 mins")
                 timeout=time()+300
                 while (self.Loop and timeout>time() and len(listdir('/dev/shm/complete'))>6):
                     sleep(0.1)
                 if timeout <= time():
-                    self.uiTools["message"]("timeout xfer error")
+                    self.signal.emit("timeout xfer error")
                     self.stopLoop()
-        self.uiTools["message"]("wait end of transfers")
+        self.signal.emit("waiting for files queued for transfer")
         timeout=time()+20
         while len(listdir('/dev/shm/complete'))>0:
             sleep (0.1)
             if time() > timeout:
-                self.uiTools["message"]("TIMEOUT waiting for end")
+                self.signal.emit("TIMEOUT waiting for end")
                 break
         
-        self.uiTools["message"]("stopping Export")
+        self.win.out.append("stopping Export")
         self.export.stopLoop()        
         self.export.join()
-        self.uiTools["runHandle"].running=False
-        self.uiTools["runHandle"].clean=False
-        self.uiTools["runButton"].configure(text="Run",state="normal",fg="black")
-        self.uiTools["captureModeSelector"].configure(state="normal",fg="black")
+        self.signal.emit("Capture stopped!")
 
-        self.uiTools["prjBox"].configure(text="Run",state="normal",fg="black")
-        self.uiTools["message"]("Capture stopped!")
 
     def stopLoop(self):
-        self.uiTools["runButton"].configure(state="disabled", fg="grey")
+        self.signal.emit("Stopping Loop")
         self.Loop=False
+    

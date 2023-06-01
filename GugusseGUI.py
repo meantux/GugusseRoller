@@ -1,6 +1,6 @@
 import sys
 import json
-from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QLabel, QSlider, QComboBox, QPushButton, QLineEdit, QTextEdit, QSplitter, QSizePolicy, QWidget
+from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QLabel, QSlider, QComboBox, QPushButton, QLineEdit, QTextEdit, QSplitter, QSizePolicy, QWidget, QMessageBox
 from PyQt5.QtCore import Qt
 
 from TrinamicSilentMotor import MotorControlWidgets
@@ -18,8 +18,10 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__(*args, **kwargs)
         self.setWindowTitle("GugusseGUI 2.0")
         
-        with open("GugusseSettings.json","rt") as h:
-            self.settings=json.load(h)
+        h=open("GugusseSettings.json","rt")
+        self.settings=json.load(h)
+        h.close()
+        print(json.dumps(self.settings, indent=4))
         fps=self.settings["fps"]
         
         self.picam2=GCamera(self)
@@ -78,10 +80,10 @@ class MainWindow(QMainWindow):
         hlayout=QHBoxLayout()        
         self.vflip=CameraSettings.FlipWidget(self, "vflip")
         self.hflip=CameraSettings.FlipWidget(self, "hflip")
-        saveSettings=CaptureSettings.SaveSettingsWidget(self)
+        self.saveSettings=CaptureSettings.SaveSettingsWidget(self)
         hlayout.addWidget(self.hflip)
         hlayout.addWidget(self.vflip)
-        hlayout.addWidget(saveSettings)
+        hlayout.addWidget(self.saveSettings)
         left_layout.addLayout(hlayout)
         
         
@@ -144,11 +146,6 @@ class MainWindow(QMainWindow):
         
         
 
-        self.buttons_controls = ['hflip', 'vflip', 'SaveSettings', 'Run', 'Photo']
-        for control in self.buttons_controls:
-            button = QPushButton(control)
-            button.clicked.connect(lambda _, c=control: self.on_button_clicked(c))
-            left_layout.addWidget(button)
 
         left_widget.setLayout(left_layout)
         self.bottom_layout.addWidget(left_widget)
@@ -200,6 +197,24 @@ class MainWindow(QMainWindow):
         self.bottom_layout.repaint()
         self.out.append(f'Button clicked for control: {control}')
 
+    def closeEvent(self, event):
+        if self.saveSettings.thereAreUnsavedSettings():
+            reply = QMessageBox.question(self, 'Unsaved Settings', 
+                "There are unsaved settings. Do you want to save before exiting?", QMessageBox.Save | 
+                QMessageBox.Cancel | QMessageBox.Discard, QMessageBox.Save)
+
+            if reply == QMessageBox.Save:
+                # save the work and exit
+                self.saveSettings.execute()
+                event.accept()
+            elif reply == QMessageBox.Discard:
+                # discard the work and exit
+                event.accept()
+            else:
+                # cancel the close event
+                event.ignore()
+        else:
+            event.accept()
 
 
 app = QApplication(sys.argv)
