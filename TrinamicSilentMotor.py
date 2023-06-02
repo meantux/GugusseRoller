@@ -19,7 +19,7 @@ from PyQt5.QtGui import QIcon
 
 
 class TrinamicSilentMotor():
-    def __init__(self,cfg,slowEnd=False,trace=False, msg=None):
+    def __init__(self,cfg,slowEnd=False,trace=False, signal=None):
         print(dumps(cfg, indent=4))
         self.cfg=cfg
         GPIO.setmode(GPIO.BCM)
@@ -34,7 +34,7 @@ class TrinamicSilentMotor():
             self.learnPin= -1
         self.histo=[]
         self.slowEnd=cfg["slowEnd"]
-        self.msg=msg
+        self.signal=signal
         self.skipHisto=2
         self.skipAdjust=0
         self.trace=trace
@@ -60,8 +60,8 @@ class TrinamicSilentMotor():
         self.log={}
 
     def message(self, txt):
-        if self.msg != None:
-            self.msg(txt)
+        if self.signal != None:
+            self.signal.emit(txt)
     def getConfig(self):
         return self.cfg
 
@@ -175,7 +175,7 @@ class TrinamicSilentMotor():
                 if reading == self.SensorStopState:
                     delta=time()-self.moveStart
                     if self.trace:
-                        print("\033[1;32m{}\033[0m ticks for {}".format(ticks,self.name))
+                        self.signal.emit("\033[1;32m{}\033[0m ticks for {}".format(ticks,self.name))
                         idx=str(ticks)
                         if idx in self.log:
                             self.log[idx]+= 1
@@ -215,10 +215,10 @@ class TrinamicSilentMotor():
                     self.speed=int(newspeed)
                     if self.speed < self.speed2:
                         self.speed=self.speed2
-                        print("WARNING: speed={} and speed2={}, the fact that speed was smaller than speed2 is unexpected".format(self.speed, self.speed2))
+                        self.signal.emit("WARNING: speed={} and speed2={}, the fact that speed was smaller than speed2 is unexpected".format(self.speed, self.speed2))
                     elif self.speed > self.maxSpeed:
                         self.speed=self.maxSpeed
-                    print("New speed for {}={}ticks/s".format(self.name, self.speed))
+                    self.signal.emit("New speed for {}={}ticks/s".format(self.name, self.speed))
                     self.skipAdjust=2
                     return
             delay=waitUntil - time()
@@ -267,7 +267,7 @@ class MotorManualWidget(QPushButton):
 
     def startMotor(self):
         if self.toggler:
-            print("Weird bug where the previous task is still there")
+            self.signal.emit("Weird bug where the previous task is still there")
             return
         self.toggler=PinToggler(self.pin)
         dirval=self.cfg["invert"]

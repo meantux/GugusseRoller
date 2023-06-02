@@ -5,13 +5,13 @@ from json import load
 from time import sleep
 
 class FtpThread(Thread):
-    def __init__(self, subdir, fileExt, uiTools):
+    def __init__(self, subdir, fileExt, signal):
         Thread.__init__(self)
         self.subdir=subdir
         self.fileExt=fileExt
         self.connected=False
         self.Loop=True
-        self.message=uiTools["message"]
+        self.message=signal
         self.fileIndex=0
 
     def forceStartPoint(self, start):
@@ -21,25 +21,25 @@ class FtpThread(Thread):
         if not self.connected:
             self.openConnection()
         listdir=[]
-        self.message("listing remote (wait)".format(self.subdir))
+        self.message.emit("listing remote (wait)".format(self.subdir))
         try:
             listdir=self.ftp.nlst("*.{}".format(self.fileExt))
         except Exception as e:
             msg=str(e)
             if msg != "450 No files found":
-                self.message(e)
+                self.message.emit(e)
                 raise Exception(msg)
-            self.message("no {} in {}".format( self.fileExt, self.subdir))
+            self.message.emit("no {} in {}".format( self.fileExt, self.subdir))
             self.fileIndex=0
             return 0
         if len(listdir) == 0:
             return 0
-        self.message("sorting list")
+        self.message.emit("sorting list")
         listdir.sort()
         lastFile=listdir[len(listdir)-1]        
-        self.message("last file in {}={}".format(self.subdir,lastFile))
+        self.message.emit("last file in {}={}".format(self.subdir,lastFile))
         self.fileIndex=1+int(lastFile.split(".")[0].split("_")[0],10)
-        self.message("File index now at: {}".format(self.fileIndex))
+        self.message.emit("File index now at: {}".format(self.fileIndex))
         return self.fileIndex
         
         
@@ -56,7 +56,7 @@ class FtpThread(Thread):
         except Exception as e:
             msg=str(e)
             if msg != "550 {}: File exists".format(self.subdir):
-                self.message(e)
+                self.message.emit(e)
         self.ftp.cwd(self.subdir)
         self.connected=True
     
@@ -71,16 +71,17 @@ class FtpThread(Thread):
         except Exception as e:
             msg=str(e)
             if msg != "[Errno 17] File exists: '/dev/shm/complete'":
-                self.message(e)
+                self.message.emit(e)
         while self.Loop:
             sleep(1)
             for item in listdir("/dev/shm/complete/"):
                 if path.isfile("/dev/shm/complete/{}".format(item)):
-                    self.message("transferring {}".format(item))
+                    self.message.emit("transferring {}".format(item))
                     a=open("/dev/shm/complete/{}".format(item), "rb")                    
                     self.ftp.storbinary("STOR {}".format(item),a)
                     a.close()
                     remove("/dev/shm/complete/{}".format(item))
+        self.message.emit("End of ftp thread")
                     
     def stopLoop(self):
         self.Loop=False

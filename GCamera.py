@@ -35,7 +35,7 @@ class GCamera(Picamera2):
             vflip=win.settings["vflip"]
         transform=Transform(vflip=vflip,hflip=hflip)
         
-        self.preview_config=self.create_preview_configuration({"size":(4056,3040)},controls={"FrameRate":self.fps,"FrameDurationLimits": (1000, 1000000//self.fps),"NoiseReductionMode":0},transform=transform)
+        self.preview_config=self.create_preview_configuration(main={"size":(4056,3040)},controls={"FrameRate":self.fps,"FrameDurationLimits": (1000, 1000000//self.fps),"NoiseReductionMode":0},raw={'format': 'SBGGR12_CSI2P', 'size': (4056, 3040)},transform=transform)
         self.still_config=self.create_still_configuration(display=None, raw={},controls={"FrameRate":self.fps,"FrameDurationLimits": (1000, 1000000//self.fps),"NoiseReductionMode":0})
         
         print(self.preview_config)
@@ -52,7 +52,10 @@ class GCamera(Picamera2):
         if captureMode == "singleJpg":
             fn="/dev/shm/{:05d}.jpg".format(self.framecount)
             fnComplete="/dev/shm/complete/{:05d}.jpg".format(self.framecount)
-            self.switch_mode_and_capture_file(self.still_config, fn)
+            #self.switch_mode_and_capture_file(self.still_config, fn)
+            buffers,metadata=self.capture_buffers(["main"])
+            orig=self.helpers.make_image(buffers[0], self.preview_config["main"]).convert('RGB')
+            orig.save(fn)
             os.rename(fn,fnComplete)
 
         elif captureMode == "bracketing":

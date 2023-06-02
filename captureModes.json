@@ -12,6 +12,6 @@
     "bracketing":{
         "description":"Bracketing (0,+1,-1) JPGs ",
         "suffix":"jpg",
-	"next": "PyDNG"
+	"next": "DNG"
     }
 }

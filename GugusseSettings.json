@@ -1,14 +1,15 @@
 {
     "fps": 10,
-    "ExposureMicroseconds": 99785,
+    "ExposureMicroseconds": 100000,
     "ExposureCompensationStops": 0.0,
     "Exposure": "Manual",
-    "ISO": 1100,
+    "ISO": 350,
     "WhiteBalanceMode": "Manual",
-    "RedGain": 1.8956501483917236,
-    "BlueGain": 2.699497938156128,
+    "RedGain": 2.2298035621643066,
+    "BlueGain": 2.086366653442383,
     "WhileBalanceMode": "Auto",
     "vflip": false,
     "hflip": true,
-    "ReelsDirection": "cw"
+    "ReelsDirection": "cw",
+    "CaptureMode": "singleJpg"
 }

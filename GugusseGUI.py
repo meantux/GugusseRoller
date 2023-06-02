@@ -12,6 +12,7 @@ from picamera2.previews.qt import QGlPicamera2
 
 import CameraSettings
 import CaptureSettings
+import CaptureLoop
 
 class MainWindow(QMainWindow):
     def __init__(self, *args, **kwargs):        
@@ -99,8 +100,6 @@ class MainWindow(QMainWindow):
         threeMotorsLayout=QHBoxLayout()
         self.motors={}
         for motor in ["feeder","filmdrive","pickup"]:
-            #bordered_widget=QWidget()
-            #bordered_widget.setStyleSheet("border: 1px solid black;")            
             motorSeparatorLayout=QVBoxLayout()
             label=QLabel(motor)
             label.setAlignment(Qt.AlignCenter)
@@ -120,10 +119,10 @@ class MainWindow(QMainWindow):
         
         
         # Project name field
-        self.project_name = CaptureSettings.ProjectNameWidget(self)        
+        self.projectName = CaptureSettings.ProjectNameWidget(self)        
         hlayout = QHBoxLayout()
-        hlayout.addWidget(self.project_name.getLabel())
-        hlayout.addWidget(self.project_name)
+        hlayout.addWidget(self.projectName.getLabel())
+        hlayout.addWidget(self.projectName)
         left_layout.addLayout(hlayout)
 
         #Capture Mode
@@ -143,9 +142,13 @@ class MainWindow(QMainWindow):
         hlayout.addWidget(self.reelsDirection)
         left_layout.addLayout(hlayout)
 
-        
-        
-
+        #Run/Stop + Take Picture
+        self.runStop=CaptureLoop.RunStopWidget(self)
+        self.snapshot=CaptureLoop.SnapshotWidget(self)
+        hlayout=QHBoxLayout()
+        hlayout.addWidget(self.snapshot)
+        hlayout.addWidget(self.runStop)
+        left_layout.addLayout(hlayout)
 
         left_widget.setLayout(left_layout)
         self.bottom_layout.addWidget(left_widget)
@@ -171,13 +174,13 @@ class MainWindow(QMainWindow):
 
     def disableWidgetsWhenCapture(self):
         self.light_selector.setEnabled(False)
-        self.project_name.setEnabled(False)
+        self.projectName.setEnabled(False)
         self.filmFormat.setEnabled(False)
         self.captureMode.setEnabled(False)
 
     def reenableWidgetsAfterCapture(self):
         self.light_selector.setEnabled(True)
-        self.project_name.setEnabled(True)
+        self.projectName.setEnabled(True)
         self.filmFormat.setEnabled(True)
         self.captureMode.setEnabled(True)
 
