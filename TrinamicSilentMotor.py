@@ -283,15 +283,18 @@ class MotorManualWidget(QPushButton):
         
     
 class MotorControlWidgets(QPushButton):
-    def __init__(self, win, cfg):
-        globalPowerIcon=QIcon('power.png')
-        QPushButton.__init__(self)        
+    signal=pyqtSignal("PyQt_PyObject")
+    def __init__(self, win, cfg, slowEnd=False, trace=False):
+        globalPowerIcon=QIcon('power.png')        
+        QPushButton.__init__(self)
+        self.win=win
         self.setIcon(globalPowerIcon)
         self.clicked.connect(self.powerHandle)
-        self.motor=TrinamicSilentMotor(cfg)
+        self.motor=TrinamicSilentMotor(cfg, slowEnd=slowEnd, trace=trace, signal=self.signal)
         self.syncMotorStatus()
         self.cw=MotorManualWidget(self.motor,"cw")
         self.ccw=MotorManualWidget(self.motor,"ccw")
+        self.signal.connect(self.signalHandle)
 
     def syncMotorStatus(self):
         if self.motor.getPowerState():
@@ -306,3 +309,6 @@ class MotorControlWidgets(QPushButton):
             self.motor.enable()
         self.syncMotorStatus()
 
+
+    def signalHandle(self, msg):
+        self.win.out.append(msg)

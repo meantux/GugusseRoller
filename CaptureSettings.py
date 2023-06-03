@@ -100,10 +100,12 @@ class ReelsDirectionWidget(QComboBox):
         else:
             self.setCurrentText("cw")
             self.win.settings["ReelsDirection"]="cw"
+        
         self.currentTextChanged.connect(self.handle)
 
     def handle(self, text):
         self.win.settings["ReelsDirection"]=text
+        self.win.runStop.warnReelChange(text)
 
     def getLabel(self):
         return self.label

@@ -38,7 +38,18 @@ class FrameSequence():
            self.filmdrive.disable()
            self.pickup.disable()
            self.win.light_selector.signal.emit("off")
-           raise Exception("Motor Fault!")
+           self.signal.emit("---------------------------------------------")
+           self.signal.emit("\"Motor faults\" are issues with the sequence")
+           self.signal.emit("they could be triggered by obvious reasons")
+           self.signal.emit("like film's end or a film break.")
+           self.signal.emit("Or less obvious reasons like film stuck, film")
+           self.signal.emit("loose, film missing static friction, too much")
+           self.signal.emit("friction by under lubrified bearings, tape")
+           self.signal.emit("over film holes, hole sensor misaligned, film")
+           self.signal.emit("out of specs, lightpipes displaced, blocked")
+           self.signal.emit("sensors, wire disconnected...")
+           self.signal.emit("---------------------------------------------")
+           raise Exception("Capture stopped by Motor Faults!")
         sleep(0.1)
         try:
            self.cam.captureCycle()
@@ -46,7 +57,7 @@ class FrameSequence():
            self.feeder.disable()
            self.filmdrive.disable()
            self.pickup.disable()
-           print("Failure to capture image: {}".format(e))
+           self.signal.emit("Failure to capture image: {}".format(e))
            self.win.light_selector.signal.emit("off")
            raise Exception("Stop")
         m2.start()
@@ -76,7 +87,7 @@ class CaptureLoop(QThread):
         # send msgs
         self.signal.emit("Capture loop start")
         currentFilmFormatCfg=self.win.hwSettings["filmFormats"][self.win.filmFormat.currentText()]
-        print(dumps(currentFilmFormatCfg, indent=4))
+        self.signal.emit(dumps(currentFilmFormatCfg, indent=4))
         self.win.motors["feeder"].motor.setFormat(currentFilmFormatCfg["feeder"])
         self.win.motors["filmdrive"].motor.setFormat(currentFilmFormatCfg["filmdrive"])
         self.win.motors["pickup"].motor.setFormat(currentFilmFormatCfg["pickup"])
@@ -93,8 +104,8 @@ class CaptureLoop(QThread):
         self.win.motors["filmdrive"].motor.setDirection("cw")
         self.win.motors["pickup"].motor.setDirection(self.win.reelsDirection.currentText())
         
-        if "saveMode" in self.win.settings and self.win.settings["saveMode"] == "local":
-            self.export=LocalThread(self.win.projectName.text(), self.captureModes[self.win.captureMode.currentText()]["suffix"], self.signal, self.win.settings["localFilePath"])
+        if "saveMode" in self.win.hwSettings and self.win.hwSettings["saveMode"] == "local":
+            self.export=LocalThread(self.win.projectName.text(), self.captureModes[self.win.captureMode.currentText()]["suffix"], self.signal, self.win.hwSettings["localFilePath"])
         else:
             self.export=FtpThread(self.win.projectName.text(),self.captureModes[self.win.captureMode.currentText()]["suffix"], self.signal)
         start=self.export.getStartPoint()
@@ -105,19 +116,19 @@ class CaptureLoop(QThread):
             try:
                 self.sequence.frameAdvance()
             except Exception as e:
-                print(e)
+                self.signal.emit(str(e))
                 self.stopLoop()
             if len(listdir('/dev/shm/complete'))>6:
                 self.signal.emit("too many files waiting")
-                self.signal.emit("pausing up to 5 mins")
+                self.signal.emit("waiting up to 5 mins")
                 timeout=time()+300
                 while (self.Loop and timeout>time() and len(listdir('/dev/shm/complete'))>6):
                     sleep(0.1)
                 if timeout <= time():
                     self.signal.emit("timeout xfer error")
                     self.stopLoop()
-        self.signal.emit("waiting for files queued for transfer")
-        timeout=time()+20
+        self.signal.emit("waiting up to 2 minutes for transfer queue to be cleared")
+        timeout=time()+120
         while len(listdir('/dev/shm/complete'))>0:
             sleep (0.1)
             if time() > timeout:
@@ -145,8 +156,15 @@ class RunStopWidget(QPushButton):
         self.running=False
         self.stopping=False
 
+    def captureWidgetsEnable(self, state):
+        self.win.filmFormat.setEnabled(state)
+        self.win.projectName.setEnabled(state)
+        self.win.captureMode.setEnabled(state)
+        self.win.light_selector.setEnabled(state)
+
     def handlePush(self):
         if not self.running:
+            self.captureWidgetsEnable(False)
             self.running=True
             self.run=CaptureLoop(self.win, self.signal)
             self.run.start()
@@ -157,11 +175,26 @@ class RunStopWidget(QPushButton):
             self.stopping=True
             self.run.stopLoop()
             
+    def isCapturing(self):
+        return self.running
+
+    def warnReelChange(self,direction):
+        if self.running:
+            self.win.motors["feeder"].motor.setDirection(direction)
+            self.win.motors["pickup"].motor.setDirection(direction)
+            self.win.out.append(f"Changing reels directions live to {direction}")
+    
     def handleSignal(self, msg):
         self.win.out.append(msg)
-        if self.stopping and msg=="Capture stopped!":
+        if msg=="Capture stopped!":
             self.setText("Run")
+            self.captureWidgetsEnable(True)
+            self.win.light_selector.handleSignal("off")
+            self.running=False
             self.setEnabled(True)
+        if msg=="Stopping Loop":
+            self.setEnabled(False)
+            self.setText("Stopping")
         
 
 class SnapshotWidget(QPushButton):
@@ -173,5 +206,5 @@ class SnapshotWidget(QPushButton):
         
 
     def handle(self):
-        self.win.out.append("TBD")
+        self.win.out.append("Not implemented yet")
 

@@ -35,12 +35,14 @@ class GCamera(Picamera2):
             vflip=win.settings["vflip"]
         transform=Transform(vflip=vflip,hflip=hflip)
         
-        self.preview_config=self.create_preview_configuration(main={"size":(4056,3040)},controls={"FrameRate":self.fps,"FrameDurationLimits": (1000, 1000000//self.fps),"NoiseReductionMode":0},raw={'format': 'SBGGR12_CSI2P', 'size': (4056, 3040)},transform=transform)
-        self.still_config=self.create_still_configuration(display=None, raw={},controls={"FrameRate":self.fps,"FrameDurationLimits": (1000, 1000000//self.fps),"NoiseReductionMode":0})
+        self.config=self.create_preview_configuration(main={"size":self.sensor_resolution},controls={"FrameRate":self.fps,"FrameDurationLimits": (1000, 1000000//self.fps),"NoiseReductionMode":0},raw={'size':self.sensor_resolution},transform=transform)
         
-        print(self.preview_config)
-        print(self.still_config)
-        self.configure(self.preview_config)        
+        print(self.config)
+        self.configure(self.config)
+
+    def getConfig(self):
+        return self.config
+    
     def createPreviewWidget(self):
         self.camWidget=CameraSettings.previewWindowWidget(self.win)
             
@@ -52,9 +54,8 @@ class GCamera(Picamera2):
         if captureMode == "singleJpg":
             fn="/dev/shm/{:05d}.jpg".format(self.framecount)
             fnComplete="/dev/shm/complete/{:05d}.jpg".format(self.framecount)
-            #self.switch_mode_and_capture_file(self.still_config, fn)
             buffers,metadata=self.capture_buffers(["main"])
-            orig=self.helpers.make_image(buffers[0], self.preview_config["main"]).convert('RGB')
+            orig=self.helpers.make_image(buffers[0], self.config["main"]).convert('RGB')
             orig.save(fn)
             os.rename(fn,fnComplete)
 
@@ -63,28 +64,33 @@ class GCamera(Picamera2):
             fps=self.win.settings["fps"]            
             fn="/dev/shm/{:05d}_m.jpg".format(self.framecount)
             fnComplete="/dev/shm/complete/{:05d}_m.jpg".format(self.framecount)
-            self.switch_mode_and_capture_file(self.still_config, fn)
+            buffers,metadata=self.capture_buffers(["main"])
+            orig=self.helpers.make_image(buffers[0], self.config["main"]).convert('RGB')
+            orig.save(fn)
             self.shutter_speed=int(shutter/2)
             os.rename(fn, fnComplete)
             sleep(3.0/float(fps))
             fn="/dev/shm/{:05d}_l.jpg".format(self.framecount)
             fnComplete="/dev/shm/complete/{:05d}_l.jpg".format(self.framecount)
-            self.switch_mode_and_capture_file(self.still_config, fn)
+            buffers,metadata=self.capture_buffers(["main"])
+            orig=self.helpers.make_image(buffers[0], self.config["main"]).convert('RGB')
+            orig.save(fn)
             self.shutter_speed=int(shutter*2)
             os.rename(fn, fnComplete)
             sleep(3.0/float(fps))
             fn="/dev/shm/{:05d}_h.jpg".format(self.framecount)
             fnComplete="/dev/shm/complete/{:05d}_h.jpg".format(self.framecount)
-            self.switch_mode_and_capture_file(self.still_config, fn)
+            buffers,metadata=self.capture_buffers(["main"])
+            orig=self.helpers.make_image(buffers[0], self.config["main"]).convert('RGB')
+            orig.save(fn)
             os.rename(fn, fnComplete)                     
             self.shutter_speed=int(shutter)
             
         elif captureMode == "DNG":
-            fn="/dev/shm/{:05d}.dng".format(self.framecount)
-            fnComplete="/dev/shm/complete/{:05d}.dng".format(self.framecount)
-            self.switch_mode_and_capture_file(self.still_config, fn)
+            fn=f"/dev/shm/{self.framecount:05d}.dng"
+            fnComplete=f"/dev/shm/complete/{self.framecount:05d}.dng"
+            buffers,metadata=self.capture_buffers(["raw"])
+            self.helpers.save_dng(buffers[0],metadata, self.config["raw"], fn)
             os.rename(fn, fnComplete)
-            os.remove(fn)
                           
         self.framecount+= 1
-        print ("Next:{}".format(self.framecount)) 

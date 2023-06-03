@@ -8,8 +8,6 @@ from TrinamicSilentMotor import MotorControlWidgets
 from GCamera import GCamera
 from Lights import LightControlWidget
 
-from picamera2.previews.qt import QGlPicamera2
-
 import CameraSettings
 import CaptureSettings
 import CaptureLoop
@@ -27,12 +25,7 @@ class MainWindow(QMainWindow):
         
         self.picam2=GCamera(self)
         self.picam2.createPreviewWidget()
-
-        
-        self.main_layout = QVBoxLayout()
-
-        
-        
+        self.main_layout = QVBoxLayout()        
         self.out = QTextEdit()
 
         #topWidget=QWidget()

@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QSlider, QComboBox, QLabel, QPushButton, QCheckBox
 from PyQt5.QtCore import Qt
 from libcamera import controls, Transform
+from picamera2 import Preview
 from picamera2.previews.qt import QGlPicamera2
 
 
@@ -68,13 +69,17 @@ class previewWindowWidget(QGlPicamera2):
         self.win=win
 
     def mousePressEvent(self, event):
+        if self.win.runStop.isCapturing():
+            self.win.out.append("Zoom is disabled while capturing")
+            return
         pos=event.pos()
         x=pos.x()
         y=pos.y()
         winw=self.width()
         winh=self.height()
-        sensorw=self.win.picam2.preview_config["main"]["size"][0]
-        sensorh=self.win.picam2.preview_config["main"]["size"][1]
+        cfg=self.win.picam2.getConfig()
+        sensorw=cfg["main"]["size"][0]
+        sensorh=cfg["main"]["size"][1]
         if self.zoomed:
             self.win.picam2.set_controls({"ScalerCrop":(0,0,sensorw,sensorh)})
             self.zoomed=False
@@ -318,5 +323,5 @@ class FlipWidget(QCheckBox):
 
     def syncCamera(self):
         pass
-        # we don't know how to do that yet.
+    # we don't know how to do that yet.
     

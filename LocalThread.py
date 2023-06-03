@@ -6,12 +6,12 @@ from time import sleep
 from glob import glob
 
 class LocalThread(Thread):
-    def __init__(self, subdir, fileExt, uiTools, basePath):
+    def __init__(self, subdir, fileExt, signal, basePath):
         Thread.__init__(self)
         self.subdir=subdir
         self.fileExt=fileExt
         self.Loop=True
-        self.message=uiTools["message"]
+        self.message=signal
         self.fileIndex=0
         self.fullpath="{}/{}".format(basePath, subdir)
         print("fullpath={}".format(self.fullpath))
@@ -38,9 +38,9 @@ class LocalThread(Thread):
         lastFile=files[len(files)-1]
         print("last file={}".format(lastFile))
         base=path.basename(lastFile)        
-        self.message("last file in {}={}".format(self.subdir,lastFile))
+        self.message.emit("last file in {}={}".format(self.subdir,lastFile))
         self.fileIndex=1+int(base.split(".")[0],10)
-        self.message("File index now at: {}".format(self.fileIndex))
+        self.message.emit("File index now at: {}".format(self.fileIndex))
         return self.fileIndex
                 
         
@@ -51,15 +51,14 @@ class LocalThread(Thread):
         except Exception as e:
             msg=str(e)
             if msg != "[Errno 17] File exists: '/dev/shm/complete'":
-                self.message(e)
+                self.message.emit(str(e))
         while self.Loop:
             sleep(1)
             for item in listdir("/dev/shm/complete/"):
                 if path.isfile("/dev/shm/complete/{}".format(item)):
                     destination="{}/{}".format(self.fullpath, item)
-                    self.message(destination)
-                    move("/dev/shm/complete/{}".format(item),destination)
-                    
+                    self.message.emit(destination)
+                    move("/dev/shm/complete/{}".format(item),destination)                    
     def stopLoop(self):
         self.Loop=False
         
