@@ -184,7 +184,8 @@ class RunStopWidget(QPushButton):
             self.win.motors["pickup"].motor.setDirection(direction)
             self.win.out.append(f"Changing reels directions live to {direction}")
     
-    def handleSignal(self, msg):
+    def handleSignal(self, unfiltered):
+        msg=str(unfiltered)
         self.win.out.append(msg)
         if msg=="Capture stopped!":
             self.setText("Run")
