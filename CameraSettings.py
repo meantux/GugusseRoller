@@ -164,11 +164,59 @@ class ExposureDualWidget(QSlider):
         return self.label
 
 
+# For Sharpness / Brigthness / Contrast / Saturation
+
+class GenericCameraAdjustmentWidget(QSlider):
+    def __init__(self, win, name, customMin=None, customMax=None):
+        QSlider.__init__(self, Qt.Horizontal)
+        self.win=win
+        self.name=name
+        if customMin != None:
+            self.min=customMin
+        else:
+            self.min=win.picam2.camera_controls[name][0]
+        if customMax != None:
+            self.max=customMax
+        else:
+            self.max=win.picam2.camera_controls[name][1]
+        self.setRange(0, 100)
+        if name not in win.settings:
+            win.settings[name]=win.picam2.camera_controls[name][2]
+        
+            
+        self.setValue(self.registerValue2SliderValue(win.settings[name]))
+        self.label=QLabel(f"{name}: {win.settings[name]:5.02f}")
+        
+        self.valueChanged.connect(self.handle)
+
+    def registerValue2SliderValue(self, rval):
+        sval=int(100.0 * (rval - self.min) / (self.max - self.min))
+        return sval
+    
+    def sliderValue2RegisterValue(self, sval):
+        rval=self.min + (sval / 100.0 * (self.max-self.min))
+        return rval
+
+    def handle(self, value):
+        registerValue=self.sliderValue2RegisterValue(value)
+        self.label.setText(f"{self.name}: {registerValue:5.02f}")
+        self.win.picam2.set_controls({self.name:registerValue})
+        self.win.settings[self.name]=registerValue
+
+    def getLabel(self):
+        return self.label
+
+    def syncCamera(self):
+        self.handle(self.value())
+        
+
 class IsoWidget(QSlider):
     def __init__(self, win):
         QSlider.__init__(self, Qt.Horizontal)
         min=int(win.picam2.camera_controls["AnalogueGain"][0]*100.0)
         max=int(win.picam2.camera_controls["AnalogueGain"][1]*100.0)
+        if "ISO" not in win.settings:
+            win.settings["ISO"]=100        
         isoValue=win.settings["ISO"]
         self.label=QLabel(f"ISO:{isoValue:5d}")
         self.win=win
