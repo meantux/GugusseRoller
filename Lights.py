@@ -4,7 +4,7 @@ import RPi.GPIO as GPIO
 from time import sleep
 from json import load
 from sys import argv,exit
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QComboBox, QLabel
 
 GPIO.setwarnings(False)
@@ -51,6 +51,7 @@ class LightControlWidget(QComboBox):
         self.setCurrentText("on")
         self.currentTextChanged.connect(self.handle)
         self.label=QLabel("Lights")
+        self.label.setAlignment(Qt.AlignRight)
         self.signal.connect(self.handleSignal)
 
     def handle(self, text):

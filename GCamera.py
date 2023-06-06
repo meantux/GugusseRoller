@@ -7,10 +7,6 @@ from threading import Thread
 import CameraSettings
 from libcamera import Transform
 
-
-
-
-
 defaultValues={
     "fps":10
 }
@@ -51,7 +47,6 @@ class GCamera(Picamera2):
     def setFileIndex(self, newIndex):
         self.framecount=newIndex
 
-
     def skipBuffers(self, count, which):
         while count > 0:
             start_time = time()
@@ -60,48 +55,63 @@ class GCamera(Picamera2):
             sleep_time = max(0, (1.0 / self.fps) - elapsed_time)
             sleep(sleep_time)
             count -= 1
-        
+
+    def waitExposureChange(self, expected, maxSkip=24):
+        skipCount=0
+        while skipCount < maxSkip:
+            buffers,metadata=self.capture_buffers(["main"])
+            skipCount+= 1
+            metaExp=metadata['ExposureTime']
+            if (float(abs(metaExp-expected))/float(expected)) < 0.1:
+                break
+            sleep(1.0/self.fps)
+        print(f"took {skipCount} buffers")
+        return buffers, metadata 
+
     def captureCycle(self):
         captureMode=self.win.captureMode.currentText()
         if captureMode == "singleJpg":
             self.skipBuffers(3, "main")
             fn="/dev/shm/{:05d}.jpg".format(self.framecount)
             fnComplete="/dev/shm/complete/{:05d}.jpg".format(self.framecount)
-            
+
             buffers,metadata=self.capture_buffers(["main"])
             orig=self.helpers.make_image(buffers[0], self.config["main"]).convert('RGB')
-            orig.save(fn)
+            self.helpers.save(orig, metadata, fn)
             os.rename(fn,fnComplete)
 
         elif captureMode == "bracketing":
             self.skipBuffers(3, "main")
-            shutter=self.win.settings["ExposureMicroseconds"]
+            shutterMid=self.win.settings["ExposureMicroseconds"]
+            shutterLow=shutterMid//2
+            shutterHigh=shutterMid*2
+            
             fn="/dev/shm/{:05d}_m.jpg".format(self.framecount)
-            fnComplete="/dev/shm/complete/{:05d}_m.jpg".format(self.framecount)
-            buffers,metadata=self.capture_buffers(["main"])
+            fnComplete="/dev/shm/complete/{:05d}_m.jpg".format(self.framecount)            
+            buffers,metadata=self.waitExposureChange(shutterMid)
+            self.set_controls({"ExposureTime": shutterLow})
             orig=self.helpers.make_image(buffers[0], self.config["main"]).convert('RGB')
-            orig.save(fn)
-            self.shutter_speed=int(shutter/2)
+            self.helpers.save(orig, metadata, fn)
             os.rename(fn, fnComplete)
-            self.skipBuffers(3, "main")
+            
             fn="/dev/shm/{:05d}_l.jpg".format(self.framecount)
             fnComplete="/dev/shm/complete/{:05d}_l.jpg".format(self.framecount)
-            buffers,metadata=self.capture_buffers(["main"])
+            buffers,metadata=self.waitExposureChange(shutterLow)
+            self.set_controls({"ExposureTime": shutterHigh})
             orig=self.helpers.make_image(buffers[0], self.config["main"]).convert('RGB')
-            orig.save(fn)
-            self.shutter_speed=int(shutter*2)
+            self.helpers.save(orig, metadata, fn)
             os.rename(fn, fnComplete)
-            self.skipBuffers(3, "main")
+            
             fn="/dev/shm/{:05d}_h.jpg".format(self.framecount)
             fnComplete="/dev/shm/complete/{:05d}_h.jpg".format(self.framecount)
-            buffers,metadata=self.capture_buffers(["main"])
+            buffers,metadata=self.waitExposureChange(shutterHigh)
+            self.set_controls({"ExposureTime": int(shutterMid)})
             orig=self.helpers.make_image(buffers[0], self.config["main"]).convert('RGB')
-            orig.save(fn)
+            self.helpers.save(orig, metadata, fn)
             os.rename(fn, fnComplete)                     
-            self.shutter_speed=int(shutter)
             
         elif captureMode == "DNG":
-            self.skipBuffers(3, "raw")
+            self.skipBuffers(1, "raw")
             fn=f"/dev/shm/{self.framecount:05d}.dng"
             fnComplete=f"/dev/shm/complete/{self.framecount:05d}.dng"
             buffers,metadata=self.capture_buffers(["raw"])
