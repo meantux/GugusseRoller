@@ -11,7 +11,6 @@ from Lights import LightControlWidget
 import CameraSettings
 import CaptureSettings
 import CaptureLoop
-import SensorReport
 
 class MainWindow(QMainWindow):
     def __init__(self, *args, **kwargs):        
@@ -100,7 +99,14 @@ class MainWindow(QMainWindow):
         hlayout.addWidget(self.vflip)
         hlayout.addWidget(self.saveSettings)
         left_layout.addLayout(hlayout)
-                
+        
+        
+        hlayout=QHBoxLayout()
+        self.light_selector = LightControlWidget(self)
+        hlayout.addWidget(self.light_selector.getLabel())
+        hlayout.addWidget(self.light_selector)
+        left_layout.addLayout(hlayout)
+
         with open("hardwarecfg.json") as h:
             self.hwSettings=json.load(h)
         
@@ -128,11 +134,6 @@ class MainWindow(QMainWindow):
         # Project name field
         self.projectName = CaptureSettings.ProjectNameWidget(self)        
         hlayout = QHBoxLayout()
-        self.light_selector = LightControlWidget(self)
-        hlayout.addWidget(self.light_selector.getLabel())
-        hlayout.addWidget(self.light_selector)
-        left_layout.addLayout(hlayout)
-
         hlayout.addWidget(self.projectName.getLabel())
         hlayout.addWidget(self.projectName)
         left_layout.addLayout(hlayout)
@@ -156,14 +157,12 @@ class MainWindow(QMainWindow):
 
         #Run/Stop + Take Picture
         self.runStop=CaptureLoop.RunStopWidget(self)
-        self.snapshot=CaptureLoop.SnapshotWidget(self)        
+        self.snapshot=CaptureLoop.SnapshotWidget(self)
         hlayout=QHBoxLayout()
         hlayout.addWidget(self.snapshot)
         hlayout.addWidget(self.runStop)
         left_layout.addLayout(hlayout)
-        self.sensors=SensorReport.SensorsWidgets(self)
-        left_layout.addLayout(self.sensors)
-        
+
         left_widget.setLayout(left_layout)
         self.bottom_layout.addWidget(left_widget)
 
@@ -195,14 +194,12 @@ class MainWindow(QMainWindow):
         self.projectName.setEnabled(False)
         self.filmFormat.setEnabled(False)
         self.captureMode.setEnabled(False)
-        self.sensors.learn.setEnabled(False)
 
     def reenableWidgetsAfterCapture(self):
         self.light_selector.setEnabled(True)
         self.projectName.setEnabled(True)
         self.filmFormat.setEnabled(True)
         self.captureMode.setEnabled(True)
-        self.sensors.enableLearnIfPossible()
 
     def getBottomLayout(self):
         return self.bottom_layout
