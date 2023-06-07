@@ -17,69 +17,46 @@
             "feeder": {
                 "faultTreshold": 8000,
                 "ignoreInitial": 10,
-                "speed": 2000.0,
+                "speed": 1000.0,
                 "speed2": 100.0,
-                "targetTime": 0.3
+                "targetTime": 0.33
             },
             "filmdrive": {
                 "faultTreshold": 8000,
-                "ignoreInitial": 1800,
-                "speed": 9000.0,
-                "speed2": 100.0,
-		"targetTime": 0.55
-            },
-            "pickup": {
-                "faultTreshold": 8000,
-                "ignoreInitial": 10,
-                "speed": 2000.0,
-                "speed2": 100.0,
-                "targetTime": 0.3
-            }
-        },
-        "16mmBigSmall": {
-            "feeder": {
-                "faultTreshold": 8000,
-                "ignoreInitial": 10,
-                "speed": 200.0,
-                "speed2": 100.0,
-                "targetTime": 1.0
-            },
-            "filmdrive": {
-                "faultTreshold": 8000,
-                "ignoreInitial": 1800,
-                "speed": 9000.0,
-                "speed2": 100.0,
-		"targetTime": 0.55
-            },
-            "pickup": {
-                "faultTreshold": 8000,
-                "ignoreInitial": 10,
+                "ignoreInitial": 1750,
                 "speed": 4000.0,
                 "speed2": 100.0,
-                "targetTime": 1.0
+		"targetTime": 0.65
+            },
+            "pickup": {
+                "faultTreshold": 8000,
+                "ignoreInitial": 10,
+                "speed": 2000.0,
+                "speed2": 100.0,
+                "targetTime": 0.33
             }
         },
         "16mmBigReels": {
             "feeder": {
                 "faultTreshold": 8000,
                 "ignoreInitial": 10,
-                "speed": 800.0,
+                "speed": 400.0,
                 "speed2": 100.0,
-                "targetTime": 0.33
+                "targetTime": 0.5
             },
             "filmdrive": {
                 "faultTreshold": 8000,
-                "ignoreInitial": 1800,
-                "speed": 12000.0,
+                "ignoreInitial": 1750,
+                "speed": 4000.0,
                 "speed2": 100.0,
-		"targetTime": 0.5
+		"targetTime": 0.65
             },
             "pickup": {
                 "faultTreshold": 8000,
                 "ignoreInitial": 10,
-                "speed": 2000.0,
+                "speed": 700.0,
                 "speed2": 100.0,
-                "targetTime": 0.33
+                "targetTime": 0.5
             }
         },
         "35mm": {
@@ -95,7 +72,7 @@
                 "ignoreInitial": 4650,
                 "speed": 15000.0,
                 "speed2": 200.0,
-		"targetTime": 1.0
+		"targetTime": 1.2
             },
             "pickup": {
                 "faultTreshold": 8000,
@@ -111,21 +88,21 @@
                 "ignoreInitial": 20,
                 "speed": 400.0,
                 "speed2": 100.0,
-                "targetTime": 0.7
+                "targetTime": 0.9
             },
             "filmdrive": {
                 "faultTreshold": 15000,
                 "ignoreInitial": 4650,
                 "speed": 15000.0,
                 "speed2": 200.0,
-		"targetTime": 1.0
+		"targetTime": 1.2
             },
             "pickup": {
                 "faultTreshold": 8000,
                 "ignoreInitial": 20,
                 "speed": 700.0,
                 "speed2": 100.0,
-                "targetTime": 0.7
+                "targetTime": 0.9
             }
         },
         "35mmSoundtrack": {
@@ -134,7 +111,7 @@
                 "ignoreInitial": 20,
                 "speed": 400.0,
                 "speed2": 400.0,
-                "targetTime": 0.15
+                "targetTime": 0.25
             },
             "filmdrive": {
                 "faultTreshold": 8000,
@@ -148,7 +125,7 @@
                 "ignoreInitial": 20,
                 "speed": 400.0,
                 "speed2": 400.0,
-                "targetTime": 0.15
+                "targetTime": 0.25
             }
         },
         "8mm": {

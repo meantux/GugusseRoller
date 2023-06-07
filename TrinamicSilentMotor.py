@@ -197,9 +197,9 @@ class TrinamicSilentMotor():
                     if self.skipAdjust > 0:
                         self.skipAdjust-= 1
                         return
-                    if len(self.histo)<3:
+                    if len(self.histo)<6:
                         return
-                    self.histo=self.histo[-3:]
+                    self.histo=self.histo[-6:]
                     avg=sum(self.histo)/len(self.histo)
                     if abs(avg-self.targetTime)<0.01:
                         return
@@ -219,10 +219,10 @@ class TrinamicSilentMotor():
                     elif self.speed > self.maxSpeed:
                         self.speed=self.maxSpeed
                     self.signal.emit("New speed for {}={}ticks/s".format(self.name, self.speed))
-                    self.skipAdjust=2
+                    self.skipAdjust=6
                     return
             delay=waitUntil - time()
-            if delay>0.000001:
+            if delay>0.0:
                 sleep(delay)
             ticks+= 1
 
