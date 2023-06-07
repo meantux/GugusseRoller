@@ -312,3 +312,4 @@ class MotorControlWidgets(QPushButton):
 
     def signalHandle(self, msg):
         self.win.out.append(msg)
+        self.syncMotorStatus()

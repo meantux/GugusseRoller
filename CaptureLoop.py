@@ -18,15 +18,13 @@ class FrameSequence():
         self.pickup=self.win.motors["pickup"].motor
         try:
             mkdir("/dev/shm/complete")
-        except Exception as e:
-            self.signal.emit(str(e))
-            self.signal.emit("Ho well... directory already exists, who cares?");
+        except Exception:
+            pass
         self.cam=self.win.picam2
         self.cam.setFileIndex(start_frame)
         self.win.light_selector.signal.emit("on")
         self.feeder.enable()
         self.pickup.enable()
-        
                    
     def frameAdvance(self):
         m1=MotorThread(self.filmdrive)
@@ -37,6 +35,9 @@ class FrameSequence():
            self.feeder.disable()
            self.filmdrive.disable()
            self.pickup.disable()
+           self.feeder.syncMotorStatus()
+           self.filmdrive.syncMotorStatus()
+           self.pickup.syncMotorStatus()
            self.win.light_selector.signal.emit("off")
            self.signal.emit("---------------------------------------------")
            self.signal.emit("\"Motor faults\" are issues with the sequence")
@@ -59,6 +60,9 @@ class FrameSequence():
            self.pickup.disable()
            self.signal.emit("Failure to capture image: {}".format(e))
            self.win.light_selector.signal.emit("off")
+           self.feeder.syncMotorStatus()
+           self.filmdrive.syncMotorStatus()
+           self.pickup.syncMotorStatus()
            raise Exception("Stop")
         m2.start()
         m3.start()
@@ -87,7 +91,6 @@ class CaptureLoop(QThread):
         # send msgs
         self.signal.emit("Capture loop start")
         currentFilmFormatCfg=self.win.hwSettings["filmFormats"][self.win.filmFormat.currentText()]
-        self.signal.emit(dumps(currentFilmFormatCfg, indent=4))
         self.win.motors["feeder"].motor.setFormat(currentFilmFormatCfg["feeder"])
         self.win.motors["filmdrive"].motor.setFormat(currentFilmFormatCfg["filmdrive"])
         self.win.motors["pickup"].motor.setFormat(currentFilmFormatCfg["pickup"])
@@ -190,7 +193,6 @@ class RunStopWidget(QPushButton):
         if msg=="Capture stopped!":
             self.setText("Run")
             self.captureWidgetsEnable(True)
-            self.win.light_selector.handleSignal("off")
             self.running=False
             self.setEnabled(True)
         if msg=="Stopping Loop":
