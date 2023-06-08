@@ -18,8 +18,16 @@ root.winfo_toplevel().title("Gugusse Roller Configure")
 with open("hardwarecfg.json","rt") as h:
     hardware=load(h)
 
-with open("ftp.json","rt") as h:
-    ftp=load(h)
+try:
+    with open("ftp.json","rt") as h:
+        ftp=load(h)
+except:
+    ftp={
+        "passwd":"",
+        "path":"",
+        "server":"",
+        "user":""
+    }
 
 if "saveMode" not in hardware:
     hardware["saveMode"]="ftp"
