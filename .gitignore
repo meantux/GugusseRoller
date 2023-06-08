@@ -2,5 +2,5 @@
 *.pyc
 *.wav
 *.raw
-ftp.json
+*.json
 img2snd
