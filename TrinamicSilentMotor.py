@@ -287,6 +287,7 @@ class MotorControlWidgets(QPushButton):
     def __init__(self, win, cfg, slowEnd=False, trace=False):
         globalPowerIcon=QIcon('power.png')        
         QPushButton.__init__(self)
+        self.name=cfg["name"]
         self.win=win
         self.setIcon(globalPowerIcon)
         self.clicked.connect(self.powerHandle)

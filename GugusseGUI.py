@@ -113,10 +113,11 @@ class MainWindow(QMainWindow):
             label.setStyleSheet("border: 1px solid black;")
             motorSeparatorLayout.addWidget(label)
             threeButtonsLayout=QHBoxLayout()
-            if motor == "filmdrive":
-                trace=True
-            else:
-                trace=False
+            trace=False
+            #if motor == "filmdrive":
+            #    trace=True
+            #else:
+            #    trace=False
             self.motors[motor]=MotorControlWidgets(self, self.hwSettings[motor], trace=trace)
             threeButtonsLayout.addWidget(self.motors[motor].ccw)
             threeButtonsLayout.addWidget(self.motors[motor])
@@ -206,6 +207,10 @@ class MainWindow(QMainWindow):
         self.filmFormat.setEnabled(True)
         self.captureMode.setEnabled(True)
         self.sensors.enableLearnIfPossible()
+        self.motors["feeder"].syncMotorStatus()
+        self.motors["filmdrive"].syncMotorStatus()
+        self.motors["pickup"].syncMotorStatus()
+        
 
     def getBottomLayout(self):
         return self.bottom_layout

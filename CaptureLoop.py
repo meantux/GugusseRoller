@@ -25,6 +25,7 @@ class FrameSequence():
         self.win.light_selector.signal.emit("on")
         self.feeder.enable()
         self.pickup.enable()
+        self.signal.emit("syncMotors")
                    
     def frameAdvance(self):
         m1=MotorThread(self.filmdrive)
@@ -35,9 +36,7 @@ class FrameSequence():
            self.feeder.disable()
            self.filmdrive.disable()
            self.pickup.disable()
-           self.feeder.syncMotorStatus()
-           self.filmdrive.syncMotorStatus()
-           self.pickup.syncMotorStatus()
+           self.signal.emit("syncMotors")
            self.signal.emit("turning lights off")
            self.signal.emit("---------------------------------------------")
            self.signal.emit("\"Motor faults\" are issues with the sequence")
@@ -59,10 +58,8 @@ class FrameSequence():
            self.filmdrive.disable()
            self.pickup.disable()
            self.signal.emit("Failure to capture image: {}".format(e))
+           self.signal.emit("syncMotors")
            self.signal.emit("turning lights off")
-           self.feeder.syncMotorStatus()
-           self.filmdrive.syncMotorStatus()
-           self.pickup.syncMotorStatus()
            raise Exception("Stop")
         m2.start()
         m3.start()
@@ -163,7 +160,7 @@ class RunStopWidget(QPushButton):
         self.win.filmFormat.setEnabled(state)
         self.win.projectName.setEnabled(state)
         self.win.captureMode.setEnabled(state)
-        self.win.light_selector.setEnabled(state)
+        self.win.light_selector.setEnabled(state)        
 
     def handlePush(self):
         if not self.running:
@@ -171,7 +168,7 @@ class RunStopWidget(QPushButton):
             self.running=True
             self.run=CaptureLoop(self.win, self.signal)
             self.run.start()
-            self.setText("Stop")
+            self.setText("Stop")            
         else:
             self.setEnabled(False)
             self.setText("Stopping!")
@@ -190,8 +187,14 @@ class RunStopWidget(QPushButton):
     def handleSignal(self, unfiltered):
         msg=str(unfiltered)
         self.win.out.append(msg)
-        if msg == "turning light off":
-            self.win.light_selector.signal.emit("off")        
+        if msg == "syncMotors":
+            self.win.motors["feeder"].syncMotorStatus()
+            self.win.motors["filmdrive"].syncMotorStatus()
+            self.win.motors["pickup"].syncMotorStatus()
+            return
+        if msg == "turning lights off":
+            self.win.light_selector.handleSignal("off")
+            return
         if msg=="Capture stopped!":
             self.setText("Run")
             self.captureWidgetsEnable(True)

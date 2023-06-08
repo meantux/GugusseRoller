@@ -96,12 +96,11 @@ class SensorsWidgets(QHBoxLayout):
 
     def handleLearn(self, checked):
         pin=self.win.hwSettings["filmdrive"]["learnPin"]
+        if not self.win.runStop.isCapturing():
+                GPIO.output(pin,checked)
         if checked:
-            GPIO.output(pin,1)
-            self.setcolors(self.learn, "white", "black")
-            
+            self.setcolors(self.learn, "white", "black")            
         else:
-            GPIO.output(pin,0)
             self.setcolors(self.learn, "black", "white")
                     
     def enableLearnIfPossible(self):
