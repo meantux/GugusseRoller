@@ -38,7 +38,7 @@ class FrameSequence():
            self.feeder.syncMotorStatus()
            self.filmdrive.syncMotorStatus()
            self.pickup.syncMotorStatus()
-           self.win.light_selector.signal.emit("off")
+           self.signal.emit("turning lights off")
            self.signal.emit("---------------------------------------------")
            self.signal.emit("\"Motor faults\" are issues with the sequence")
            self.signal.emit("they could be triggered by obvious reasons")
@@ -59,7 +59,7 @@ class FrameSequence():
            self.filmdrive.disable()
            self.pickup.disable()
            self.signal.emit("Failure to capture image: {}".format(e))
-           self.win.light_selector.signal.emit("off")
+           self.signal.emit("turning lights off")
            self.feeder.syncMotorStatus()
            self.filmdrive.syncMotorStatus()
            self.pickup.syncMotorStatus()
@@ -190,6 +190,8 @@ class RunStopWidget(QPushButton):
     def handleSignal(self, unfiltered):
         msg=str(unfiltered)
         self.win.out.append(msg)
+        if msg == "turning light off":
+            self.win.light_selector.signal.emit("off")        
         if msg=="Capture stopped!":
             self.setText("Run")
             self.captureWidgetsEnable(True)

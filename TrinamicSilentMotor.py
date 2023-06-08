@@ -175,7 +175,7 @@ class TrinamicSilentMotor():
                 if reading == self.SensorStopState:
                     delta=time()-self.moveStart
                     if self.trace:
-                        self.signal.emit("\033[1;32m{}\033[0m ticks for {}".format(ticks,self.name))
+                        self.signal.emit("{} ticks for {}".format(ticks,self.name))
                         idx=str(ticks)
                         if idx in self.log:
                             self.log[idx]+= 1

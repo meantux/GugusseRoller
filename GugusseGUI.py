@@ -113,8 +113,11 @@ class MainWindow(QMainWindow):
             label.setStyleSheet("border: 1px solid black;")
             motorSeparatorLayout.addWidget(label)
             threeButtonsLayout=QHBoxLayout()
-        
-            self.motors[motor]=MotorControlWidgets(self, self.hwSettings[motor])
+            if motor == "filmdrive":
+                trace=True
+            else:
+                trace=False
+            self.motors[motor]=MotorControlWidgets(self, self.hwSettings[motor], trace=trace)
             threeButtonsLayout.addWidget(self.motors[motor].ccw)
             threeButtonsLayout.addWidget(self.motors[motor])
             threeButtonsLayout.addWidget(self.motors[motor].cw)

@@ -50,7 +50,7 @@ class FtpThread(Thread):
         self.ftp=FTP(cfg["server"])
         self.message.emit(f"ftp settings:")
         self.message.emit(f"user={cfg['user']}, server={cfg['server']}")
-        self.message.emit(f"path={cfg['path']}/{subdir}")
+        self.message.emit(f"path={cfg['path']}/{self.subdir}")
         self.ftp.login(user=cfg["user"],passwd=cfg["passwd"])
         if cfg["path"]!="" and cfg["path"]!=".":            
             self.ftp.cwd(cfg["path"])
