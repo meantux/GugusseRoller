@@ -19,19 +19,7 @@ printed parts and the one to make the PCB for free, no strings
 attached, at www.deniscarl.com
 
 DEPENDENCIES:
-  - installable by raspbian's apt-get:
-      - python3-pil
-      - python3-picamera
-      - python3-rpi.gpio
-      - python3-dev
-      - git
-      - nano (you might need an editor for the first time you run it)
-      - imagemagick
-      - python3-numpy
-      - python3-exif
-      - jq
-  - found on Github:
-      - schoolpost/PiDNG (used to be called schoolpost/PyDNG)
+    Raspbian Bulleyes. Use the 64bits version if you want support
       
 The resulting machine is fully functionnal and stable but it
 is still evolving. You can watch or participate this evolution at
@@ -48,7 +36,6 @@ The objectives of the software is to:
     - capture each frame, save it as jpeg (or better as a 12bits raw DNG)
     - transfer the file to a ftp server
 
-Files Explained:
 
     
     
