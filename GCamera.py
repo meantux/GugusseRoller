@@ -111,7 +111,7 @@ class GCamera(Picamera2):
             os.rename(fn, fnComplete)                     
             
         elif captureMode == "DNG":
-            self.skipBuffers(1, "raw")
+            self.skipBuffers(3, "raw")
             fn=f"/dev/shm/{self.framecount:05d}.dng"
             fnComplete=f"/dev/shm/complete/{self.framecount:05d}.dng"
             buffers,metadata=self.capture_buffers(["raw"])
