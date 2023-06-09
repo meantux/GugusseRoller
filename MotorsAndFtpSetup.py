@@ -10,16 +10,15 @@ from ftplib import FTP
 from datetime import datetime
 from os import remove
 from TrinamicSilentMotor import TrinamicSilentMotor
+from ConfigFiles import ConfigFiles
+
 
 root=Tk()
 
 root.winfo_toplevel().title("Gugusse Roller Configure")
 
-with open("hardwarecfg.json","rt") as h:
-    hardware=load(h)
-
-with open("ftp.json","rt") as h:
-    ftp=load(h)
+hardware=ConfigFiles("hardwarecfg.json")
+ftp=ConfigFiles("ftp.json")
 
 if "saveMode" not in hardware:
     hardware["saveMode"]="ftp"
@@ -206,13 +205,11 @@ def saveExit():
     ftp["path"]=path.get()
     if " " in ftp["path"]:
         print("WARNING: SPACE CHARACTER DETECTED IN THE PATH")
-    with open("ftp.json","wt") as h:
-        dump(ftp, h, sort_keys=True, indent=4)
+    ftp.save()
     hardware["feeder"]["invert"]=feeder.get()
     hardware["filmdrive"]["invert"]=filmdrive.get()
     hardware["pickup"]["invert"]=pickup.get()
-    with open("hardwarecfg.json","wt") as h:
-        dump(hardware, h, sort_keys=True, indent=4)
+    hardware.save()
     root.destroy()
 
 miniFrame=Frame(root, highlightbackground="black", highlightthickness=1)

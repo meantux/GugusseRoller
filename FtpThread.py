@@ -3,6 +3,7 @@ from os import listdir,mkdir,remove,path
 from threading import Thread
 from json import load
 from time import sleep
+from ConfigFiles import ConfigFiles
 
 class FtpThread(Thread):
     def __init__(self, subdir, fileExt, signal):
@@ -27,7 +28,7 @@ class FtpThread(Thread):
         except Exception as e:
             msg=str(e)
             if msg != "450 No files found":
-                self.message.emit(e)
+                self.message.emit(str(e))
                 raise Exception(msg)
             self.message.emit("no {} in {}".format( self.fileExt, self.subdir))
             self.fileIndex=0
@@ -45,9 +46,11 @@ class FtpThread(Thread):
         
         
     def openConnection(self):
-        with open("ftp.json","rt") as h:
-            cfg=load(h)
+        cfg=ConfigFiles("ftp.json")
         self.ftp=FTP(cfg["server"])
+        self.message.emit(f"ftp settings:")
+        self.message.emit(f"user={cfg['user']}, server={cfg['server']}")
+        self.message.emit(f"path={cfg['path']}/{self.subdir}")
         self.ftp.login(user=cfg["user"],passwd=cfg["passwd"])
         if cfg["path"]!="" and cfg["path"]!=".":            
             self.ftp.cwd(cfg["path"])
@@ -56,7 +59,7 @@ class FtpThread(Thread):
         except Exception as e:
             msg=str(e)
             if msg != "550 {}: File exists".format(self.subdir):
-                self.message.emit(e)
+                self.message.emit(str(e))
         self.ftp.cwd(self.subdir)
         self.connected=True
     
@@ -65,13 +68,13 @@ class FtpThread(Thread):
         if self.connected:
             self.ftp.close()
             self.connected=False
-        self.openConnection()
         try:
+            self.openConnection()            
             mkdir("/dev/shm/complete")
         except Exception as e:
             msg=str(e)
             if msg != "[Errno 17] File exists: '/dev/shm/complete'":
-                self.message.emit(e)
+                self.message.emit(str(e))
         while self.Loop:
             sleep(1)
             for item in listdir("/dev/shm/complete/"):
@@ -84,5 +87,7 @@ class FtpThread(Thread):
         self.message.emit("End of ftp thread")
                     
     def stopLoop(self):
+        self.message.emit("The FTP thread received the command to finish and stop")
         self.Loop=False
+
         

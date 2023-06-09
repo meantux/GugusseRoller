@@ -11,15 +11,14 @@ from Lights import LightControlWidget
 import CameraSettings
 import CaptureSettings
 import CaptureLoop
+import SensorReport
+from ConfigFiles import ConfigFiles
 
 class MainWindow(QMainWindow):
     def __init__(self, *args, **kwargs):        
         super(MainWindow, self).__init__(*args, **kwargs)
         self.setWindowTitle("GugusseGUI 2.0")
-        
-        h=open("GugusseSettings.json","rt")
-        self.settings=json.load(h)
-        h.close()
+        self.settings=ConfigFiles("GugusseSettings.json")
         print(json.dumps(self.settings, indent=4))
         fps=self.settings["fps"]
         
@@ -28,6 +27,11 @@ class MainWindow(QMainWindow):
         self.main_layout = QVBoxLayout()        
         self.out = QTextEdit()
 
+
+        print("--------Available Camera Settings------")
+        print(json.dumps(self.picam2.camera_controls, indent=4))
+        print("---------------------------------------")
+        
         #topWidget=QWidget()
         #top=QHBoxLayout(topWidget)
         #topWidget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -36,7 +40,7 @@ class MainWindow(QMainWindow):
         
         hlayout=QHBoxLayout()
         
-        # Row 1  | Exposure stuff
+        # Row 1:  | Exposure stuff
         self.AutoExposure=CameraSettings.AutoExposureWidget(self)
         hlayout.addWidget(self.AutoExposure.getLabel())
         hlayout.addWidget(self.AutoExposure)
@@ -50,7 +54,7 @@ class MainWindow(QMainWindow):
         
         hlayout=QHBoxLayout()
 
-        # Row 2 White balance stuff
+        # Row 2: White balance stuff
         self.WBMode=CameraSettings.WhiteBalanceModeWidget(self)
         hlayout.addWidget(self.WBMode.getLabel())
         hlayout.addWidget(self.WBMode)
@@ -63,7 +67,22 @@ class MainWindow(QMainWindow):
         hlayout.addWidget(self.BlueGain.getLabel())
         hlayout.addWidget(self.BlueGain)
         self.main_layout.addLayout(hlayout)
-    
+
+        hlayout=QHBoxLayout()
+        # Row 3: Post-processing adjustments
+        self.brightness=CameraSettings.GenericCameraAdjustmentWidget(self, "Brightness", customMin= -0.5, customMax= 0.5)
+        hlayout.addWidget(self.brightness.getLabel())
+        hlayout.addWidget(self.brightness)
+        self.contrast=CameraSettings.GenericCameraAdjustmentWidget(self, "Contrast", customMax=2.00)
+        hlayout.addWidget(self.contrast.getLabel())
+        hlayout.addWidget(self.contrast)
+        self.sharpness=CameraSettings.GenericCameraAdjustmentWidget(self, "Sharpness", customMax=10.0)
+        hlayout.addWidget(self.sharpness.getLabel())
+        hlayout.addWidget(self.sharpness)
+        self.saturation=CameraSettings.GenericCameraAdjustmentWidget(self, "Saturation", customMin=0.01,customMax=1.99)
+        hlayout.addWidget(self.saturation.getLabel())
+        hlayout.addWidget(self.saturation)
+        self.main_layout.addLayout(hlayout)
         
         # Bottom section divided into left and right
         self.bottom_layout = QSplitter(Qt.Horizontal)
@@ -79,16 +98,8 @@ class MainWindow(QMainWindow):
         hlayout.addWidget(self.vflip)
         hlayout.addWidget(self.saveSettings)
         left_layout.addLayout(hlayout)
-        
-        
-        hlayout=QHBoxLayout()
-        self.light_selector = LightControlWidget(self)
-        hlayout.addWidget(self.light_selector.getLabel())
-        hlayout.addWidget(self.light_selector)
-        left_layout.addLayout(hlayout)
 
-        with open("hardwarecfg.json") as h:
-            self.hwSettings=json.load(h)
+        self.hwSettings=ConfigFiles("hardwarecfg.json")
         
         threeMotorsLayout=QHBoxLayout()
         self.motors={}
@@ -99,8 +110,12 @@ class MainWindow(QMainWindow):
             label.setStyleSheet("border: 1px solid black;")
             motorSeparatorLayout.addWidget(label)
             threeButtonsLayout=QHBoxLayout()
-        
-            self.motors[motor]=MotorControlWidgets(self, self.hwSettings[motor])
+            trace=False
+            #if motor == "filmdrive":
+            #    trace=True
+            #else:
+            #    trace=False
+            self.motors[motor]=MotorControlWidgets(self, self.hwSettings[motor], trace=trace)
             threeButtonsLayout.addWidget(self.motors[motor].ccw)
             threeButtonsLayout.addWidget(self.motors[motor])
             threeButtonsLayout.addWidget(self.motors[motor].cw)
@@ -114,6 +129,11 @@ class MainWindow(QMainWindow):
         # Project name field
         self.projectName = CaptureSettings.ProjectNameWidget(self)        
         hlayout = QHBoxLayout()
+        self.light_selector = LightControlWidget(self)
+        hlayout.addWidget(self.light_selector.getLabel())
+        hlayout.addWidget(self.light_selector)
+        left_layout.addLayout(hlayout)
+
         hlayout.addWidget(self.projectName.getLabel())
         hlayout.addWidget(self.projectName)
         left_layout.addLayout(hlayout)
@@ -137,12 +157,14 @@ class MainWindow(QMainWindow):
 
         #Run/Stop + Take Picture
         self.runStop=CaptureLoop.RunStopWidget(self)
-        self.snapshot=CaptureLoop.SnapshotWidget(self)
+        self.snapshot=CaptureLoop.SnapshotWidget(self)        
         hlayout=QHBoxLayout()
         hlayout.addWidget(self.snapshot)
         hlayout.addWidget(self.runStop)
         left_layout.addLayout(hlayout)
-
+        self.sensors=SensorReport.SensorsWidgets(self)
+        left_layout.addLayout(self.sensors)
+        
         left_widget.setLayout(left_layout)
         self.bottom_layout.addWidget(left_widget)
 
@@ -162,6 +184,10 @@ class MainWindow(QMainWindow):
         # forcing a sync with the auto-exposure value will fix all exposure related values
         self.AutoExposure.syncCamera()
         self.WBMode.syncCamera()
+        self.brightness.syncCamera()
+        self.contrast.syncCamera()
+        self.saturation.syncCamera()
+        self.sharpness.syncCamera()
         self.hflip.syncCamera() # syncing one syncs the other, and start cam
         self.picam2.start()
 
@@ -170,12 +196,18 @@ class MainWindow(QMainWindow):
         self.projectName.setEnabled(False)
         self.filmFormat.setEnabled(False)
         self.captureMode.setEnabled(False)
+        self.sensors.learn.setEnabled(False)
 
     def reenableWidgetsAfterCapture(self):
         self.light_selector.setEnabled(True)
         self.projectName.setEnabled(True)
         self.filmFormat.setEnabled(True)
         self.captureMode.setEnabled(True)
+        self.sensors.enableLearnIfPossible()
+        self.motors["feeder"].syncMotorStatus()
+        self.motors["filmdrive"].syncMotorStatus()
+        self.motors["pickup"].syncMotorStatus()
+        
 
     def getBottomLayout(self):
         return self.bottom_layout

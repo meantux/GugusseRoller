@@ -2,4 +2,5 @@
 *.pyc
 *.wav
 *.raw
+*.json
 img2snd

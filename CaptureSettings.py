@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QComboBox, QLabel, QPushButton, QLineEdit
 from PyQt5.QtCore import Qt
 from datetime import datetime
+from ConfigFiles import ConfigFiles
 import json
 import re
 import os
@@ -58,8 +59,7 @@ class FilmFormatWidget(QComboBox):
 class CaptureModeWidget(QComboBox):
     def __init__(self, win):
         QComboBox.__init__(self)
-        with open("captureModes.json", "rt") as h:
-            self.modes=json.load(h)            
+        self.modes=ConfigFiles("captureModes.json")
         self.win=win        
         self.label=QLabel("Output")
         self.label.setAlignment(Qt.AlignRight)
@@ -124,9 +124,6 @@ class SaveSettingsWidget(QPushButton):
         if not self.thereAreUnsavedSettings():
             self.win.out.append("Nothing to save.")
             return
-        h=open(".buildingJson", "wt")
-        json.dump(self.win.settings, h, indent=4)
-        h.close()
-        os.rename(".buildingJson", "GugusseSettings.json")
+        self.win.settings.save()
         self.lastSaved=dict(self.win.settings)
         self.win.out.append("Settings saved.")

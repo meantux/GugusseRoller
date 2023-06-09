@@ -7,7 +7,7 @@ from json import load,dumps
 from os import mkdir,listdir
 from FtpThread import FtpThread
 from LocalThread import LocalThread
-
+from ConfigFiles import ConfigFiles
 
 class FrameSequence():
     def __init__(self, win, start_frame, signal):
@@ -18,15 +18,14 @@ class FrameSequence():
         self.pickup=self.win.motors["pickup"].motor
         try:
             mkdir("/dev/shm/complete")
-        except Exception as e:
-            self.signal.emit(str(e))
-            self.signal.emit("Ho well... directory already exists, who cares?");
+        except Exception:
+            pass
         self.cam=self.win.picam2
         self.cam.setFileIndex(start_frame)
         self.win.light_selector.signal.emit("on")
         self.feeder.enable()
         self.pickup.enable()
-        
+        self.signal.emit("syncMotors")
                    
     def frameAdvance(self):
         m1=MotorThread(self.filmdrive)
@@ -37,7 +36,8 @@ class FrameSequence():
            self.feeder.disable()
            self.filmdrive.disable()
            self.pickup.disable()
-           self.win.light_selector.signal.emit("off")
+           self.signal.emit("syncMotors")
+           self.signal.emit("turning lights off")
            self.signal.emit("---------------------------------------------")
            self.signal.emit("\"Motor faults\" are issues with the sequence")
            self.signal.emit("they could be triggered by obvious reasons")
@@ -58,7 +58,8 @@ class FrameSequence():
            self.filmdrive.disable()
            self.pickup.disable()
            self.signal.emit("Failure to capture image: {}".format(e))
-           self.win.light_selector.signal.emit("off")
+           self.signal.emit("syncMotors")
+           self.signal.emit("turning lights off")
            raise Exception("Stop")
         m2.start()
         m3.start()
@@ -80,14 +81,12 @@ class CaptureLoop(QThread):
         self.signal=signal
         self.win=win
         self.Loop=True
-        with open("captureModes.json", "rt") as h:
-            self.captureModes=load(h)
+        self.captureModes=ConfigFiles("captureModes.json")
 
     def run(self):
         # send msgs
         self.signal.emit("Capture loop start")
         currentFilmFormatCfg=self.win.hwSettings["filmFormats"][self.win.filmFormat.currentText()]
-        self.signal.emit(dumps(currentFilmFormatCfg, indent=4))
         self.win.motors["feeder"].motor.setFormat(currentFilmFormatCfg["feeder"])
         self.win.motors["filmdrive"].motor.setFormat(currentFilmFormatCfg["filmdrive"])
         self.win.motors["pickup"].motor.setFormat(currentFilmFormatCfg["pickup"])
@@ -160,7 +159,7 @@ class RunStopWidget(QPushButton):
         self.win.filmFormat.setEnabled(state)
         self.win.projectName.setEnabled(state)
         self.win.captureMode.setEnabled(state)
-        self.win.light_selector.setEnabled(state)
+        self.win.light_selector.setEnabled(state)        
 
     def handlePush(self):
         if not self.running:
@@ -168,7 +167,7 @@ class RunStopWidget(QPushButton):
             self.running=True
             self.run=CaptureLoop(self.win, self.signal)
             self.run.start()
-            self.setText("Stop")
+            self.setText("Stop")            
         else:
             self.setEnabled(False)
             self.setText("Stopping!")
@@ -184,12 +183,20 @@ class RunStopWidget(QPushButton):
             self.win.motors["pickup"].motor.setDirection(direction)
             self.win.out.append(f"Changing reels directions live to {direction}")
     
-    def handleSignal(self, msg):
+    def handleSignal(self, unfiltered):
+        msg=str(unfiltered)
         self.win.out.append(msg)
+        if msg == "syncMotors":
+            self.win.motors["feeder"].syncMotorStatus()
+            self.win.motors["filmdrive"].syncMotorStatus()
+            self.win.motors["pickup"].syncMotorStatus()
+            return
+        if msg == "turning lights off":
+            self.win.light_selector.handleSignal("off")
+            return
         if msg=="Capture stopped!":
             self.setText("Run")
             self.captureWidgetsEnable(True)
-            self.win.light_selector.handleSignal("off")
             self.running=False
             self.setEnabled(True)
         if msg=="Stopping Loop":
