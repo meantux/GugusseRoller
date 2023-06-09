@@ -12,15 +12,13 @@ import CameraSettings
 import CaptureSettings
 import CaptureLoop
 import SensorReport
+from ConfigFiles import ConfigFiles
 
 class MainWindow(QMainWindow):
     def __init__(self, *args, **kwargs):        
         super(MainWindow, self).__init__(*args, **kwargs)
         self.setWindowTitle("GugusseGUI 2.0")
-        
-        h=open("GugusseSettings.json","rt")
-        self.settings=json.load(h)
-        h.close()
+        self.settings=ConfigFiles("GugusseSettings.json")
         print(json.dumps(self.settings, indent=4))
         fps=self.settings["fps"]
         
@@ -100,9 +98,8 @@ class MainWindow(QMainWindow):
         hlayout.addWidget(self.vflip)
         hlayout.addWidget(self.saveSettings)
         left_layout.addLayout(hlayout)
-                
-        with open("hardwarecfg.json") as h:
-            self.hwSettings=json.load(h)
+
+        self.hwSettings=ConfigFiles("hardwarecfg.json")
         
         threeMotorsLayout=QHBoxLayout()
         self.motors={}

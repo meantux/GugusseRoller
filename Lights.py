@@ -6,6 +6,7 @@ from json import load
 from sys import argv,exit
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QComboBox, QLabel
+from ConfigFiles import ConfigFiles
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
@@ -25,9 +26,8 @@ tab={
 
 
 class Lights():
-    def __init__(self, state="off"):        
-        h=open("hardwarecfg.json","rt")
-        self.cfg=load(h)
+    def __init__(self, state="off"):
+        self.cfg=ConfigFiles("hardwarecfg.json")
         GPIO.setup(self.cfg["lights"]["red"],GPIO.OUT,initial=tab[state][0])
         GPIO.setup(self.cfg["lights"]["green"],GPIO.OUT,initial=tab[state][1])
         GPIO.setup(self.cfg["lights"]["blue"],GPIO.OUT,initial=tab[state][2])

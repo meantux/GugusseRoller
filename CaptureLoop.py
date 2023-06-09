@@ -7,7 +7,7 @@ from json import load,dumps
 from os import mkdir,listdir
 from FtpThread import FtpThread
 from LocalThread import LocalThread
-
+from ConfigFiles import ConfigFiles
 
 class FrameSequence():
     def __init__(self, win, start_frame, signal):
@@ -81,8 +81,7 @@ class CaptureLoop(QThread):
         self.signal=signal
         self.win=win
         self.Loop=True
-        with open("captureModes.json", "rt") as h:
-            self.captureModes=load(h)
+        self.captureModes=ConfigFiles("captureModes.json")
 
     def run(self):
         # send msgs

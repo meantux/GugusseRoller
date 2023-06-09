@@ -6,6 +6,7 @@ import os
 from threading import Thread
 import CameraSettings
 from libcamera import Transform
+from ConfigFiles import ConfigFiles
 
 defaultValues={
     "fps":10
@@ -22,8 +23,7 @@ class GCamera(Picamera2):
         setMissingToDefault(win.settings)
         self.fps=self.win.settings["fps"]
         self.framecount=0
-        with open("captureModes.json","r") as h:
-            self.captureModes=json.load(h)
+        self.captureModes=ConfigFiles("captureModes.json")
 
         vflip=False
         hflip=False

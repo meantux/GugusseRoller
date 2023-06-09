@@ -3,6 +3,7 @@ from os import listdir,mkdir,remove,path
 from threading import Thread
 from json import load
 from time import sleep
+from ConfigFiles import ConfigFiles
 
 class FtpThread(Thread):
     def __init__(self, subdir, fileExt, signal):
@@ -45,8 +46,7 @@ class FtpThread(Thread):
         
         
     def openConnection(self):
-        with open("ftp.json","rt") as h:
-            cfg=load(h)
+        cfg=ConfigFiles("ftp.json")
         self.ftp=FTP(cfg["server"])
         self.message.emit(f"ftp settings:")
         self.message.emit(f"user={cfg['user']}, server={cfg['server']}")
