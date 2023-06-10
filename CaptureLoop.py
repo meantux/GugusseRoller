@@ -163,6 +163,7 @@ class RunStopWidget(QPushButton):
 
     def handlePush(self):
         if not self.running:
+            self.win.snapshot.disableExportIfRunning()
             self.captureWidgetsEnable(False)
             self.running=True
             self.run=CaptureLoop(self.win, self.signal)
@@ -202,7 +203,7 @@ class RunStopWidget(QPushButton):
         if msg=="Stopping Loop":
             self.setEnabled(False)
             self.setText("Stopping")
-        
+
 
 class SnapshotWidget(QPushButton):
     def __init__(self, win):
@@ -210,8 +211,28 @@ class SnapshotWidget(QPushButton):
         self.win=win
         self.setIcon(QIcon('camera.png'))
         self.clicked.connect(self.handle)
+        self.projectName=None
+        self.export=None
+
+
+    def initialize(self):
+        self.disableExportIfRunning()
+        self.projectName=self.win.projectName.text()
+        if "saveMode" in self.win.hwSettings and self.win.hwSettings["saveMode"] == "local":
+            self.export=LocalThread(self.win.projectName.text(), self.captureModes[self.win.captureMode.currentText()]["suffix"], self.signal, self.win.hwSettings["localFilePath"])
+        else:
+            self.export=FtpThread(self.win.projectName.text(),self.captureModes[self.win.captureMode.currentText()]["suffix"], self.signal)
+        self.win.picam2.setFileIndex(self.export.getStartPoint())
+        self.export.start()
         
+    def disableExportIfRunning(self):
+        if self.export != None:
+            self.export.stopLoop()
+            self.export.join()
+            self.export=None
 
     def handle(self):
-        self.win.out.append("Not implemented yet")
+        if self.export == None or self.win.projectName.text() != self.projectName:
+            self.initialize()
+        self.win.picam2.captureCycle()
 

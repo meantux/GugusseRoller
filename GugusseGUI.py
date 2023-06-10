@@ -197,12 +197,14 @@ class MainWindow(QMainWindow):
         self.filmFormat.setEnabled(False)
         self.captureMode.setEnabled(False)
         self.sensors.learn.setEnabled(False)
+        self.snapshot.setEnabled(False)
 
     def reenableWidgetsAfterCapture(self):
         self.light_selector.setEnabled(True)
         self.projectName.setEnabled(True)
         self.filmFormat.setEnabled(True)
         self.captureMode.setEnabled(True)
+        self.snapshot.setEnabled(True)
         self.sensors.enableLearnIfPossible()
         self.motors["feeder"].syncMotorStatus()
         self.motors["filmdrive"].syncMotorStatus()
