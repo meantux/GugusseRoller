@@ -205,7 +205,19 @@ class RunStopWidget(QPushButton):
             self.setText("Stopping")
 
 
+
+class singleShotEvent(QThread):
+    def __init__(self, picam2, signal):
+        QThread.__init__(self)
+        self.picam2=picam2
+        self.signal=signal
+
+    def run(self):
+        self.picam2.captureCycle()
+        self.signal.emit("captureDone")
+            
 class SnapshotWidget(QPushButton):
+    signal=pyqtSignal("PyQt_PyObject")
     def __init__(self, win):
         QPushButton.__init__(self)
         self.win=win
@@ -213,7 +225,9 @@ class SnapshotWidget(QPushButton):
         self.clicked.connect(self.handle)
         self.projectName=None
         self.export=None
-
+        self.captureModes=ConfigFiles("captureModes.json")
+        self.signal.connect(self.signalHandle)
+        self.ignore=False
 
     def initialize(self):
         self.disableExportIfRunning()
@@ -232,7 +246,18 @@ class SnapshotWidget(QPushButton):
             self.export=None
 
     def handle(self):
+        if self.ignore:
+            self.win.out.append("Too early to click again for a snapshot!")
+            return
         if self.export == None or self.win.projectName.text() != self.projectName:
             self.initialize()
-        self.win.picam2.captureCycle()
-
+        self.trigger=singleShotEvent(self.win.picam2, self.signal)
+        self.ignore=True
+        self.trigger.start()
+        
+    def signalHandle(self, unfiltered):        
+        msg=str(unfiltered)
+        if msg == "captureDone":
+            self.ignore=False
+        else:
+            self.win.out.append(msg)

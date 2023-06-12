@@ -236,14 +236,17 @@ class MainWindow(QMainWindow):
             if reply == QMessageBox.Save:
                 # save the work and exit
                 self.saveSettings.execute()
+                self.snapshot.disableExportIfRunning()
                 event.accept()
             elif reply == QMessageBox.Discard:
                 # discard the work and exit
+                self.snapshot.disableExportIfRunning()
                 event.accept()
             else:
                 # cancel the close event
                 event.ignore()
         else:
+            self.snapshot.disableExportIfRunning()
             event.accept()
 
 
