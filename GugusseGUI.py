@@ -111,7 +111,7 @@ class MainWindow(QMainWindow):
             label.setStyleSheet("border: 1px solid black;")
             motorSeparatorLayout.addWidget(label)
             self.speedmeters[motor]=QLabel("peak: ?steps/s")
-            motorSeparatorLayout.addWidget(self.motorLabels[motor])
+            motorSeparatorLayout.addWidget(self.speedmeters[motor])
             threeButtonsLayout=QHBoxLayout()
             trace=False
             #if motor == "filmdrive":
