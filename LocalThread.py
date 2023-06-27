@@ -57,7 +57,7 @@ class LocalThread(Thread):
             for item in listdir("/dev/shm/complete/"):
                 if path.isfile("/dev/shm/complete/{}".format(item)):
                     destination="{}/{}".format(self.fullpath, item)
-                    self.message.emit(destination)
+                    self.message.emit(f"xfer,{destination}")
                     move("/dev/shm/complete/{}".format(item),destination)                    
     def stopLoop(self):
         self.Loop=False

@@ -103,12 +103,15 @@ class MainWindow(QMainWindow):
         
         threeMotorsLayout=QHBoxLayout()
         self.motors={}
+        self.speedmeters={}
         for motor in ["feeder","filmdrive","pickup"]:
             motorSeparatorLayout=QVBoxLayout()
             label=QLabel(motor)
             label.setAlignment(Qt.AlignCenter)
             label.setStyleSheet("border: 1px solid black;")
             motorSeparatorLayout.addWidget(label)
+            self.speedmeters[motor]=QLabel("peak: ?steps/s")
+            motorSeparatorLayout.addWidget(self.motorLabels[motor])
             threeButtonsLayout=QHBoxLayout()
             trace=False
             #if motor == "filmdrive":
@@ -136,6 +139,8 @@ class MainWindow(QMainWindow):
 
         hlayout.addWidget(self.projectName.getLabel())
         hlayout.addWidget(self.projectName)
+        self.lastFileLabel=QLabel("...")
+        hlayout.addWidget(self.lastFileLabel)
         left_layout.addLayout(hlayout)
 
         #Capture Mode
