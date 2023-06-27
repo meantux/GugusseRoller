@@ -188,6 +188,11 @@ class RunStopWidget(QPushButton):
     
     def handleSignal(self, unfiltered):
         msg=str(unfiltered)
+        if msg[0:4]=="xfer":
+            s=msg.split(',')
+            self.win.lastFileLabel.setText(f"{datetime.now().strftime('%H:%M:%S')} {s[1]}")
+            self.lastNum=s[1]
+            return
         self.win.out.append(msg)
         if msg == "syncMotors":
             self.win.motors["feeder"].syncMotorStatus()
@@ -262,9 +267,5 @@ class SnapshotWidget(QPushButton):
         if msg == "captureDone":
             self.ignore=False
             self.win.lastFileLabel.setText(f"LAST: {datetime.now().strftime('%H:%M:%S')} {self.lastNum}")
-        elif msg[0:4]=="xfer":
-            s=msg.split(',')
-            self.win.lastFileLabel.setText(f"{datetime.now().strftime('%H:%M:%S')} {s[1]}")
-            self.lastNum=s[1]
         else:
             self.win.out.append(msg)
