@@ -40,6 +40,10 @@ class TrinamicSilentMotor():
         self.trace=trace
         self.fault=False
         self.name=cfg["name"]
+        if self.name=="filmdrive":
+            self.nextDelay=self.nextDelayForFilmDrive
+        else:
+            self.nextDelay=self.nextDelayForTurntable
         self.target=0
         self.SensorStopPin=cfg["stopPin"]
         self.ignore=0
@@ -74,6 +78,7 @@ class TrinamicSilentMotor():
         self.signal.emit(f"spdchg,{self.name},{self.speed}")
         self.speed2=cfg["speed2"]
         self.ignoreInitial=cfg["ignoreInitial"]
+        self.halfpoint=self.ignoreInitial / 2
         self.faultTreshold=cfg["faultTreshold"]
         if "targetTime" in cfg:
             self.targetTime=cfg["targetTime"]
@@ -97,14 +102,13 @@ class TrinamicSilentMotor():
             self.toggle=0
         else:
             self.toggle=1
-    def nextDelay(self):
-        moveStart=self.moveStart
+    def nextDelayForTurntable(self):
         now=time()
         speed2=float(self.speed2)
         if self.forceSpeed2:
             return now+(1.0/speed2)
         speed=float(self.speed)
-        pos=now-moveStart
+        pos=now-self.moveStart
         target=self.targetTime
         delta=speed-speed2
         if pos >= target:
@@ -113,6 +117,16 @@ class TrinamicSilentMotor():
             newspeed=speed2 + 2 * delta * pos / target
         else:
             newspeed=speed2 + 2 * delta * (target - pos) / target
+        return now + (1.0/newspeed)
+        
+    def nextDelayForFilmdrive(self):
+        now=time()
+        if self.forceSpeed2:
+            return now+(1.0/speed2)
+        if self.ticks <= self.halfpoint:
+            newspeed=self.speed2 + (self.speed - self.speed2) * (self.ticks / self.halfpoint)
+        else:
+            newspeed=self.speed - (self.speed - self.speed2) * ((self.ticks - self.halfpoint) / self.halfpoint)      
         return now + (1.0/newspeed)
         
         
@@ -146,7 +160,7 @@ class TrinamicSilentMotor():
             ticks-= 1
     
     def move(self):
-        ticks=0
+        self.ticks=0
 
         self.target= self.pos+self.faultTreshold
         self.ignore=self.ignoreInitial
@@ -176,12 +190,12 @@ class TrinamicSilentMotor():
                 if reading == self.SensorStopState:
                     delta=time()-self.moveStart
                     if self.trace:
-                        idx=str(ticks)
+                        idx=str(self.ticks)
                         if idx in self.log:
                             self.log[idx]+= 1
                         else:
                             self.log[idx]= 1
-                    if ticks == self.ignoreInitial:
+                    if self.ticks == self.ignoreInitial:
                         self.shortsInARow+= 1;
                     else:
                         self.shortsInARow=0
@@ -224,7 +238,7 @@ class TrinamicSilentMotor():
             delay=waitUntil - time()
             if delay>0.0:
                 sleep(delay)
-            ticks+= 1
+            self.ticks+= 1
 
             waitUntil=self.tick()
         self.fault=True
