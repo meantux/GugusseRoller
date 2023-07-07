@@ -81,7 +81,7 @@ class FtpThread(Thread):
             sleep(1)
             for item in listdir("/dev/shm/complete/"):
                 if path.isfile("/dev/shm/complete/{}".format(item)):
-                    self.message.emit("transferring {}".format(item))
+                    self.message.emit(f"xfer,{item}")
                     a=open("/dev/shm/complete/{}".format(item), "rb")                    
                     self.ftp.storbinary("STOR {}".format(item),a)
                     a.close()

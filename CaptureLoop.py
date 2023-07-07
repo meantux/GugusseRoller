@@ -3,6 +3,7 @@ from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtWidgets import QPushButton
 from threading import Thread
 from time import sleep, time
+from datetime import datetime
 from json import load,dumps
 from os import mkdir,listdir
 from FtpThread import FtpThread
@@ -16,6 +17,7 @@ class FrameSequence():
         self.filmdrive=self.win.motors["filmdrive"].motor
         self.feeder=self.win.motors["feeder"].motor
         self.pickup=self.win.motors["pickup"].motor
+        self.lastNum="0"
         try:
             mkdir("/dev/shm/complete")
         except Exception:
@@ -186,6 +188,11 @@ class RunStopWidget(QPushButton):
     
     def handleSignal(self, unfiltered):
         msg=str(unfiltered)
+        if msg[0:4]=="xfer":
+            s=msg.split(',')
+            self.win.lastFileLabel.setText(f"{datetime.now().strftime('%H:%M:%S')} {s[1]}")
+            self.lastNum=s[1]
+            return
         self.win.out.append(msg)
         if msg == "syncMotors":
             self.win.motors["feeder"].syncMotorStatus()
@@ -259,5 +266,6 @@ class SnapshotWidget(QPushButton):
         msg=str(unfiltered)
         if msg == "captureDone":
             self.ignore=False
+            self.win.lastFileLabel.setText(f"LAST: {datetime.now().strftime('%H:%M:%S')} {self.lastNum}")
         else:
             self.win.out.append(msg)

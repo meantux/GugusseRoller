@@ -71,6 +71,7 @@ class TrinamicSilentMotor():
         
     def setFormat(self, cfg):
         self.speed=cfg["speed"]
+        self.signal.emit(f"spdchg,{self.name},{self.speed}")
         self.speed2=cfg["speed2"]
         self.ignoreInitial=cfg["ignoreInitial"]
         self.faultTreshold=cfg["faultTreshold"]
@@ -175,7 +176,6 @@ class TrinamicSilentMotor():
                 if reading == self.SensorStopState:
                     delta=time()-self.moveStart
                     if self.trace:
-                        self.signal.emit("{} ticks for {}".format(ticks,self.name))
                         idx=str(ticks)
                         if idx in self.log:
                             self.log[idx]+= 1
@@ -218,7 +218,7 @@ class TrinamicSilentMotor():
                         self.signal.emit("WARNING: speed={} and speed2={}, the fact that speed was smaller than speed2 is unexpected".format(self.speed, self.speed2))
                     elif self.speed > self.maxSpeed:
                         self.speed=self.maxSpeed
-                    self.signal.emit("New speed for {}={}ticks/s".format(self.name, self.speed))
+                    self.signal.emit(f"spdchg,{self.name},{self.speed}")
                     self.skipAdjust=6
                     return
             delay=waitUntil - time()
@@ -312,5 +312,9 @@ class MotorControlWidgets(QPushButton):
 
 
     def signalHandle(self, msg):
-        self.win.out.append(msg)
+        if msg[0:6]=="spdchg":
+            s=msg.split(',')
+            self.win.speedmeters[s[1]].setText(f"peak: {s[2]}steps/s")
+        else:
+            self.win.out.append(msg)
         self.syncMotorStatus()
