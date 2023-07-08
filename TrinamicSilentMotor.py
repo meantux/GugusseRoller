@@ -19,7 +19,7 @@ from PyQt5.QtGui import QIcon
 
 
 class TrinamicSilentMotor():
-    def __init__(self,cfg,slowEnd=False,trace=False, signal=None):
+    def __init__(self,cfg,trace=False, signal=None):
         print(dumps(cfg, indent=4))
         self.cfg=cfg
         GPIO.setmode(GPIO.BCM)
@@ -33,20 +33,16 @@ class TrinamicSilentMotor():
             self.learning=False
             self.learnPin= -1
         self.histo=[]
-        self.slowEnd=cfg["slowEnd"]
+        self.isFilmDrive=cfg["isFilmDrive"]
         self.signal=signal
         self.skipHisto=2
         self.skipAdjust=0
         self.trace=trace
         self.fault=False
         self.name=cfg["name"]
-        if self.name=="filmdrive":
-            self.nextDelay=self.nextDelayForFilmDrive
-        else:
-            self.nextDelay=self.nextDelayForTurntable
-        self.target=0
+        self.nextDelay=self.nextDelayForFilmDrive
+        self.move=self.moveForFilmdrive
         self.SensorStopPin=cfg["stopPin"]
-        self.ignore=0
         self.pinEnable=cfg["pinEnable"]
         self.pinDirection=cfg["pinDirection"]
         self.pinStep=cfg["pinStep"]
@@ -55,10 +51,8 @@ class TrinamicSilentMotor():
         self.lasttick=time()
         self.toggle=0
         self.shortsInARow=0
-        self.forceSpeed2=False
         GPIO.setup(self.pinStep, GPIO.OUT, initial=0)
         GPIO.setup(self.pinEnable, GPIO.OUT, initial=0)
-        self.pos=int(0)
         GPIO.setup(self.SensorStopPin, GPIO.IN)
         GPIO.setup(self.pinDirection, GPIO.OUT, initial=0)
         self.log={}
@@ -77,11 +71,13 @@ class TrinamicSilentMotor():
         self.speed=cfg["speed"]
         self.signal.emit(f"spdchg,{self.name},{self.speed}")
         self.speed2=cfg["speed2"]
-        self.ignoreInitial=cfg["ignoreInitial"]
-        self.halfpoint=self.ignoreInitial / 2
         self.faultTreshold=cfg["faultTreshold"]
-        if "targetTime" in cfg:
-            self.targetTime=cfg["targetTime"]
+        self.ignoreInitial=cfg["ignoreInitial"]
+        self.targetTime=cfg["targetTime"]
+        if self.isFilmDrive:
+            self.halfpoint=self.ignoreInitial / 2
+        else:
+            self.halfTime=self.targetTime/2
                 
     def enable(self):
         GPIO.output(self.pinEnable, 0)
@@ -95,46 +91,34 @@ class TrinamicSilentMotor():
                 dump(self.log, h, indent=4)
             self.log={}
         
-    def forward(self):
-        self.pos += 1
-        GPIO.output(self.pinStep, self.toggle)
-        if self.toggle==1:
-            self.toggle=0
-        else:
-            self.toggle=1
     def nextDelayForTurntable(self):
-        now=time()
-        speed2=float(self.speed2)
-        if self.forceSpeed2:
-            return now+(1.0/speed2)
-        speed=float(self.speed)
-        pos=now-self.moveStart
-        target=self.targetTime
-        delta=speed-speed2
-        if pos >= target:
-            newspeed=speed2
-        elif pos <= (target/2):
-            newspeed=speed2 + 2 * delta * pos / target
+        delta=time()-self.moveStart
+        if delta > self.targetTime:
+            return now+(1.0/self.speed2)
+        if now<self.deceleratePoint:
+            pointSpeed=self.speed2 + (self.speed - self.speed2) * (delta / self.halfTime)
         else:
-            newspeed=speed2 + 2 * delta * (target - pos) / target
-        return now + (1.0/newspeed)
+            pointSpeed=self.speed - (self.speed - self.speed2) * ((delta - self.halfTime) / self.halfTime)
+        return now + (1.0/pointSpeed)
         
     def nextDelayForFilmdrive(self):
         now=time()
-        if self.forceSpeed2:
+        if self.ticks>self.ignoreInitial:
             return now+(1.0/speed2)
         if self.ticks <= self.halfpoint:
-            newspeed=self.speed2 + (self.speed - self.speed2) * (self.ticks / self.halfpoint)
+            pointSpeed=self.speed2 + (self.speed - self.speed2) * (self.ticks / self.halfpoint)
         else:
-            newspeed=self.speed - (self.speed - self.speed2) * ((self.ticks - self.halfpoint) / self.halfpoint)      
-        return now + (1.0/newspeed)
+            pointSpeed=self.speed - (self.speed - self.speed2) * ((self.ticks - self.halfpoint) / self.halfpoint)      
+        return now + (1.0/pointSpeed)
         
         
     def tick(self):
-        if self.target != self.pos:
-            self.direction()
-            return self.nextDelay()
-        return None
+        self.ticks+= 1
+        if self.ticks > self.faultThreshold:
+            return None
+        self.toggle=  not self.toggle
+        GPIO.output(self.pinStep, self.toggle)
+        return self.nextDelay()
 
     def getPowerState(self):
         return 1-GPIO.input(self.pinEnable)
@@ -149,98 +133,94 @@ class TrinamicSilentMotor():
             GPIO.output(self.pinDirection,0)
         else:
             GPIO.output(self.pinDirection,1)
-        
-    def blindMove(self, ticks):
-        delay=0.020
-        while ticks > 0:
-            sleep(delay)
-            if delay > 0.001:
-                delay-= 0.0005                
-            self.forward()
-            ticks-= 1
-    
-    def move(self):
-        self.ticks=0
-
-        self.target= self.pos+self.faultTreshold
-        self.ignore=self.ignoreInitial
-        if self.learning:
-            GPIO.output(self.learnPin, 1)
-        if self.target < self.pos:
-            self.fault=True
-            raise Exception("We do not support backward yet")
+    def calculateNewSpeed(self):
+        if self.skipAdjust > 0:
+            self.skipAdjust-= 1
+            return self.speed
+        if len(self.histo)<6:
+            return self.speed
+        self.histo=self.histo[-6:]
+        avg=sum(self.histo)/len(self.histo)
+        if abs(avg-self.targetTime)<0.01:
+            return self.speed
+        if avg > self.targetTime:
+            gamma=5.0*(avg-self.targetTime)/(self.targetTime*100.0)
         else:
-            self.direction=self.forward
+            gamma=20.0*(avg-self.targetTime)/(self.targetTime*100.0)
+        if gamma > 0.05:
+            gamma=0.05
+        elif gamma < -0.2:
+            gamma= -0.2
+        newspeed=self.speed * (1.0 + gamma)
+        if newspeed>self.maxSpeed:
+            self.newspeed=self.maxSpeed
+        elif newspeed < self.speed2:
+            newspeed=self.speed2
+        return newspeed
+    
+    def moveForTurnTables(self):
+        self.ticks=0
         self.moveStart=time()
-        self.forceSpeed2=False
         waitUntil=self.tick()
         while waitUntil != None:
             reading=GPIO.input(self.SensorStopPin)
-            if self.learning and self.ignore == 5:
-                GPIO.output(self.learnPin,0)
-            if self.ignore > 0:
-                self.ignore -= 1
-            elif self.ignore == 0 and self.slowEnd:
-                self.ignore = -1
+            if reading == self.SensorStopState:
+                delta=time()-self.moveStart
+                if self.ticks < self.ignoreInitial:
+                    self.shortsInARow+= 1;
+                else:
+                    self.shortsInARow=0
+                if self.shortsInARow >= 10:
+                    self.fault=True
+                    self.message("{} short FAULT".format(self.name))
+                    raise Exception("\033[1;31mFAULT\033[0m: only the lowest amount of steps for 10 cycles in a row")
                 if self.skipHisto <= 0:
-                    delta=time()-self.moveStart
-                    self.histo.append(delta)          
-                self.forceSpeed2=True
-            else:
-                if reading == self.SensorStopState:
-                    delta=time()-self.moveStart
-                    if self.trace:
-                        idx=str(self.ticks)
-                        if idx in self.log:
-                            self.log[idx]+= 1
-                        else:
-                            self.log[idx]= 1
-                    if self.ticks == self.ignoreInitial:
-                        self.shortsInARow+= 1;
-                    else:
-                        self.shortsInARow=0
-                    if self.shortsInARow >= 10:
-                        self.fault=True
-                        self.message("{} short FAULT".format(self.name))
-                        raise Exception("\033[1;31mFAULT\033[0m: only the lowest amount of steps for 10 cycles in a row")
-                    if self.skipHisto > 0:
-                        self.skipHisto-= 1
-                        return
-                    if not self.slowEnd:
-                        self.histo.append(delta)
-                    if self.skipAdjust > 0:
-                        self.skipAdjust-= 1
-                        return
-                    if len(self.histo)<6:
-                        return
-                    self.histo=self.histo[-6:]
-                    avg=sum(self.histo)/len(self.histo)
-                    if abs(avg-self.targetTime)<0.01:
-                        return
-                    if avg > self.targetTime:
-                        gamma=5.0*(avg-self.targetTime)/(self.targetTime*100.0)
-                    else:
-                        gamma=20.0*(avg-self.targetTime)/(self.targetTime*100.0)
-                    if gamma > 0.05:
-                        gamma=0.05
-                    elif gamma < -0.2:
-                        gamma= -0.2
-                    newspeed=self.speed * (1.0 + gamma)
-                    self.speed=int(newspeed)
-                    if self.speed < self.speed2:
-                        self.speed=self.speed2
-                        self.signal.emit("WARNING: speed={} and speed2={}, the fact that speed was smaller than speed2 is unexpected".format(self.speed, self.speed2))
-                    elif self.speed > self.maxSpeed:
-                        self.speed=self.maxSpeed
-                    self.signal.emit(f"spdchg,{self.name},{self.speed}")
-                    self.skipAdjust=6
-                    return
+                    self.histo.append(delta)
+                self.speed=self.calculateNewSpeed()
+                self.signal.emit(f"spdchg,{self.name},{self.speed}")
+                self.skipAdjust=6
+                return
             delay=waitUntil - time()
             if delay>0.0:
                 sleep(delay)
-            self.ticks+= 1
 
             waitUntil=self.tick()
+        self.fault=True
+        self.message("{} long FAULT".format(self.name))
+        raise Exception("Move failed, \033[1;31m{}\033[0m passed its limit without triggering sensor".format(self.name))
+
+    def moveForFilmDrive(self):
+        self.ticks=0
+        GPIO.output(self.learnPin, 1)
+        self.moveStart=time()
+        waitUntil=self.tick()
+        pointToStopLearning=self.ignoreInitial - 5
+        while waitUntil != None:
+            if self.ticks == pointToStopLearning:
+                GPIO.output(self.learnPin,0)
+            elif self.ticks == self.ignoreInitial:
+                if self.skipHisto <= 0:
+                    delta=time()-self.moveStart
+                    self.histo.append(delta)
+            if self.ticks >= self.ignoreInitial and
+              self.SensorStopState == GPIO.input(self.SensorStopPin):
+                if self.ticks == self.ignoreInitial:
+                    self.shortsInARow+= 1;
+                else:
+                    self.shortsInARow=0
+                if self.shortsInARow >= 10:
+                    self.fault=True
+                    self.message("{} short FAULT".format(self.name))
+                    raise Exception("\033[1;31mFAULT\033[0m: only the lowest amount of steps for 10 cycles in a row")
+                self.speed=self.calculateNewSpeed()
+                self.signal.emit(f"spdchg,{self.name},{self.speed}")
+                self.skipAdjust=6
+                return
+            delay=waitUntil - time()
+            if delay>0.0:
+                sleep(delay)
+            waitUntil=self.tick()
+            
         self.fault=True
         self.message("{} long FAULT".format(self.name))
         raise Exception("Move failed, \033[1;31m{}\033[0m passed its limit without triggering sensor".format(self.name))
@@ -298,14 +278,14 @@ class MotorManualWidget(QPushButton):
     
 class MotorControlWidgets(QPushButton):
     signal=pyqtSignal("PyQt_PyObject")
-    def __init__(self, win, cfg, slowEnd=False, trace=False):
+    def __init__(self, win, cfg, trace=False):
         globalPowerIcon=QIcon('power.png')        
         QPushButton.__init__(self)
         self.name=cfg["name"]
         self.win=win
         self.setIcon(globalPowerIcon)
         self.clicked.connect(self.powerHandle)
-        self.motor=TrinamicSilentMotor(cfg, slowEnd=slowEnd, trace=trace, signal=self.signal)
+        self.motor=TrinamicSilentMotor(cfg, trace=trace, signal=self.signal)
         self.syncMotorStatus()
         self.cw=MotorManualWidget(self.motor,"cw")
         self.ccw=MotorManualWidget(self.motor,"ccw")

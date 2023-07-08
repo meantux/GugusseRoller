@@ -76,7 +76,7 @@ class ConfigFiles(dict):
                 "pinDirection": 23,
                 "pinEnable": 25,
                 "pinStep": 24,
-                "slowEnd": False,
+                "isFilmDrive": False,
                 "stopPin": 6,
                 "stopState": 1
             },
@@ -275,7 +275,7 @@ class ConfigFiles(dict):
                 "pinDirection": 14,
                 "pinEnable": 18,
                 "pinStep": 15,
-                "slowEnd": True,
+                "isFilmDrive": True,
                 "stopPin": 26,
                 "stopState": 1
             },
@@ -292,7 +292,7 @@ class ConfigFiles(dict):
                 "pinDirection": 8,
                 "pinEnable": 21,
                 "pinStep": 7,
-                "slowEnd": False,
+                "isFilmDrive": False,
                 "stopPin": 13,
                 "stopState": 1
             }
