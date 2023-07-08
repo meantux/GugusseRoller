@@ -40,8 +40,12 @@ class TrinamicSilentMotor():
         self.trace=trace
         self.fault=False
         self.name=cfg["name"]
-        self.nextDelay=self.nextDelayForFilmDrive
-        self.move=self.moveForFilmdrive
+        if self.isFilmDrive:
+            self.move=self.moveForFilmDrive
+            self.nextDelay=self.nextDelayForFilmDrive
+        else:
+            self.move=self.moveForTurnTables
+            self.nextDelay=self.nextDelayForTurnTables
         self.SensorStopPin=cfg["stopPin"]
         self.pinEnable=cfg["pinEnable"]
         self.pinDirection=cfg["pinDirection"]
@@ -91,20 +95,21 @@ class TrinamicSilentMotor():
                 dump(self.log, h, indent=4)
             self.log={}
         
-    def nextDelayForTurntable(self):
-        delta=time()-self.moveStart
+    def nextDelayForTurnTables(self):
+        now=time()
+        delta=now-self.moveStart
         if delta > self.targetTime:
             return now+(1.0/self.speed2)
-        if now<self.deceleratePoint:
+        if delta < self.halfTime:
             pointSpeed=self.speed2 + (self.speed - self.speed2) * (delta / self.halfTime)
         else:
             pointSpeed=self.speed - (self.speed - self.speed2) * ((delta - self.halfTime) / self.halfTime)
         return now + (1.0/pointSpeed)
         
-    def nextDelayForFilmdrive(self):
+    def nextDelayForFilmDrive(self):
         now=time()
         if self.ticks>self.ignoreInitial:
-            return now+(1.0/speed2)
+            return now+(1.0/self.speed2)
         if self.ticks <= self.halfpoint:
             pointSpeed=self.speed2 + (self.speed - self.speed2) * (self.ticks / self.halfpoint)
         else:
@@ -114,7 +119,7 @@ class TrinamicSilentMotor():
         
     def tick(self):
         self.ticks+= 1
-        if self.ticks > self.faultThreshold:
+        if self.ticks > self.faultTreshold:
             return None
         self.toggle=  not self.toggle
         GPIO.output(self.pinStep, self.toggle)
@@ -202,8 +207,7 @@ class TrinamicSilentMotor():
                 if self.skipHisto <= 0:
                     delta=time()-self.moveStart
                     self.histo.append(delta)
-            if self.ticks >= self.ignoreInitial and
-              self.SensorStopState == GPIO.input(self.SensorStopPin):
+            if self.ticks >= self.ignoreInitial and self.SensorStopState == GPIO.input(self.SensorStopPin):
                 if self.ticks == self.ignoreInitial:
                     self.shortsInARow+= 1;
                 else:
