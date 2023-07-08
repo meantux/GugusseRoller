@@ -181,6 +181,8 @@ class TrinamicSilentMotor():
                     raise Exception("\033[1;31mFAULT\033[0m: only the lowest amount of steps for 10 cycles in a row")
                 if self.skipHisto <= 0:
                     self.histo.append(delta)
+                else:
+                    self.skipHisto -= 1
                 self.speed=self.calculateNewSpeed()
                 self.signal.emit(f"spdchg,{self.name},{self.speed}")
                 self.skipAdjust=6
@@ -207,6 +209,8 @@ class TrinamicSilentMotor():
                 if self.skipHisto <= 0:
                     delta=time()-self.moveStart
                     self.histo.append(delta)
+                else:
+                    self.skipHisto-= 1
             if self.ticks >= self.ignoreInitial and self.SensorStopState == GPIO.input(self.SensorStopPin):
                 if self.ticks == self.ignoreInitial:
                     self.shortsInARow+= 1;
