@@ -162,7 +162,7 @@ class TrinamicSilentMotor():
         elif newspeed < self.speed2:
             newspeed=self.speed2
         self.skipAdjust=6
-        self.signal.emit(f"spdchg,{int(newspeed)},{self.speed}")
+        self.signal.emit(f"spdchg,{self.name},{int(newspeed)}")
         return int(newspeed)
     
     def moveForTurnTables(self):
