@@ -253,7 +253,7 @@ class ConfigFiles(dict):
                     "filmdrive": {
                         "faultTreshold": 16000,
                         "ignoreInitial": 950,
-                        "speed": 3000.0,
+                        "speed": 4500.0,
                         "speed2": 80.0,
                         "targetTime": 0.5
                     },

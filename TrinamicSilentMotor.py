@@ -161,7 +161,9 @@ class TrinamicSilentMotor():
             self.newspeed=self.maxSpeed
         elif newspeed < self.speed2:
             newspeed=self.speed2
-        return newspeed
+        self.skipAdjust=6
+        self.signal.emit(f"spdchg,{int(newspeed)},{self.speed}")
+        return int(newspeed)
     
     def moveForTurnTables(self):
         self.ticks=0
@@ -182,10 +184,8 @@ class TrinamicSilentMotor():
                 if self.skipHisto <= 0:
                     self.histo.append(delta)
                 else:
-                    self.skipHisto -= 1
+                    self.skipHisto-= 1
                 self.speed=self.calculateNewSpeed()
-                self.signal.emit(f"spdchg,{self.name},{self.speed}")
-                self.skipAdjust=6
                 return
             delay=waitUntil - time()
             if delay>0.0:
@@ -221,8 +221,6 @@ class TrinamicSilentMotor():
                     self.message("{} short FAULT".format(self.name))
                     raise Exception("\033[1;31mFAULT\033[0m: only the lowest amount of steps for 10 cycles in a row")
                 self.speed=self.calculateNewSpeed()
-                self.signal.emit(f"spdchg,{self.name},{self.speed}")
-                self.skipAdjust=6
                 return
             delay=waitUntil - time()
             if delay>0.0:
