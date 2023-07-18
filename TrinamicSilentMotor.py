@@ -158,7 +158,7 @@ class TrinamicSilentMotor():
             gamma= -0.2
         newspeed=self.speed * (1.0 + gamma)
         if newspeed>self.maxSpeed:
-            self.newspeed=self.maxSpeed
+            newspeed=self.maxSpeed
         elif newspeed < self.speed2:
             newspeed=self.speed2
         self.skipAdjust=6
