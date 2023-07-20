@@ -77,7 +77,14 @@ class TrinamicSilentMotor():
         self.speed2=cfg["speed2"]
         self.faultTreshold=cfg["faultTreshold"]
         self.ignoreInitial=cfg["ignoreInitial"]
+        self.eighthPoint = self.ignoreInitial / 8.0
+        self.sevenEighthPoint = 7.0 * self.ignoreInitial / 8.0
+        
+        
         self.targetTime=cfg["targetTime"]
+        self.eighthTime = self.targetTime / 8.0
+        self.sevenEighthTime = 7.0 * self.targetTime / 8.0 
+
         if self.isFilmDrive:
             self.halfpoint=self.ignoreInitial / 2
         else:
@@ -94,28 +101,38 @@ class TrinamicSilentMotor():
             with open(fn,"wt") as h:
                 dump(self.log, h, indent=4)
             self.log={}
-        
+
+
     def nextDelayForTurnTables(self):
-        now=time()
-        delta=now-self.moveStart
+        now = time()
+        delta = now - self.moveStart
+
         if delta > self.targetTime:
-            return now+(1.0/self.speed2)
-        if delta < self.halfTime:
-            pointSpeed=self.speed2 + (self.speed - self.speed2) * (delta / self.halfTime)
+            return now + (1.0 / self.speed2)
+        if delta < self.eighthTime:
+            pointSpeed = self.speed2 + (self.speed - self.speed2) * (delta / self.eighthTime)
+        elif delta < self.sevenEighthTime:
+            pointSpeed = self.speed
         else:
-            pointSpeed=self.speed - (self.speed - self.speed2) * ((delta - self.halfTime) / self.halfTime)
-        return now + (1.0/pointSpeed)
-        
+            pointSpeed = self.speed - (self.speed - self.speed2) * ((delta - self.sevenEighthTime) / self.eighthTime)
+
+        return now + (1.0 / pointSpeed)
+                
+
     def nextDelayForFilmDrive(self):
-        now=time()
-        if self.ticks>self.ignoreInitial:
-            return now+(1.0/self.speed2)
-        if self.ticks <= self.halfpoint:
-            pointSpeed=self.speed2 + (self.speed - self.speed2) * (self.ticks / self.halfpoint)
+        now = time()
+
+        if self.ticks > self.ignoreInitial:
+            return now + (1.0 / self.speed2)
+        if self.ticks <= self.eighthPoint:
+            pointSpeed = self.speed2 + (self.speed - self.speed2) * (self.ticks / self.eighthPoint)
+        elif self.ticks <= self.sevenEighthPoint
+            pointSpeed = self.speed
         else:
-            pointSpeed=self.speed - (self.speed - self.speed2) * ((self.ticks - self.halfpoint) / self.halfpoint)      
-        return now + (1.0/pointSpeed)
-        
+            pointSpeed = self.speed - (self.speed - self.speed2) * ((self.ticks - self.sevenEighthPoint) / self.eighthPoint)
+            
+        return now + (1.0 / pointSpeed)
+    
         
     def tick(self):
         self.ticks+= 1
