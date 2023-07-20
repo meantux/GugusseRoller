@@ -126,7 +126,7 @@ class TrinamicSilentMotor():
             return now + (1.0 / self.speed2)
         if self.ticks <= self.eighthPoint:
             pointSpeed = self.speed2 + (self.speed - self.speed2) * (self.ticks / self.eighthPoint)
-        elif self.ticks <= self.sevenEighthPoint
+        elif self.ticks <= self.sevenEighthPoint:
             pointSpeed = self.speed
         else:
             pointSpeed = self.speed - (self.speed - self.speed2) * ((self.ticks - self.sevenEighthPoint) / self.eighthPoint)
