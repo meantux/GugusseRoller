@@ -114,10 +114,8 @@ class MainWindow(QMainWindow):
             motorSeparatorLayout.addWidget(self.speedmeters[motor])
             threeButtonsLayout=QHBoxLayout()
             trace=False
-            #if motor == "filmdrive":
-            #    trace=True
-            #else:
-            #    trace=False
+            if motor == "filmdrive":
+                trace=True
             self.motors[motor]=MotorControlWidgets(self, self.hwSettings[motor], trace=trace)
             threeButtonsLayout.addWidget(self.motors[motor].ccw)
             threeButtonsLayout.addWidget(self.motors[motor])

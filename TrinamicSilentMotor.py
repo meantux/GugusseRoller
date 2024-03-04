@@ -57,7 +57,12 @@ class TrinamicSilentMotor():
         self.shortsInARow=0
         GPIO.setup(self.pinStep, GPIO.OUT, initial=0)
         GPIO.setup(self.pinEnable, GPIO.OUT, initial=0)
-        GPIO.setup(self.SensorStopPin, GPIO.IN)
+        if "flags" in cfg and "pullUp" in cfg["flags"]:
+            GPIO.setup(self.SensorStopPin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        elif "flags" in cfg and "pullDown" in cfg["flags"]:
+            GPIO.setup(self.SensorStopPin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+        else:
+            GPIO.setup(self.SensorStopPin, GPIO.IN)
         GPIO.setup(self.pinDirection, GPIO.OUT, initial=0)
         self.log={}
 
@@ -229,6 +234,11 @@ class TrinamicSilentMotor():
                 else:
                     self.skipHisto-= 1
             if self.ticks >= self.ignoreInitial and self.SensorStopState == GPIO.input(self.SensorStopPin):
+                if self.trace:
+                    if f"{self.ticks}" in self.log:
+                        self.log[f"{self.ticks}"]+= 1
+                    else:
+                        self.log[f"{self.ticks}"]=1
                 if self.ticks == self.ignoreInitial:
                     self.shortsInARow+= 1;
                 else:
@@ -257,10 +267,14 @@ class PinToggler(QThread):
         self.toggle=GPIO.input(pin)
 
     def run(self):
+        t=0.01
+        lowl=1.0/10000.0
         while self.loop:
             self.toggle= not self.toggle
             GPIO.output(self.pin, self.toggle)
-            sleep(0.001)
+            if t > lowl:
+                t = t / (1 + (t/2))
+            sleep(t)
 
     def killLoop(self):
         self.loop=False

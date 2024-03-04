@@ -78,14 +78,15 @@ class ConfigFiles(dict):
                 "pinStep": 24,
                 "isFilmDrive": False,
                 "stopPin": 6,
-                "stopState": 1
+                "stopState": 1,
+                "flags": ["pullUp"]
             },
             "filmFormats": {
                 "16mm": {
                     "feeder": {
                         "faultTreshold": 8000,
                         "ignoreInitial": 10,
-                        "speed": 2000.0,
+                        "speed": 1000.0,
                         "speed2": 100.0,
                         "targetTime": 0.33
                     },
@@ -93,8 +94,8 @@ class ConfigFiles(dict):
                         "faultTreshold": 8000,
                         "ignoreInitial": 1800,
                         "speed": 9000.0,
-                        "speed2": 100.0,
-                        "targetTime": 0.55
+                        "speed2": 1000.0,
+                        "targetTime": 0.4
                     },
                     "pickup": {
                         "faultTreshold": 8000,
@@ -108,44 +109,44 @@ class ConfigFiles(dict):
                     "feeder": {
                         "faultTreshold": 8000,
                         "ignoreInitial": 10,
-                        "speed": 800.0,
+                        "speed": 400.0,
                         "speed2": 100.0,
-                        "targetTime": 0.33
+                        "targetTime": 0.45
                     },
                     "filmdrive": {
                         "faultTreshold": 8000,
                         "ignoreInitial": 1800,
                         "speed": 9000.0,
-                        "speed2": 100.0,
-                        "targetTime": 0.55
+                        "speed2": 1000.0,
+                        "targetTime": 0.4
                     },
                     "pickup": {
                         "faultTreshold": 8000,
                         "ignoreInitial": 10,
-                        "speed": 2000.0,
+                        "speed": 1000.0,
                         "speed2": 100.0,
-                        "targetTime": 0.33
+                        "targetTime": 0.45
                     }
                 },
                 "35mm": {
                     "feeder": {
                         "faultTreshold": 8000,
                         "ignoreInitial": 20,
-                        "speed": 2500.0,
+                        "speed": 500.0,
                         "speed2": 500.0,
                         "targetTime": 0.8
                     },
                     "filmdrive": {
                         "faultTreshold": 15000,
-                        "ignoreInitial": 4650,
-                        "speed": 15000.0,
-                        "speed2": 200.0,
-                        "targetTime": 1.0
+                        "ignoreInitial": 4770,
+                        "speed": 14000.0,
+                        "speed2": 2000.0,
+                        "targetTime": 0.85
                     },
                     "pickup": {
                         "faultTreshold": 8000,
                         "ignoreInitial": 20,
-                        "speed": 4000.0,
+                        "speed": 1000.0,
                         "speed2": 500.0,
                         "targetTime": 0.8
                     }
@@ -154,23 +155,23 @@ class ConfigFiles(dict):
                     "feeder": {
                         "faultTreshold": 8000,
                         "ignoreInitial": 20,
-                        "speed": 400.0,
-                        "speed2": 100.0,
-                        "targetTime": 0.7
+                        "speed": 200.0,
+                        "speed2": 200.0,
+                        "targetTime": 1.2
                     },
                     "filmdrive": {
                         "faultTreshold": 15000,
-                        "ignoreInitial": 4650,
-                        "speed": 15000.0,
-                        "speed2": 200.0,
-                        "targetTime": 1.0
+                        "ignoreInitial": 4770,
+                        "speed": 14000.0,
+                        "speed2": 2000.0,
+                        "targetTime": 0.85
                     },
                     "pickup": {
                         "faultTreshold": 8000,
                         "ignoreInitial": 20,
-                        "speed": 700.0,
-                        "speed2": 100.0,
-                        "targetTime": 0.7
+                        "speed": 500.0,
+                        "speed2": 200.0,
+                        "targetTime": 1.2
                     }
                 },
                 "35mmSoundtrack": {
@@ -179,13 +180,13 @@ class ConfigFiles(dict):
                         "ignoreInitial": 20,
                         "speed": 400.0,
                         "speed2": 400.0,
-                        "targetTime": 0.15
+                        "targetTime": 0.25
                     },
                     "filmdrive": {
                         "faultTreshold": 8000,
                         "ignoreInitial": 1100,
-                        "speed": 2000.0,
-                        "speed2": 200.0,
+                        "speed": 4000.0,
+                        "speed2": 2000.0,
                         "targetTime": 0.4
                     },
                     "pickup": {
@@ -193,7 +194,7 @@ class ConfigFiles(dict):
                         "ignoreInitial": 20,
                         "speed": 400.0,
                         "speed2": 400.0,
-                        "targetTime": 0.15
+                        "targetTime": 0.25
                     }
                 },
                 "8mm": {
@@ -208,8 +209,8 @@ class ConfigFiles(dict):
                         "faultTreshold": 8000,
                         "ignoreInitial": 860,
                         "speed": 8000.0,
-                        "speed2": 100.0,
-                        "targetTime": 0.33
+                        "speed2": 500.0,
+                        "targetTime": 0.25
                     },
                     "pickup": {
                         "faultTreshold": 8000,
@@ -225,21 +226,21 @@ class ConfigFiles(dict):
                         "ignoreInitial": 10,
                         "speed": 800.0,
                         "speed2": 100.0,
-                        "targetTime": 0.5
+                        "targetTime": 0.33
                     },
                     "filmdrive": {
                         "faultTreshold": 8000,
                         "ignoreInitial": 1800,
                         "speed": 12000.0,
-                        "speed2": 100.0,
-                        "targetTime": 0.667
+                        "speed2": 2000.0,
+                        "targetTime": 0.4
                     },
                     "pickup": {
                         "faultTreshold": 8000,
                         "ignoreInitial": 10,
                         "speed": 800.0,
                         "speed2": 100.0,
-                        "targetTime": 0.5
+                        "targetTime": 0.33
                     }
                 },
                 "super8": {
@@ -254,8 +255,8 @@ class ConfigFiles(dict):
                         "faultTreshold": 16000,
                         "ignoreInitial": 950,
                         "speed": 4500.0,
-                        "speed2": 80.0,
-                        "targetTime": 0.5
+                        "speed2": 400.0,
+                        "targetTime": 0.4
                     },
                     "pickup": {
                         "faultTreshold": 8000,
@@ -277,7 +278,8 @@ class ConfigFiles(dict):
                 "pinStep": 15,
                 "isFilmDrive": True,
                 "stopPin": 26,
-                "stopState": 1
+                "stopState": 1,
+                "flags":[]
             },
             "lights": {
                 "blue": 22,
@@ -294,6 +296,7 @@ class ConfigFiles(dict):
                 "pinStep": 7,
                 "isFilmDrive": False,
                 "stopPin": 13,
-                "stopState": 1
+                "stopState": 1,
+                "flags":["pullUp"]
             }
         }
