@@ -235,6 +235,7 @@ class SnapshotWidget(QPushButton):
         self.captureModes=ConfigFiles("captureModes.json")
         self.signal.connect(self.signalHandle)
         self.ignore=False
+        self.lastNum=0
 
     def initialize(self):
         self.disableExportIfRunning()
