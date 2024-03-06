@@ -186,7 +186,17 @@ class TrinamicSilentMotor():
         self.skipAdjust=6
         self.signal.emit(f"spdchg,{self.name},{int(newspeed)}")
         return int(newspeed)
-    
+        
+    def blindMove(self, ticks):
+        delay=0.020
+        while ticks > 0:
+            sleep(delay)
+            if delay > 0.001:
+                delay-= 0.0005                
+            self.toggle=  not self.toggle
+            GPIO.output(self.pinStep, self.toggle)
+            ticks-= 1
+            
     def moveForTurnTables(self):
         self.ticks=0
         self.moveStart=time()
