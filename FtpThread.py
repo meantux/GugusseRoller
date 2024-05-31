@@ -1,5 +1,5 @@
 from ftplib import FTP
-from os import listdir,mkdir,remove,path
+from os import listdir,makedirs,remove,path
 from threading import Thread
 from json import load
 from time import sleep
@@ -67,19 +67,22 @@ class FtpThread(Thread):
     
     def run(self):
         self.Loop=True
+        localLoop=True
         if self.connected:
             self.ftp.close()
             self.connected=False
         try:
             self.openConnection()            
-            mkdir("/dev/shm/complete")
+            makedirs("/dev/shm/complete", exist_ok=True)
         except Exception as e:
             msg=str(e)
-            if msg != "[Errno 17] File exists: '/dev/shm/complete'":
-                self.message.emit(str(e))
-        while self.Loop:
+            self.message.emit(str(e))
+        while localLoop:
+            if self.Loop == False:
+                localLoop=False
             sleep(1)
-            for item in listdir("/dev/shm/complete/"):
+            file_list = sorted(listdir("/dev/shm/complete/"))
+            for item in file_list:
                 if path.isfile("/dev/shm/complete/{}".format(item)):
                     self.message.emit(f"xfer,{item}")
                     a=open("/dev/shm/complete/{}".format(item), "rb")                    
