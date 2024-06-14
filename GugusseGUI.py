@@ -1,6 +1,6 @@
 import sys
 import json
-from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QLabel, QSlider, QComboBox, QPushButton, QLineEdit, QTextEdit, QSplitter, QSizePolicy, QWidget, QMessageBox
+from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QLabel, QSlider, QComboBox, QPushButton, QLineEdit, QTextEdit, QSplitter, QSizePolicy, QWidget, QMessageBox, QSizePolicy
 from PyQt5.QtCore import Qt
 
 from TrinamicSilentMotor import MotorControlWidgets
@@ -13,6 +13,7 @@ import CaptureSettings
 import CaptureLoop
 import SensorReport
 from ConfigFiles import ConfigFiles
+from MplCanvas import MplCanvas
 
 class MainWindow(QMainWindow):
     def __init__(self, *args, **kwargs):        
@@ -26,6 +27,7 @@ class MainWindow(QMainWindow):
         self.picam2.createPreviewWidget()
         self.main_layout = QVBoxLayout()        
         self.out = QTextEdit()
+        self.histo=MplCanvas(self, width=5, height=4, dpi=100)
 
 
         print("--------Available Camera Settings------")
@@ -174,7 +176,9 @@ class MainWindow(QMainWindow):
         # Text output area
         self.out.setReadOnly(True)
         left_layout.addWidget(self.out)
+        left_layout.addWidget(self.histo)
         self.main_layout.addWidget(self.bottom_layout)
+        self.picam2.setPicDataHandler(self.histo.plot_raw_histogram)
 
         # Camera preview area
         self.bottom_layout.addWidget(self.picam2.camWidget)
@@ -193,6 +197,12 @@ class MainWindow(QMainWindow):
         self.sharpness.syncCamera()
         self.hflip.syncCamera() # syncing one syncs the other, and start cam
         self.picam2.start()
+
+    def plot_fake_histogram(self):
+        import numpy as np
+        data = np.random.normal(0, 1, 1000)
+        self.histo.axes.hist(data, bins=1024)
+        self.histo.draw()
 
     def disableWidgetsWhenCapture(self):
         self.light_selector.setEnabled(False)

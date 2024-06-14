@@ -19,11 +19,14 @@ def setMissingToDefault(settings):
 class GCamera(Picamera2):
     def __init__(self, win):
         Picamera2.__init__(self)
+        
         self.win=win
         setMissingToDefault(win.settings)
         self.fps=self.win.settings["fps"]
         self.framecount=0
         self.captureModes=ConfigFiles("captureModes.json")
+
+        self.picDataHandler=None
 
         vflip=False
         hflip=False
@@ -38,6 +41,9 @@ class GCamera(Picamera2):
         print(self.config)
         self.configure(self.config)
 
+    def setPicDataHandler(self, handler):
+        self.picDataHandler=handler
+        
     def getConfig(self):
         return self.config
     
@@ -114,8 +120,13 @@ class GCamera(Picamera2):
             self.skipBuffers(3, "raw")
             fn=f"/dev/shm/{self.framecount:05d}.dng"
             fnComplete=f"/dev/shm/complete/{self.framecount:05d}.dng"
-            buffers,metadata=self.capture_buffers(["raw"])
+            buffers,metadata=self.capture_buffers(["raw"])            
             self.helpers.save_dng(buffers[0],metadata, self.config["raw"], fn)
             os.rename(fn, fnComplete)
+            if self.picDataHandler:
+                #self.picDataHandler(buffers[0][:int(4056 * 3040 * 12 / 8)])
+                offset=2
+                size=int(4056 * 3040 * 12 / 8)
+                self.picDataHandler(buffers[0][offset:size+offset])
                           
         self.framecount+= 1
