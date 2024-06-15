@@ -3,6 +3,9 @@ import json
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QLabel, QSlider, QComboBox, QPushButton, QLineEdit, QTextEdit, QSplitter, QSizePolicy, QWidget, QMessageBox, QSizePolicy
 from PyQt5.QtCore import Qt
 
+
+
+
 from TrinamicSilentMotor import MotorControlWidgets
 
 from GCamera import GCamera
@@ -13,7 +16,8 @@ import CaptureSettings
 import CaptureLoop
 import SensorReport
 from ConfigFiles import ConfigFiles
-from MplCanvas import MplCanvas
+from HistogramWidget import HistogramWidget
+
 
 class MainWindow(QMainWindow):
     def __init__(self, *args, **kwargs):        
@@ -27,7 +31,7 @@ class MainWindow(QMainWindow):
         self.picam2.createPreviewWidget()
         self.main_layout = QVBoxLayout()        
         self.out = QTextEdit()
-        self.histo=MplCanvas(self, width=5, height=4, dpi=100)
+        self.histo=HistogramWidget()
 
 
         print("--------Available Camera Settings------")
@@ -178,7 +182,7 @@ class MainWindow(QMainWindow):
         left_layout.addWidget(self.out)
         left_layout.addWidget(self.histo)
         self.main_layout.addWidget(self.bottom_layout)
-        self.picam2.setPicDataHandler(self.histo.plot_raw_histogram)
+        #self.picam2.setPicDataHandler(self.histo.plot_raw_histogram)
 
         # Camera preview area
         self.bottom_layout.addWidget(self.picam2.camWidget)

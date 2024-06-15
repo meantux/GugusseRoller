@@ -3,4 +3,5 @@
 *.wav
 *.raw
 *.json
+*.so
 img2snd
