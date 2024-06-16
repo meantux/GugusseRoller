@@ -9,7 +9,7 @@ from cffi import FFI
 
 ffi=FFI()
 ffi.cdef("""
-  void draw_histogram(unsigned char *buffer, int width, int height);
+  void draw_histogram(uint8_t *buffer, int width, int height, int x, int y);
 """)
 lib = ffi.dlopen("./histogram_lib.so")
 
@@ -41,11 +41,15 @@ class HistogramWidget(QWidget):
         self.update()
 
     def mousePressEvent(self, event):
+        x=event.pos().x()
+        y=event.pos().y()
+        print(f"x={x}, y={y}")
         if event.button() == Qt.LeftButton: # Handle left mouse clicks
-            self.drawHistogram()
+            self.drawHistogram(event.pos().x(), event.pos().y())
 
-    def drawHistogram(self):
-        lib.draw_histogram(ffi.cast("unsigned char *",self.image.bits()), self.image.width(), self.image.height())
+    def drawHistogram(self, x, y):
+        self.image.fill(0)
+        lib.draw_histogram(ffi.cast("uint8_t *",self.image.bits()), self.image.width(), self.image.height(),x, y)
         self.update()
 
 
