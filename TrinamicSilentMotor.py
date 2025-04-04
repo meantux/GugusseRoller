@@ -17,6 +17,9 @@ from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QIcon
 
 
+powerOnIcon=None
+powerOffIcon=None
+
 
 class TrinamicSilentMotor():
     def __init__(self,cfg,trace=False, signal=None):
@@ -326,11 +329,15 @@ class MotorManualWidget(QPushButton):
 class MotorControlWidgets(QPushButton):
     signal=pyqtSignal("PyQt_PyObject")
     def __init__(self, win, cfg, trace=False):
-        globalPowerIcon=QIcon('power.png')        
+        global powerOnIcon
+        global powerOffIcon
         QPushButton.__init__(self)
         self.name=cfg["name"]
         self.win=win
-        self.setIcon(globalPowerIcon)
+        if powerOnIcon == None:
+            powerOnIcon=QIcon('powerOn.png')
+            powerOffIcon=QIcon('powerOff.png')
+        self.setIcon(powerOffIcon)
         self.clicked.connect(self.powerHandle)
         self.motor=TrinamicSilentMotor(cfg, trace=trace, signal=self.signal)
         self.syncMotorStatus()
@@ -339,10 +346,12 @@ class MotorControlWidgets(QPushButton):
         self.signal.connect(self.signalHandle)
 
     def syncMotorStatus(self):
+        global powerOnIcon
+        global powerOffIcon
         if self.motor.getPowerState():
-            self.setStyleSheet("background-color: green;")
+            self.setIcon(powerOnIcon)
         else:
-            self.setStyleSheet("background-color: grey;")
+            self.setIcon(powerOffIcon)
 
     def powerHandle(self):
         if self.motor.getPowerState():
