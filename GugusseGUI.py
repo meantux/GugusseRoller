@@ -1,7 +1,9 @@
 import sys
 import json
+import numpy as np
+from Histogram import HistogramWidget, HistogramCalculator
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QLabel, QSlider, QComboBox, QPushButton, QLineEdit, QTextEdit, QSplitter, QSizePolicy, QWidget, QMessageBox
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 
 from TrinamicSilentMotor import MotorControlWidgets
 
@@ -173,7 +175,12 @@ class MainWindow(QMainWindow):
 
         # Text output area
         self.out.setReadOnly(True)
-        left_layout.addWidget(self.out)
+        self.histWidget = HistogramWidget(self)
+        self.logSplitter = QSplitter(Qt.Vertical)
+        self.logSplitter.addWidget(self.histWidget)
+        self.logSplitter.addWidget(self.out)
+        self.logSplitter.setSizes([1,1])
+        left_layout.addWidget(self.logSplitter)
         self.main_layout.addWidget(self.bottom_layout)
 
         # Camera preview area
@@ -193,6 +200,10 @@ class MainWindow(QMainWindow):
         self.sharpness.syncCamera()
         self.hflip.syncCamera() # syncing one syncs the other, and start cam
         self.picam2.start()
+        self.histcalc = HistogramCalculator()
+        self.histTimer = QTimer(self)
+        self.histTimer.timeout.connect(self.updateHistogram)
+        self.histTimer.start(500)
 
     def disableWidgetsWhenCapture(self):
         self.light_selector.setEnabled(False)
@@ -216,6 +227,21 @@ class MainWindow(QMainWindow):
 
     def getBottomLayout(self):
         return self.bottom_layout
+
+    def updateHistogram(self):
+        mode = self.captureMode.currentText()
+        try:
+            if mode == "DNG":
+                buf = self.picam2.capture_buffer("raw")
+                arr = np.frombuffer(buf, dtype=np.uint8)
+                hist = self.histcalc.hist_gray12(arr)
+                self.histWidget.setHistogram(hist, "gray12")
+            else:
+                arr = self.picam2.capture_array("main")
+                hist = self.histcalc.hist_rgb8(arr)
+                self.histWidget.setHistogram(hist, "rgb")
+        except Exception as e:
+            print(f"Histogram update error: {e}")
 
     def on_slider_value_changed(self, control, value):
         self.out.append(f'Slider value changed for control: {control} to {value}')

@@ -4,3 +4,5 @@
 *.raw
 *.json
 img2snd
+
+*.so
