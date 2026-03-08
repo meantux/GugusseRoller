@@ -1,0 +1,74 @@
+CONVERSION TO C++ — STEPS
+Platform: Raspberry Pi only (latest Raspbian). No cross-platform support.
+=========================================================================
+
+STEP 1 — Camera capture + DNG writer  (most complex, do first)
+--------------------------------------------------------------
+Replaces: GCamera.py
+Libraries: libcamera C++ API, libtiff
+- Initialize libcamera, enumerate camera, read CameraProperties
+- Read ColorFilterArrangement property to get actual Bayer pattern (RGGB/BGGR/GRBG/GBRG)
+- Capture raw Bayer buffers (12-bit packed CSI2P, same as current)
+- Read actual stride from stream configuration after configure()
+- Write DNG using libtiff:
+    - Store 12-bit packed Bayer data as-is (no unpacking, no 16-bit expansion)
+    - Encode CFAPattern tag from ColorFilterArrangement
+    - Encode BlackLevel, WhiteLevel, ColorMatrix1 from camera metadata
+    - Encode DNGVersion, UniqueCameraModel tags
+    - Single ExposureTime tag (green exposure, reference channel)
+- Validate output against current Python DNG files using exiftool and a raw converter
+  (Darktable, RawTherapee)
+- Note: architecture must support future 3-exposure bracketing mode where R, G, B
+  channels each come from a separate capture; recombination happens at Bayer level
+  before DNG write using a 2-buffer strategy (~37MB peak):
+    1. Capture green-optimized → buffer A (becomes the canvas)
+    2. Capture blue-optimized  → buffer B, splice B pixels into A at CFA positions, free B
+    3. Capture red-optimized   → buffer B (reuse), splice R pixels into A at CFA positions, free B
+    4. Write buffer A as DNG
+- Testable standalone with a small main() on the Pi, no GUI needed
+
+STEP 2 — GPIO / motor control
+------------------------------
+Replaces: TrinamicSilentMotor.py
+Libraries: libgpiod (libgpiodcxx C++ wrapper)
+- One C++ class per motor, configured from JSON (see step 3)
+- Two move() strategies:
+    - filmdrive: count steps to hole-detection sensor
+    - feeder/pickup: timed move to arm-position sensor
+- Auto-speed adjustment via rolling 6-sample history vs targetTime (calculateNewSpeed)
+- GPIO pin directions: step, direction, enable per motor; stopPin input; learnPin output
+- Testable standalone with a small main() on the Pi, no GUI needed
+
+STEP 3 — Config files
+----------------------
+Replaces: ConfigFiles.py
+Libraries: QJsonDocument (already in Qt)
+- C++ class wrapping a QJsonObject, behaves like a dict
+- Auto-creates file with defaults on first run
+- Atomic save: write to _filename, then rename to filename
+- Four config files: GugusseSettings.json, hardwarecfg.json, ftp.json, captureModes.json
+- Testable on the workstation, no hardware needed
+
+STEP 4 — Transfer threads
+--------------------------
+Replaces: FtpThread.py, LocalThread.py
+Libraries: libcurl (FTP), std::filesystem (local copy)
+- Polls /dev/shm/complete/ for new files
+- FTP mode: FIFO upload via libcurl
+- Local mode: move files to configured path via std::filesystem
+- Pause capture signal if more than 6 files queued (same logic as current)
+- Testable standalone on the Pi with dummy files, no GUI needed
+
+STEP 5 — GUI
+-------------
+Replaces: GugusseGUI.py, CameraSettings.py, CaptureSettings.py, SensorReport.py,
+          MotorsAndFtpSetup.py, Lights.py
+Libraries: Qt6 C++ (direct translation from PyQt5 — same class names, same
+           signal/slot model, same widget hierarchy)
+- MainWindow assembles all widget modules same as current layout
+- Camera preview via libcamera Qt integration (replaces QGlPicamera2)
+- All widgets follow same pattern: subclass Qt widget, getLabel(), syncCamera()
+- MotorsAndFtpSetup becomes a Qt dialog (drop tkinter)
+- Lights control integrated (was standalone script)
+- Wire all backend C++ classes (steps 1-4) into GUI
+- Only doable once steps 1-4 are validated on the Pi
