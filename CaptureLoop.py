@@ -28,8 +28,12 @@ class FrameSequence():
         self.feeder.enable()
         self.pickup.enable()
         self.signal.emit("syncMotors")
+        currentFilmFormatCfg=self.win.hwSettings["filmFormats"][self.win.filmFormat.currentText()]
+        self.framesPerReelAdvance=currentFilmFormatCfg.get("framesPerReelAdvance", 1)
+        self.frameCount=0
                    
     def frameAdvance(self):
+        self.frameCount+=1
         m1=MotorThread(self.filmdrive)
         m2=MotorThread(self.feeder)
         m3=MotorThread(self.pickup)
@@ -63,10 +67,12 @@ class FrameSequence():
            self.signal.emit("syncMotors")
            self.signal.emit("turning lights off")
            raise Exception("Stop")
-        m2.start()
-        m3.start()
-        m3.join()
-        m2.join()
+        skipReels=self.framesPerReelAdvance > 1 and self.frameCount % self.framesPerReelAdvance != 1
+        if not skipReels:
+            m2.start()
+            m3.start()
+            m3.join()
+            m2.join()
         m1.start()
         m1.join()
 
