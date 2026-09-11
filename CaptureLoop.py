@@ -88,10 +88,14 @@ class CaptureLoop(QThread):
     def run(self):
         # send msgs
         self.signal.emit("Capture loop start")
+        # preserveSpeed=True: the "speed" field is edited/tuned by the operator
+        # and slowly recalculated live during a scan; a stop/restart must not
+        # wipe it back to the film format's default (only speed2 and the
+        # structural ramp parameters are reloaded here).
         currentFilmFormatCfg=self.win.hwSettings["filmFormats"][self.win.filmFormat.currentText()]
-        self.win.motors["feeder"].motor.setFormat(currentFilmFormatCfg["feeder"])
-        self.win.motors["filmdrive"].motor.setFormat(currentFilmFormatCfg["filmdrive"])
-        self.win.motors["pickup"].motor.setFormat(currentFilmFormatCfg["pickup"])
+        self.win.motors["feeder"].motor.setFormat(currentFilmFormatCfg["feeder"], preserveSpeed=True)
+        self.win.motors["filmdrive"].motor.setFormat(currentFilmFormatCfg["filmdrive"], preserveSpeed=True)
+        self.win.motors["pickup"].motor.setFormat(currentFilmFormatCfg["pickup"], preserveSpeed=True)
 
         self.win.motors["feeder"].motor.enable()
         self.win.motors["filmdrive"].motor.enable()
@@ -161,7 +165,10 @@ class RunStopWidget(QPushButton):
         self.win.filmFormat.setEnabled(state)
         self.win.projectName.setEnabled(state)
         self.win.captureMode.setEnabled(state)
-        self.win.light_selector.setEnabled(state)        
+        self.win.light_selector.setEnabled(state)
+        self.win.resetSpeeds.setEnabled(state)
+        for motor in self.win.speedEdits:
+            self.win.speedEdits[motor].setEnabled(state)
 
     def handlePush(self):
         if not self.running:

@@ -12,7 +12,7 @@ from datetime import datetime
 import RPi.GPIO as GPIO
 GPIO.setmode(GPIO.BCM) 
 from json import dumps, dump
-from PyQt5.QtWidgets import QPushButton
+from PyQt5.QtWidgets import QPushButton, QDoubleSpinBox
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QIcon
 
@@ -79,24 +79,32 @@ class TrinamicSilentMotor():
         self.fault=False
         self.shortsInARow=0
         
-    def setFormat(self, cfg):
-        self.speed=cfg["speed"]
-        self.signal.emit(f"spdchg,{self.name},{self.speed}")
+    def setFormat(self, cfg, preserveSpeed=False):
+        if not preserveSpeed:
+            self.speed=cfg["speed"]
+            self.signal.emit(f"spdchg,{self.name},{self.speed}")
         self.speed2=cfg["speed2"]
         self.faultTreshold=cfg["faultTreshold"]
         self.ignoreInitial=cfg["ignoreInitial"]
         self.eighthPoint = self.ignoreInitial / 8.0
         self.sevenEighthPoint = 7.0 * self.ignoreInitial / 8.0
-        
-        
+
+
         self.targetTime=cfg["targetTime"]
         self.eighthTime = self.targetTime / 8.0
-        self.sevenEighthTime = 7.0 * self.targetTime / 8.0 
+        self.sevenEighthTime = 7.0 * self.targetTime / 8.0
 
         if self.isFilmDrive:
             self.halfpoint=self.ignoreInitial / 2
         else:
             self.halfTime=self.targetTime/2
+
+    def setSpeed(self, newSpeed):
+        if newSpeed < self.minSpeed or newSpeed > self.maxSpeed:
+            return False
+        self.speed=newSpeed
+        self.signal.emit(f"spdchg,{self.name},{int(self.speed)}")
+        return True
                 
     def enable(self):
         GPIO.output(self.pinEnable, 0)
@@ -365,6 +373,34 @@ class MotorControlWidgets(QPushButton):
         if msg[0:6]=="spdchg":
             s=msg.split(',')
             self.win.speedmeters[s[1]].setText(f"peak: {s[2]}steps/s")
+            if hasattr(self.win, "speedEdits") and s[1] in self.win.speedEdits:
+                editor=self.win.speedEdits[s[1]]
+                editor.blockSignals(True)
+                editor.setValue(float(s[2]))
+                editor.blockSignals(False)
         else:
             self.win.out.append(msg)
         self.syncMotorStatus()
+
+
+class MotorSpeedWidget(QDoubleSpinBox):
+    def __init__(self, win, motor):
+        QDoubleSpinBox.__init__(self)
+        self.win=win
+        self.motor=motor
+        self.setDecimals(0)
+        self.setRange(motor.minSpeed, motor.maxSpeed)
+        self.setSingleStep(10)
+        self.setValue(motor.speed)
+        self.editingFinished.connect(self.handle)
+
+    def handle(self):
+        value=self.value()
+        if not self.motor.setSpeed(value):
+            self.win.out.append(
+                f"Speed {value} for {self.motor.name} rejected: must be between "
+                f"{self.motor.minSpeed} and {self.motor.maxSpeed}."
+            )
+            self.blockSignals(True)
+            self.setValue(self.motor.speed)
+            self.blockSignals(False)
