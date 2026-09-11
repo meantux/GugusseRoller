@@ -56,6 +56,8 @@ class FrameSequence():
            self.signal.emit("sensors, wire disconnected...")
            self.signal.emit("---------------------------------------------")
            raise Exception("Capture stopped by Motor Faults!")
+        self.win.light_selector.lights.set("on")
+        self.win.light_selector.signal.emit("on")
         sleep(0.1)
         try:
            self.cam.captureCycle()
@@ -68,6 +70,8 @@ class FrameSequence():
            self.signal.emit("turning lights off")
            raise Exception("Stop")
         skipReels=self.framesPerReelAdvance > 1 and self.frameCount % self.framesPerReelAdvance != 1
+        self.win.light_selector.lights.set("off")
+        self.win.light_selector.signal.emit("off")
         if not skipReels:
             m2.start()
             m3.start()
