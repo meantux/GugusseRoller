@@ -137,6 +137,7 @@ class CaptureLoop(QThread):
                     sleep(0.1)
                 if timeout <= time():
                     self.signal.emit("timeout xfer error")
+                    self.signal.emit("turning lights off")
                     self.stopLoop()
         self.signal.emit("waiting up to 2 minutes for transfer queue to be cleared")
         timeout=time()+120
@@ -144,8 +145,9 @@ class CaptureLoop(QThread):
             sleep (0.1)
             if time() > timeout:
                 self.signal.emit("TIMEOUT waiting for end")
+                self.signal.emit("turning lights off")
                 break
-        
+
         self.signal.emit("stopping Export")
         self.export.stopLoop()        
         self.export.join()
