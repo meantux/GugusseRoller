@@ -108,6 +108,13 @@ class CaptureLoop(QThread):
         self.win.motors["filmdrive"].motor.setFormat(currentFilmFormatCfg["filmdrive"], preserveSpeed=True)
         self.win.motors["pickup"].motor.setFormat(currentFilmFormatCfg["pickup"], preserveSpeed=True)
 
+        # histo/skipHisto/skipAdjust are left over from any previous run;
+        # without this a restart could recalculate speed off stale timings
+        # collected before the stop instead of waiting for fresh ones.
+        self.win.motors["feeder"].motor.resetSpeedAdaptation()
+        self.win.motors["filmdrive"].motor.resetSpeedAdaptation()
+        self.win.motors["pickup"].motor.resetSpeedAdaptation()
+
         self.win.motors["feeder"].motor.enable()
         self.win.motors["filmdrive"].motor.enable()
         self.win.motors["pickup"].motor.enable()

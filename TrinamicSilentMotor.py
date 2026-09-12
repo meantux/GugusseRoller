@@ -99,6 +99,11 @@ class TrinamicSilentMotor():
         else:
             self.halfTime=self.targetTime/2
 
+    def resetSpeedAdaptation(self):
+        self.histo=[]
+        self.skipHisto=2
+        self.skipAdjust=0
+
     def setSpeed(self, newSpeed):
         if newSpeed < self.minSpeed or newSpeed > self.maxSpeed:
             return False
@@ -372,7 +377,6 @@ class MotorControlWidgets(QPushButton):
     def signalHandle(self, msg):
         if msg[0:6]=="spdchg":
             s=msg.split(',')
-            self.win.speedmeters[s[1]].setText(f"peak: {s[2]}steps/s")
             if hasattr(self.win, "speedEdits") and s[1] in self.win.speedEdits:
                 editor=self.win.speedEdits[s[1]]
                 editor.blockSignals(True)

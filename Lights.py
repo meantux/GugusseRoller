@@ -67,7 +67,7 @@ class LightControlWidget(QComboBox):
 
 class EconolightWidget(QCheckBox):
     def __init__(self, win):
-        QCheckBox.__init__(self, "econolight")
+        QCheckBox.__init__(self, "ecolight")
         self.win=win
         self.setChecked(True)
 

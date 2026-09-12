@@ -109,7 +109,6 @@ class MainWindow(QMainWindow):
 
         threeMotorsLayout=QHBoxLayout()
         self.motors={}
-        self.speedmeters={}
         self.speedEdits={}
         for motor in ["feeder","filmdrive","pickup"]:
             motorSeparatorLayout=QVBoxLayout()
@@ -117,8 +116,6 @@ class MainWindow(QMainWindow):
             label.setAlignment(Qt.AlignCenter)
             label.setStyleSheet("border: 1px solid black;")
             motorSeparatorLayout.addWidget(label)
-            self.speedmeters[motor]=QLabel("peak: ?steps/s")
-            motorSeparatorLayout.addWidget(self.speedmeters[motor])
             threeButtonsLayout=QHBoxLayout()
             trace=False
             if motor == "filmdrive":
@@ -145,8 +142,8 @@ class MainWindow(QMainWindow):
         hlayout = QHBoxLayout()
         self.light_selector = LightControlWidget(self)
         self.econolight = EconolightWidget(self)
-        hlayout.addWidget(self.light_selector.getLabel())
         hlayout.addWidget(self.econolight)
+        hlayout.addWidget(self.light_selector.getLabel())
         hlayout.addWidget(self.light_selector)
         left_layout.addLayout(hlayout)
 
