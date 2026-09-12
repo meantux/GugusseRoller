@@ -6,7 +6,7 @@ from PyQt5.QtCore import Qt
 from TrinamicSilentMotor import MotorControlWidgets
 
 from GCamera import GCamera
-from Lights import LightControlWidget
+from Lights import LightControlWidget, EconolightWidget
 
 import CameraSettings
 import CaptureSettings
@@ -131,7 +131,9 @@ class MainWindow(QMainWindow):
         self.projectName = CaptureSettings.ProjectNameWidget(self)        
         hlayout = QHBoxLayout()
         self.light_selector = LightControlWidget(self)
+        self.econolight = EconolightWidget(self)
         hlayout.addWidget(self.light_selector.getLabel())
+        hlayout.addWidget(self.econolight)
         hlayout.addWidget(self.light_selector)
         left_layout.addLayout(hlayout)
 

@@ -70,8 +70,9 @@ class FrameSequence():
            self.signal.emit("turning lights off")
            raise Exception("Stop")
         skipReels=self.framesPerReelAdvance > 1 and self.frameCount % self.framesPerReelAdvance != 1
-        self.win.light_selector.lights.set("off")
-        self.win.light_selector.signal.emit("off")
+        if self.win.econolight.isChecked():
+            self.win.light_selector.lights.set("off")
+            self.win.light_selector.signal.emit("off")
         if not skipReels:
             m2.start()
             m3.start()
