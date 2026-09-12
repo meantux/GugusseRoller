@@ -28,8 +28,12 @@ class FrameSequence():
         self.feeder.enable()
         self.pickup.enable()
         self.signal.emit("syncMotors")
+        currentFilmFormatCfg=self.win.hwSettings["filmFormats"][self.win.filmFormat.currentText()]
+        self.framesPerReelAdvance=currentFilmFormatCfg.get("framesPerReelAdvance", 1)
+        self.frameCount=0
                    
     def frameAdvance(self):
+        self.frameCount+=1
         m1=MotorThread(self.filmdrive)
         m2=MotorThread(self.feeder)
         m3=MotorThread(self.pickup)
@@ -52,6 +56,8 @@ class FrameSequence():
            self.signal.emit("sensors, wire disconnected...")
            self.signal.emit("---------------------------------------------")
            raise Exception("Capture stopped by Motor Faults!")
+        self.win.light_selector.lights.set("on")
+        self.win.light_selector.signal.emit("on")
         sleep(0.1)
         try:
            self.cam.captureCycle()
@@ -63,10 +69,15 @@ class FrameSequence():
            self.signal.emit("syncMotors")
            self.signal.emit("turning lights off")
            raise Exception("Stop")
-        m2.start()
-        m3.start()
-        m3.join()
-        m2.join()
+        skipReels=self.framesPerReelAdvance > 1 and self.frameCount % self.framesPerReelAdvance != 1
+        if self.win.econolight.isChecked():
+            self.win.light_selector.lights.set("off")
+            self.win.light_selector.signal.emit("off")
+        if not skipReels:
+            m2.start()
+            m3.start()
+            m3.join()
+            m2.join()
         m1.start()
         m1.join()
 
@@ -88,10 +99,21 @@ class CaptureLoop(QThread):
     def run(self):
         # send msgs
         self.signal.emit("Capture loop start")
+        # preserveSpeed=True: the "speed" field is edited/tuned by the operator
+        # and slowly recalculated live during a scan; a stop/restart must not
+        # wipe it back to the film format's default (only speed2 and the
+        # structural ramp parameters are reloaded here).
         currentFilmFormatCfg=self.win.hwSettings["filmFormats"][self.win.filmFormat.currentText()]
-        self.win.motors["feeder"].motor.setFormat(currentFilmFormatCfg["feeder"])
-        self.win.motors["filmdrive"].motor.setFormat(currentFilmFormatCfg["filmdrive"])
-        self.win.motors["pickup"].motor.setFormat(currentFilmFormatCfg["pickup"])
+        self.win.motors["feeder"].motor.setFormat(currentFilmFormatCfg["feeder"], preserveSpeed=True)
+        self.win.motors["filmdrive"].motor.setFormat(currentFilmFormatCfg["filmdrive"], preserveSpeed=True)
+        self.win.motors["pickup"].motor.setFormat(currentFilmFormatCfg["pickup"], preserveSpeed=True)
+
+        # histo/skipHisto/skipAdjust are left over from any previous run;
+        # without this a restart could recalculate speed off stale timings
+        # collected before the stop instead of waiting for fresh ones.
+        self.win.motors["feeder"].motor.resetSpeedAdaptation()
+        self.win.motors["filmdrive"].motor.resetSpeedAdaptation()
+        self.win.motors["pickup"].motor.resetSpeedAdaptation()
 
         self.win.motors["feeder"].motor.enable()
         self.win.motors["filmdrive"].motor.enable()
@@ -127,6 +149,7 @@ class CaptureLoop(QThread):
                     sleep(0.1)
                 if timeout <= time():
                     self.signal.emit("timeout xfer error")
+                    self.signal.emit("turning lights off")
                     self.stopLoop()
         self.signal.emit("waiting up to 2 minutes for transfer queue to be cleared")
         timeout=time()+120
@@ -134,8 +157,9 @@ class CaptureLoop(QThread):
             sleep (0.1)
             if time() > timeout:
                 self.signal.emit("TIMEOUT waiting for end")
+                self.signal.emit("turning lights off")
                 break
-        
+
         self.signal.emit("stopping Export")
         self.export.stopLoop()        
         self.export.join()
@@ -161,7 +185,10 @@ class RunStopWidget(QPushButton):
         self.win.filmFormat.setEnabled(state)
         self.win.projectName.setEnabled(state)
         self.win.captureMode.setEnabled(state)
-        self.win.light_selector.setEnabled(state)        
+        self.win.light_selector.setEnabled(state)
+        self.win.resetSpeeds.setEnabled(state)
+        for motor in self.win.speedEdits:
+            self.win.speedEdits[motor].setEnabled(state)
 
     def handlePush(self):
         if not self.running:

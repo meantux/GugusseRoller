@@ -52,6 +52,14 @@ class FilmFormatWidget(QComboBox):
     def handle(self, text):
         self.win.out.append(f"film format changed to {text}")
         self.win.settings["FilmFormat"]=text
+        cfg=self.allFormats[text]
+        for motor in ["feeder", "filmdrive", "pickup"]:
+            m=self.win.motors[motor].motor
+            m.setFormat(cfg[motor])
+            editor=self.win.speedEdits[motor]
+            editor.blockSignals(True)
+            editor.setValue(m.speed)
+            editor.blockSignals(False)
 
     def getLabel(self):
         return self.label
@@ -127,3 +135,36 @@ class SaveSettingsWidget(QPushButton):
         self.win.settings.save()
         self.lastSaved=dict(self.win.settings)
         self.win.out.append("Settings saved.")
+
+
+class ResetSpeedsWidget(QPushButton):
+    def __init__(self, win):
+        QPushButton.__init__(self, "Reset Speeds")
+        self.win=win
+        self.clicked.connect(self.execute)
+
+    def execute(self):
+        # Note: hardwarecfg.json is never written to as a result of this -
+        # it only ever restores motor.speed in memory from what is already
+        # on disk (the operator edits the JSON by hand if defaults change).
+        cfg=self.win.hwSettings["filmFormats"][self.win.filmFormat.currentText()]
+        changed=False
+        for motor in ["feeder", "filmdrive", "pickup"]:
+            target=cfg[motor]["speed"]
+            m=self.win.motors[motor].motor
+            if int(m.speed) != int(target):
+                changed=True
+            if not m.setSpeed(target):
+                self.win.out.append(
+                    f"Reset Speeds: {motor} default speed {target} is outside "
+                    f"its {m.minSpeed}-{m.maxSpeed} hardware range, left unchanged."
+                )
+                continue
+            editor=self.win.speedEdits[motor]
+            editor.blockSignals(True)
+            editor.setValue(m.speed)
+            editor.blockSignals(False)
+        if changed:
+            self.win.out.append("Speeds reset to film format defaults.")
+        else:
+            self.win.out.append("Reset Speeds had no effect: speeds already at film format defaults.")

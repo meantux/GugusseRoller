@@ -5,7 +5,7 @@ from time import sleep
 from json import load
 from sys import argv,exit
 from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtWidgets import QComboBox, QLabel
+from PyQt5.QtWidgets import QComboBox, QLabel, QCheckBox
 from ConfigFiles import ConfigFiles
 
 GPIO.setwarnings(False)
@@ -63,6 +63,13 @@ class LightControlWidget(QComboBox):
 
     def getLabel(self):
         return self.label
+
+
+class EconolightWidget(QCheckBox):
+    def __init__(self, win):
+        QCheckBox.__init__(self, "ecolight")
+        self.win=win
+        self.setChecked(True)
 
 
 if __name__=="__main__":

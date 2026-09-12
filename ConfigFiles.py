@@ -18,7 +18,27 @@ class ConfigFiles(dict):
             data=self.config[filename]()
             with open(filename, "wt") as h:
                 json.dump(data, h, indent=4)
+        if filename == "hardwarecfg.json":
+            data = self._migrateHardwareSettings(data)
         super(ConfigFiles, self).__init__(data)
+    def _migrateHardwareSettings(self, data):
+        defaults = self.getDefaultHardwareSettings()
+        changed = False
+        for formatName, formatCfg in data.get("filmFormats", {}).items():
+            if "framesPerReelAdvance" not in formatCfg:
+                fpra = defaults["filmFormats"].get(formatName, {}).get("framesPerReelAdvance", 1)
+                formatCfg["framesPerReelAdvance"] = fpra
+                for motor in ("feeder", "pickup"):
+                    if motor in formatCfg and "targetTime" in formatCfg[motor]:
+                        old = formatCfg[motor]["targetTime"]
+                        formatCfg[motor]["targetTime"] = old + (fpra - 1) * old * 30 / 100
+                changed = True
+        if changed:
+            with open(f"_{self.filename}", "wt") as h:
+                json.dump(data, h, sort_keys=True, indent=4)
+            shutil.move(f"_{self.filename}", self.filename)
+        return data
+
     def save(self):
         with open(f"_{self.filename}", "wt") as h:
             json.dump(dict(self), h, sort_keys=True, indent=4)
@@ -83,12 +103,13 @@ class ConfigFiles(dict):
             },
             "filmFormats": {
                 "16mm": {
+                    "framesPerReelAdvance": 3,
                     "feeder": {
                         "faultTreshold": 8000,
                         "ignoreInitial": 10,
                         "speed": 1000.0,
                         "speed2": 100.0,
-                        "targetTime": 0.33
+                        "targetTime": 0.5
                     },
                     "filmdrive": {
                         "faultTreshold": 8000,
@@ -102,16 +123,17 @@ class ConfigFiles(dict):
                         "ignoreInitial": 10,
                         "speed": 2000.0,
                         "speed2": 100.0,
-                        "targetTime": 0.33
+                        "targetTime": 0.5
                     }
                 },
                 "16mmBigReels": {
+                    "framesPerReelAdvance": 3,
                     "feeder": {
                         "faultTreshold": 8000,
                         "ignoreInitial": 10,
                         "speed": 400.0,
                         "speed2": 100.0,
-                        "targetTime": 0.45
+                        "targetTime": 0.7
                     },
                     "filmdrive": {
                         "faultTreshold": 8000,
@@ -125,10 +147,11 @@ class ConfigFiles(dict):
                         "ignoreInitial": 10,
                         "speed": 1000.0,
                         "speed2": 100.0,
-                        "targetTime": 0.45
+                        "targetTime": 0.7
                     }
                 },
                 "35mm": {
+                    "framesPerReelAdvance": 1,
                     "feeder": {
                         "faultTreshold": 8000,
                         "ignoreInitial": 20,
@@ -152,6 +175,7 @@ class ConfigFiles(dict):
                     }
                 },
                 "35mmBigReels": {
+                    "framesPerReelAdvance": 1,
                     "feeder": {
                         "faultTreshold": 8000,
                         "ignoreInitial": 20,
@@ -175,12 +199,13 @@ class ConfigFiles(dict):
                     }
                 },
                 "35mmSoundtrack": {
+                    "framesPerReelAdvance": 6,
                     "feeder": {
                         "faultTreshold": 8000,
                         "ignoreInitial": 20,
                         "speed": 400.0,
                         "speed2": 400.0,
-                        "targetTime": 0.25
+                        "targetTime": 0.7
                     },
                     "filmdrive": {
                         "faultTreshold": 8000,
@@ -194,16 +219,17 @@ class ConfigFiles(dict):
                         "ignoreInitial": 20,
                         "speed": 400.0,
                         "speed2": 400.0,
-                        "targetTime": 0.25
+                        "targetTime": 0.7
                     }
                 },
                 "8mm": {
+                    "framesPerReelAdvance": 6,                    
                     "feeder": {
                         "faultTreshold": 8000,
                         "ignoreInitial": 10,
                         "speed": 800.0,
                         "speed2": 100.0,
-                        "targetTime": 0.33
+                        "targetTime": 0.85
                     },
                     "filmdrive": {
                         "faultTreshold": 8000,
@@ -217,16 +243,17 @@ class ConfigFiles(dict):
                         "ignoreInitial": 10,
                         "speed": 800.0,
                         "speed2": 100.0,
-                        "targetTime": 0.33
+                        "targetTime": 0.85
                     }
                 },
                 "pathex": {
+                    "framesPerReelAdvance": 3,
                     "feeder": {
                         "faultTreshold": 8000,
                         "ignoreInitial": 10,
                         "speed": 800.0,
                         "speed2": 100.0,
-                        "targetTime": 0.33
+                        "targetTime": 0.5
                     },
                     "filmdrive": {
                         "faultTreshold": 8000,
@@ -240,16 +267,17 @@ class ConfigFiles(dict):
                         "ignoreInitial": 10,
                         "speed": 800.0,
                         "speed2": 100.0,
-                        "targetTime": 0.33
+                        "targetTime": 0.5
                     }
                 },
                 "super8": {
+                    "framesPerReelAdvance": 6,
                     "feeder": {
                         "faultTreshold": 8000,
                         "ignoreInitial": 0,
                         "speed": 800.0,
                         "speed2": 100.0,
-                        "targetTime": 0.33
+                        "targetTime": 0.85
                     },
                     "filmdrive": {
                         "faultTreshold": 16000,
@@ -263,7 +291,7 @@ class ConfigFiles(dict):
                         "ignoreInitial": 0,
                         "speed": 800.0,
                         "speed2": 100.0,
-                        "targetTime": 0.33
+                        "targetTime": 0.85
                     }
                 }
             },
